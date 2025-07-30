@@ -27,10 +27,10 @@
     "qs": "^6.11.2",
     "save-svg-as-png": "^1.4.17",
     "slugify": "^1.6.6",
-    "stylelint-config-standard": "^38.0.0",
+    "stylelint-config-standard": "^39.0.0",
     "sweetalert2": "^11.7.31",
     "vite-svg-loader": "^5.1.0",
-    "vue": "^3.4.0",
+    "vue": "^3.5.0",
     "vue-chartjs": "^5.3.1",
     "vue-cookie-accept-decline": "^6.1.0",
     "vue-gtag": "^3.2.0",
@@ -43,8 +43,8 @@
   "devDependencies": {
     "@iconify/vue": "^5.0.0",
     "@rushstack/eslint-patch": "^1.1.0",
-    "@vitejs/plugin-legacy": "^6.0.0",
-    "@vitejs/plugin-vue": "^5.0.0",
+    "@vitejs/plugin-legacy": "^7.0.0",
+    "@vitejs/plugin-vue": "^6.0.0",
     "@vue/eslint-config-prettier": "^10.0.0",
     "@vue/test-utils": "^2.4.1",
     "autoprefixer": "^10.4.16",
@@ -55,7 +55,7 @@
     "sass-embedded": "^1.79.4",
     "stylelint": "^16.0.0",
     "terser": "^5.14.2",
-    "vite": "^6.0.0",
+    "vite": "^7.0.0",
     "vitest": "^3.0.0"
   },
   "browserslist": [
