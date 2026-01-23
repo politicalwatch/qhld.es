@@ -190,7 +190,10 @@ export default {
       .get(getEndpoint(), {
         params: params,
       })
-      .then((response) => response.data.deputies.slice(0, limit));
+      .then((response) => {
+        const deputies = response.data.deputies;
+        return limit ? deputies.slice(0, limit) : deputies;
+      });
 
     function getEndpoint() {
       return [config.BACKEND_URL, "/footprint/by-topic"].join("");

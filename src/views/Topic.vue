@@ -22,7 +22,7 @@
     </div>
 
     <div id="topic" class="o-container o-section">
-      <div class="u-padding-top-2" v-if="deputies.length > 0">
+      <div class="u-padding-top-2" v-if="featuredDeputies.length">
         <h2 class="u-uppercase u-margin-bottom-2 c-topic__title">
           Frecuencia de las iniciativas
         </h2>
@@ -35,12 +35,18 @@
           v-if="topicsByWeek != null"
         />
       </div>
-      <div class="u-padding-top-2" v-if="deputies.length">
+      <div class="u-padding-top-2" v-if="featuredDeputies.length">
+        <h2 class="u-uppercase u-margin-bottom-2 c-topic__title">
+          Distrubución de las iniciativas por partido
+        </h2>
+        <FootprintScatterChart :dataset="scatterDataset" />
+      </div>
+      <div class="u-padding-top-2" v-if="featuredDeputies.length">
         <h2 class="u-uppercase u-margin-bottom-4 c-topic__title">
           En esta temática destacan...
         </h2>
         <CardGrid
-          :items="deputies"
+          :items="featuredDeputies"
           type="deputy"
           layout="large"
           :footprintByTopic="topic.name"
@@ -82,14 +88,15 @@ import { useRoute, useRouter } from "vue-router";
 import { useHead } from "@unhead/vue";
 import { Icon } from "@iconify/vue";
 
+import api from "@/api";
+import config from "@/config";
+import { useParliamentStore } from "@/stores/parliament";
 import Results from "@/components/Results.vue";
 import CardGrid from "@/components/CardGrid.vue";
 import Loader from "@/components/Loader.vue";
 import SaveAlert from "@/components/SaveAlert.vue";
 import FrequencyChart from "@/components/FrequencyChart.vue";
-import api from "@/api";
-import config from "@/config";
-import { useParliamentStore } from "@/stores/parliament";
+import FootprintScatterChart from "@/components/FootprintScatterChart.vue";
 
 const router = useRouter();
 const route = useRoute();
@@ -197,7 +204,7 @@ const credits = {
 };
 
 const topic = ref(null);
-const deputies = ref([]);
+const deputiesFootprints = ref(new Map());
 const latestInitiatives = ref(null);
 const topicsByWeek = ref(null);
 const allTopicsByWeek = ref(null);
@@ -232,13 +239,11 @@ const getTopic = () => {
 
 const getDeputiesRanking = (topic) => {
   api
-    .getDeputiesRanking(topic, 6)
+    .getDeputiesRanking(topic, null)
     .then((response) => {
-      const deputies_ranking = response;
-      deputies_ranking.forEach((d) => {
-        let deputy = store.getDeputyByName(d.name);
-        deputy.footprint = d.score;
-        deputies.value.push(deputy);
+      deputiesFootprints.value.clear();
+      response.forEach((d) => {
+        deputiesFootprints.value.set(d.name, d.score);
       });
       loaded.value = true;
     })
@@ -247,6 +252,79 @@ const getDeputiesRanking = (topic) => {
       console.log(error);
     });
 };
+
+const featuredDeputies = computed(() => {
+  return Array.from(deputiesFootprints.value.entries())
+    .slice(0, 5)
+    .map(([name, score]) => {
+      const deputy = store.getDeputyByName(name);
+      return { ...deputy, footprint: score };
+    });
+});
+
+const partyIdeology = {
+  Cs: 50,
+  VOX: 100,
+  Vox: 100,
+  ERC: -50,
+  "ERC-S": -50,
+  PP: 80,
+  "PP - FORO": 80,
+  "MÉS COMPROMÍS": -50,
+  "MÁS PAÍS-EQUO": -50,
+  PDeCAT: -50,
+  "JxCAT-JUNTS": 50,
+  "JxCat-JUNTS (Junts)": 50,
+  BNG: -60,
+  SUMAR: -80,
+  UP: -80,
+  "EC-UP": -80,
+  PODEMOS: -80,
+  IU: -80,
+  "ECP-GUAYEM EL CANVI": -80,
+  CCa: 70,
+  "CCa-NC": 70,
+  "NC-CCa-PNC": 70,
+  "CUP-PR": -80,
+  UPN: 60,
+  "¡Teruel Existe!": 0,
+  FAC: 0,
+  PRC: 0,
+  PSOE: 0,
+  "PSC-PSOE": 0,
+  "PSE-EE-PSOE": 0,
+  "PSE-EE (PSOE)": 0,
+  "PsdeG-PSOE": 0,
+  "PSIB-PSOE": 0,
+  "PSN-PSOE": 0,
+  "EAJ-PNV": 50,
+  "EH Bildu": -80,
+};
+
+const scatterDataset = computed(() => {
+  return store.allDeputies
+    .filter((deputy) => deputy.active)
+    .filter((deputy) => {
+      const footprint = deputiesFootprints.value.get(deputy.name);
+      return footprint && footprint > 0;
+    })
+    .map((deputy) => {
+      return {
+        x: Math.max(
+          -100,
+          Math.min(
+            100,
+            partyIdeology[deputy.party_name] + Math.random() * 40 - 20
+          )
+        ),
+        y: deputiesFootprints.value.get(deputy.name),
+        active: deputy.active,
+        party: deputy.party_name,
+        color: config.STYLES.parties[deputy.party_name].color,
+        name: deputy.name,
+      };
+    });
+});
 
 const getLatestInitiatives = (topic) => {
   api
