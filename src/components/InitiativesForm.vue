@@ -79,15 +79,14 @@
           <label for="startdate">Desde</label>
           <VueDatePicker
             v-model="formData.startdate"
-            locale="es"
-            :format="formatDatepickerDate"
+            :locale="es"
+            :formats="{ input: formatDatepickerDate }"
             placeholder="dd/mm/yyyy"
-            hide-input-icon
             auto-apply
             @update:model-value="selectStartDate"
             @cleared="clearStartDate"
             :text-input="textInputOptions"
-            name="startdate"
+            :input-attrs="{ name: 'startdate', hideInputIcon: true }"
           />
         </div>
       </div>
@@ -96,16 +95,15 @@
           <label for="enddate">Hasta</label>
           <VueDatePicker
             v-model="formData.enddate"
-            locale="es"
-            :format="formatDatepickerDate"
+            :locale="es"
+            :formats="{ input: formatDatepickerDate }"
             placeholder="dd/mm/yyyy"
             :max-date="new Date()"
-            hide-input-icon
             auto-apply
             @update:model-value="selectEndDate"
             @cleared="clearEndDate"
             :text-input="textInputOptions"
-            name="enddate"
+            :input-attrs="{ name: 'enddate', hideInputIcon: true }"
           />
         </div>
       </div>
@@ -234,11 +232,12 @@
 <script setup>
 import { ref, toRefs, computed, onMounted, watch, nextTick } from "vue";
 import { useRouter } from "vue-router";
-import VueDatePicker from "@vuepic/vue-datepicker";
+import { VueDatePicker } from "@vuepic/vue-datepicker";
 import "@vuepic/vue-datepicker/dist/main.css";
 import Multiselect from "vue-multiselect";
 import { Icon } from "@iconify/vue";
-import format from "date-fns/format";
+import { format } from "date-fns";
+import { es } from "date-fns/locale";
 
 import * as Utils from "@/utils";
 import api from "@/api";

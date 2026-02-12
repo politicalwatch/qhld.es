@@ -12,8 +12,8 @@
   },
   "dependencies": {
     "@unhead/vue": "^2.0.0",
-    "@vuepic/vue-datepicker": "^11.0.0",
-    "@vueuse/core": "^13.0.0",
+    "@vuepic/vue-datepicker": "^12.0.0",
+    "@vueuse/core": "^14.0.0",
     "axios": "^1.5.1",
     "chart.js": "^4.4.4",
     "core-js": "^3.32.2",
@@ -37,7 +37,7 @@
     "vue-inline-svg": "^4.0.0",
     "vue-json-excel3": "^1.0.24",
     "vue-multiselect": "^3.0.0-beta.2",
-    "vue-router": "^4.2.5",
+    "vue-router": "^5.0.0",
     "vue-scrollto": "^2.15.0"
   },
   "devDependencies": {

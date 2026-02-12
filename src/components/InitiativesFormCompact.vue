@@ -55,7 +55,6 @@
 import { toRefs } from "vue";
 import { storeToRefs } from "pinia";
 import { useRouter } from "vue-router";
-import "@vuepic/vue-datepicker/dist/main.css";
 import Multiselect from "vue-multiselect";
 import qs from "qs";
 
