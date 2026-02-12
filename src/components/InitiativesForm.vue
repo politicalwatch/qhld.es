@@ -80,6 +80,7 @@
           <VueDatePicker
             v-model="formData.startdate"
             :locale="es"
+            :time-config="{ enableTimePicker: false }"
             :formats="{ input: formatDatepickerDate }"
             placeholder="dd/mm/yyyy"
             auto-apply
@@ -96,6 +97,7 @@
           <VueDatePicker
             v-model="formData.enddate"
             :locale="es"
+            :time-config="{ enableTimePicker: false }"
             :formats="{ input: formatDatepickerDate }"
             placeholder="dd/mm/yyyy"
             :max-date="new Date()"
