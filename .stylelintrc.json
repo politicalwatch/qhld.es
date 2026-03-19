@@ -1,0 +1,15 @@
+{
+  "extends": ["stylelint-config-standard", "stylelint-config-standard-scss"],
+  "ignoreFiles": ["dist/**", "node_modules/**"],
+  "overrides": [
+    {
+      "files": ["**/*.vue"],
+      "customSyntax": "postcss-html"
+    }
+  ],
+  "rules": {
+    "selector-pseudo-class-no-unknown": [true, { "ignorePseudoClasses": ["deep", "slotted", "global"] }],
+    "selector-class-pattern": null,
+    "scss/dollar-variable-pattern": null
+  }
+}
