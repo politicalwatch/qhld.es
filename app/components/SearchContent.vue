@@ -78,7 +78,7 @@ const topicsStyles = config.STYLES.topics;
 const errors = ref(null);
 const initiatives = ref([]);
 const query_meta = ref({});
-const formData = ref({
+const createInitialFormData = () => ({
   topic: "",
   author: "",
   deputy: "",
@@ -91,6 +91,7 @@ const formData = ref({
   subtopics: [],
   text: "",
 });
+const formData = ref(createInitialFormData());
 const loadingResults = ref(false);
 const csvItems = ref([]);
 const scrollToID = ref("#results");
@@ -142,9 +143,11 @@ const getResults = (event) => {
     event.preventDefault();
   }
 
-  Object.keys(urlParams).forEach(
-    (key) => (!urlParams[key] || key === "page") && delete urlParams[key]
-  );
+  Object.keys(urlParams).forEach((key) => {
+    const v = urlParams[key];
+    const empty = v === "" || v == null || (Array.isArray(v) && v.length === 0);
+    if (empty || key === "page") delete urlParams[key];
+  });
 
   router
     .push({ path: "/buscar", query: urlParams })
@@ -170,6 +173,8 @@ const getResults = (event) => {
 const clearInitiatives = () => {
   initiatives.value = [];
   cleanedForm.value = true;
+  formData.value = createInitialFormData();
+  router.push({ path: "/buscar", query: {} }).catch((e) => e);
 };
 
 const loadMore = () => {

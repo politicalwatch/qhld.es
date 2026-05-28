@@ -92,7 +92,7 @@ const getFootprint = () => {
 
 const groupColor = computed(() => {
   return (
-    (deputy.party_name && config.STYLES.parties[deputy.party_name]?.color) ??
+    (deputy?.party_name && config.STYLES.parties[deputy.party_name]?.color) ??
     "#A3D5C8"
   );
 });

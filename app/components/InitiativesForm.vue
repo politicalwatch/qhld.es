@@ -233,7 +233,6 @@
 
 <script setup>
 import { ref, toRefs, computed, onMounted, watch, nextTick } from "vue";
-import { useRouter } from "vue-router";
 import { VueDatePicker } from "@vuepic/vue-datepicker";
 import "@vuepic/vue-datepicker/dist/main.css";
 import Multiselect from "vue-multiselect";
@@ -254,7 +253,6 @@ const { formData } = toRefs(props);
 
 const emit = defineEmits(["getResults", "clearInitiatives"]);
 
-const router = useRouter();
 const store = useParliamentStore();
 const { allTopics, allStatus } = storeToRefs(store);
 
@@ -308,21 +306,7 @@ const formattedEndDate = computed(() => {
 });
 
 const cleanForm = () => {
-  formData.value.topic = "";
-  formData.value.subtopics = [];
-  formData.value.tags = [];
-  formData.value.author = "";
-  formData.value.deputy = "";
-  formData.value.status = "";
-  formData.value.place = "";
-  formData.value.type = "";
-  formData.value.reference = "";
-  formData.value.enddate = "";
-  formData.value.startdate = "";
-  formData.value.text = "";
   clearSubtopicsAndTags();
-  // //clear url
-  router.push({ name: "search" });
 };
 
 const getTypes = () => {
@@ -355,9 +339,11 @@ const fillSubtopicsAndTags = (selectedTopic, clearValues) => {
     formData.value.subtopics = [];
     formData.value.tags = [];
   }
+  if (!selectedTopic) return;
   const currentTopic = allTopics.value.find(
     (topic) => topic.name === selectedTopic
   );
+  if (!currentTopic) return;
   getSubtopicsAndTags(currentTopic.id);
 };
 
@@ -396,7 +382,6 @@ const selectEndDate = (date) => {
 };
 
 const prepareForm = () => {
-  console.log("prepareForm");
   if (formData.value.topic) {
     fillSubtopicsAndTags(formData.value.topic, false);
   }
