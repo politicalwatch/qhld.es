@@ -58,7 +58,6 @@
 <script setup>
 import { ref, computed, nextTick, onUpdated, onMounted, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import qs from "qs";
 import VueScrollTo from "vue-scrollto";
 
 import api from "@/api";
@@ -118,15 +117,23 @@ const message = computed(() => {
 });
 
 const getResults = (event) => {
-  console.log("[results] route.params.data =", JSON.stringify(route.params.data));
   loadingResults.value = true;
   cleanedForm.value = false;
   csvItems.value = [];
   const isNewSearch = event?.type === "submit";
-  const params =
-    route.params.data && !isNewSearch
-      ? qs.parse(route.params.data)
-      : formData.value;
+  const queryParams = route.query;
+  const params = !isNewSearch && Object.keys(queryParams).length
+    ? {
+        ...queryParams,
+        page: queryParams.page ? Number(queryParams.page) : 1,
+        tags: queryParams.tags
+          ? [].concat(queryParams.tags)
+          : [],
+        subtopics: queryParams.subtopics
+          ? [].concat(queryParams.subtopics)
+          : [],
+      }
+    : formData.value;
   formData.value = Object.assign(formData.value, params);
   const urlParams = Object.assign({}, formData.value);
 
@@ -140,12 +147,7 @@ const getResults = (event) => {
   );
 
   router
-    .push({
-      name: "results",
-      params: {
-        data: qs.stringify(urlParams, { arrayFormat: "repeat" }),
-      },
-    })
+    .push({ path: "/buscar", query: urlParams })
     .catch((e) => e);
 
   api
@@ -211,7 +213,7 @@ watch(() => formData.value.subtopics, resetPage, { deep: true });
 watch(() => formData.value.text, resetPage);
 
 onMounted(() => {
-  if (route.name == "results") {
+  if (Object.keys(route.query).length > 0) {
     getResults();
   }
 });

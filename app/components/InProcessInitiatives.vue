@@ -22,14 +22,7 @@
     </div>
     <div class="c-in-process-initiatives__more">
       <RouterLink
-        :to="{
-          name: 'results',
-          params: {
-            data: qs.stringify({
-              status: 'En tramitación',
-            }),
-          },
-        }"
+        :to="{ path: '/buscar', query: { status: 'En tramitación' } }"
         class="u-border-link u-uppercase"
       >
         Ver todas las iniciativas en tramitación
@@ -41,7 +34,6 @@
 <script setup>
 import { computed } from "vue";
 import { differenceInDays } from "date-fns/differenceInDays";
-import qs from "qs";
 
 const { initiatives, numInitiatives } = defineProps({
   initiatives: {

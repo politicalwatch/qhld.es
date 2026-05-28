@@ -51,7 +51,7 @@
           <h2 class="u-uppercase c-topic__title">Últimas iniciativas</h2>
           <router-link
             class="u-border-link u-uppercase u-hide u-inline@sm"
-            :to="{ name: 'results', params: { data: 'topic=' + topic.name } }"
+            :to="{ path: '/buscar', query: { topic: topic.name } }"
           >
             Ver todas
           </router-link>
@@ -59,7 +59,7 @@
         <results :initiatives="latestInitiatives" :topicsStyles="styles" />
         <router-link
           class="u-border-link u-uppercase u-hide@sm"
-          :to="{ name: 'results', params: { data: 'topic=' + topic.name } }"
+          :to="{ path: '/buscar', query: { topic: topic.name } }"
         >
           Ver todas
         </router-link>

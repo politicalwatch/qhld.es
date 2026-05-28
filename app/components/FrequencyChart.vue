@@ -544,14 +544,15 @@ const formatActiveWeekMonday = computed(() => {
 });
 
 const searchWeekInitiatives = (bar) => {
-  let weekRange = getYearWeekRange(bar.week);
-  let topic = topic.name;
-
-  const data = `topic=${topic}&startdate=${weekRange.monday}&enddate=${weekRange.sunday}&knowledgebase=politicas`;
-
+  const weekRange = getYearWeekRange(bar.week);
   router.push({
-    name: "results",
-    params: { data },
+    path: "/buscar",
+    query: {
+      topic: bar.topic?.name ?? bar.topic,
+      startdate: weekRange.monday,
+      enddate: weekRange.sunday,
+      knowledgebase: "politicas",
+    },
   });
 };
 </script>

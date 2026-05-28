@@ -56,8 +56,6 @@ import { toRefs } from "vue";
 import { storeToRefs } from "pinia";
 import { useRouter } from "vue-router";
 import Multiselect from "vue-multiselect";
-import qs from "qs";
-
 import { useParliamentStore } from "@/stores/parliament";
 
 const props = defineProps({
@@ -71,12 +69,7 @@ const store = useParliamentStore();
 const { allTopics } = storeToRefs(store);
 
 const getResults = () => {
-  router.push({
-    name: "results",
-    params: {
-      data: qs.stringify(formData.value),
-    },
-  });
+  router.push({ path: "/buscar", query: { ...formData.value } });
 };
 </script>
 

@@ -244,7 +244,7 @@ const drawChart = () => {
       .append("xhtml:div")
       .html(
         (d) =>
-          `<button class="footprint-range-chart__button" onclick="window.location.href='/resultados/topic=${d.name}&${entityType == "deputy" ? "deputy" : "author"}=${entityName}'">Consultar</button>`
+          `<button class="footprint-range-chart__button" onclick="window.location.href='/buscar?topic=${encodeURIComponent(d.name)}&${entityType == "deputy" ? "deputy" : "author"}=${encodeURIComponent(entityName)}'">Consultar</button>`
       );
   }
 };

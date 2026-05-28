@@ -30,7 +30,7 @@
           :id="`topic-${i}`"
           class="c-topics__topic"
           :style="`background-color:${topicsStyles[topic].color}`"
-          :to="{ name: 'results', params: { data: paramsData(topic) } }"
+          :to="{ path: '/buscar', query: paramsData(topic) }"
         >
           {{ topic }}
         </router-link>
@@ -51,10 +51,7 @@
             <router-link
               v-if="activeKb != 'ods'"
               class="c-topics__link"
-              :to="{
-                name: 'results',
-                params: { data: paramsData(topic, subtopic) },
-              }"
+              :to="{ path: '/buscar', query: paramsData(topic, subtopic) }"
             >
               {{ subtopic }}
             </router-link>
@@ -75,10 +72,7 @@
                 <router-link
                   v-if="activeKb != 'ods'"
                   class="c-topics__link"
-                  :to="{
-                    name: 'results',
-                    params: { data: paramsData(topic, subtopic, tag) },
-                  }"
+                  :to="{ path: '/buscar', query: paramsData(topic, subtopic, tag) }"
                 >
                   {{ tag }}
                 </router-link>
@@ -175,16 +169,15 @@ const getTagsBySubtopic = (subtopic) => {
 };
 
 const paramsData = (currentTopic, currentSubtopic, currentTag) => {
-  return qs.stringify({
-    topic: currentTopic,
-    subtopics: currentSubtopic ? currentSubtopic : undefined,
-    tags: currentTag ? currentTag : undefined,
-  });
+  const obj = { topic: currentTopic };
+  if (currentSubtopic) obj.subtopics = currentSubtopic;
+  if (currentTag) obj.tags = currentTag;
+  return obj;
 };
 
 const getP2030SearchLink = (params) => {
   const baseUrl = "https://www.parlamento2030.es/resultados/";
-  return baseUrl + params;
+  return baseUrl + qs.stringify(params);
 };
 </script>
 

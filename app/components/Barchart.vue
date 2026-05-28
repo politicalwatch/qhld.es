@@ -5,10 +5,7 @@
 
       <div class="c-barchart__more">
         <RouterLink
-          :to="{
-            name: 'results',
-            params: { data: paramsData(d.name, entity) },
-          }"
+          :to="{ path: '/buscar', query: paramsData(d.name, entity) }"
           class="u-border-link u-uppercase"
         >
           Consultar
@@ -27,8 +24,6 @@
 <script setup>
 import { computed } from "vue";
 import { storeToRefs } from "pinia";
-import qs from "qs";
-
 import { useParliamentStore } from "@/stores/parliament";
 
 const {
@@ -107,12 +102,10 @@ const getFieldToSearch = () => {
   return "";
 };
 
-const paramsData = (topic, entity) => {
-  return qs.stringify({
-    topic: topic,
-    [getFieldToSearch()]: entity["name"],
-  });
-};
+const paramsData = (topic, entity) => ({
+  topic,
+  [getFieldToSearch()]: entity["name"],
+});
 </script>
 
 <style lang="scss" scoped>
