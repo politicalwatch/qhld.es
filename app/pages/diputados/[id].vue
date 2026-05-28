@@ -162,11 +162,8 @@
         <router-link
           v-if="totalInitiatives > initiativesToShow"
           :to="{
-            name: 'results',
-            params: {
-              data:
-                'deputy=' + deputy.name + '&author=' + parliamentarygroup.name,
-            },
+            path: '/buscar',
+            query: { deputy: deputy.name, author: parliamentarygroup.name },
           }"
           class="c-deputy__initiatives-more u-border-link u-hide u-block@sm u-uppercase"
           >Ver todas
@@ -180,11 +177,8 @@
       <router-link
         v-if="totalInitiatives > initiativesToShow"
         :to="{
-          name: 'results',
-          params: {
-            data:
-              'deputy=' + deputy.name + '&author=' + parliamentarygroup.name,
-          },
+          path: '/buscar',
+          query: { deputy: deputy.name, author: parliamentarygroup.name },
         }"
         class="c-deputy__initiatives-more u-border-link u-hide@sm u-uppercase"
         >Ver todas
