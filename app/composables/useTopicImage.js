@@ -1,0 +1,28 @@
+export const TOPICS_WITH_IMAGE = new Set([
+  "adicciones",
+  "comercio-internacional",
+  "conflictos-y-paz",
+  "cooperacion-al-desarrollo",
+  "democracia",
+  "dependencia",
+  "derechos-digitales",
+  "discapacidad",
+  "educacion",
+  "empleo",
+  "energia-y-clima",
+  "espana-vaciada",
+  "fiscalidad",
+  "igualdad-de-genero",
+  "infancia",
+  "lgtbi",
+  "mayores",
+  "migraciones",
+  "personas-sin-hogar",
+  "poblacion-gitana",
+  "poblacion-reclusa",
+  "proteccion-social",
+  "sanidad",
+  "vivienda",
+]);
+
+export const topicImageSrc = (id) => `/assets/topics/${id}.jpg`;

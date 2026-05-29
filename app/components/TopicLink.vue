@@ -1,29 +1,37 @@
 <template>
   <div>
     <div class="c-topic-link">
-      <div :class="'u-topic-bg__' + topic.id">
-        <!-- <router-link :to="{name: 'topic', params: {id: topic.id }}" :class="'c-topic-link__image-link u-topic-bg__' + topic.id"> -->
-        <router-link
-          :to="{ name: 'topic', params: { id: topic.id } }"
-          class="c-topic-link__image-link"
-        >
-          <div>
-            <h1 class="c-topic-link__name u-uppercase">{{ topic.name }}</h1>
-            <h3 class="c-topic-link__name">{{ stat }}</h3>
-            <h4 class="c-topic-link__name u-uppercase">
-              iniciativas vinculadas
-            </h4>
-          </div>
-        </router-link>
-      </div>
+      <router-link
+        :to="{ name: 'topic', params: { id: topic.id } }"
+        class="c-topic-link__image-link"
+      >
+        <NuxtImg
+          v-if="hasImage"
+          :src="topicImageSrc(topic.id)"
+          alt=""
+          :width="400"
+          :height="400"
+          sizes="sm:50vw md:25vw"
+          loading="lazy"
+          class="c-topic-link__bg"
+        />
+        <div class="c-topic-link__content">
+          <h1 class="c-topic-link__name u-uppercase">{{ topic.name }}</h1>
+          <h3 class="c-topic-link__name">{{ stat }}</h3>
+          <h4 class="c-topic-link__name u-uppercase">
+            iniciativas vinculadas
+          </h4>
+        </div>
+      </router-link>
     </div>
   </div>
 </template>
 
 <script setup>
 import { computed } from "vue";
+import { TOPICS_WITH_IMAGE, topicImageSrc } from "@/composables/useTopicImage.js";
 
-const { topic, stat, color, image } = defineProps({
+const { topic, stat } = defineProps({
   topic: {
     type: Object,
     required: true,
@@ -32,37 +40,32 @@ const { topic, stat, color, image } = defineProps({
     type: Number,
     default: 0,
   },
-  color: {
-    type: String,
-    default: "#000",
-  },
-  image: {
-    type: String,
-  },
 });
 
-const topicImage = computed(() => {
-  return `/img/topics/${image}` || `/img/topics/${topic?.icon}`;
-});
+const hasImage = computed(() => TOPICS_WITH_IMAGE.has(topic.id));
 </script>
 
 <style lang="scss" scoped>
 .c-topic-link {
   &__image-link {
+    position: relative;
+    overflow: hidden;
+    aspect-ratio: 1;
     display: flex;
-    justify-content: center;
-    align-items: center;
+    align-items: flex-end;
+    justify-content: flex-start;
     padding: rem($spacer-unit * 2);
     margin-bottom: rem($spacer-unit * 2);
     transition: transform 0.3s ease;
-    background-color: #33333340;
-    align-items: flex-end;
-    justify-content: flex-start;
+    text-decoration: none;
 
-    &::after {
+    // dark tint sits above the image, below the text
+    &::before {
       content: "";
-      display: block;
-      padding-bottom: 100%;
+      position: absolute;
+      inset: 0;
+      background-color: #33333340;
+      z-index: 1;
     }
 
     h3,
@@ -76,21 +79,28 @@ const topicImage = computed(() => {
     }
   }
 
-  &__image {
-    max-width: 80%;
-    max-height: 80%;
+  // full-bleed background image
+  &__bg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: 0;
   }
 
-  a {
+  // text layer on top of tint
+  &__content {
+    position: relative;
+    z-index: 2;
+  }
+
+  .c-topic-link__name {
+    color: $white;
     text-decoration: none;
 
-    .c-topic-link__name {
-      color: $white;
-      text-decoration: none;
-
-      &:hover {
-        text-decoration: underline;
-      }
+    &:hover {
+      text-decoration: underline;
     }
   }
 }

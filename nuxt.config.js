@@ -31,7 +31,13 @@ export default defineNuxtConfig({
     },
   },
 
-  modules: ["@pinia/nuxt"],
+  modules: ["@pinia/nuxt", "@nuxt/image"],
+
+  image: {
+    domains: ["www.congreso.es"],
+    format: ["webp"],
+    quality: 80,
+  },
 
   devtools: {
     enabled: true

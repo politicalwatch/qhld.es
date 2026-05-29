@@ -17,10 +17,14 @@
       <div class="o-grid">
         <div class="o-grid__col u-12 u-4@sm">
           <div class="c-deputy__image_container">
-            <img
+            <NuxtImg
               class="c-deputy__image"
               :src="deputy.image"
               :alt="'Foto de ' + deputy.name"
+              :width="256"
+              :height="256"
+              loading="eager"
+              fetchpriority="high"
             />
             <div class="c-deputy__links">
               <social-icon

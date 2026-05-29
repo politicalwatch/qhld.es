@@ -1,6 +1,17 @@
 <template>
   <div v-if="loaded" class="c-topic">
-    <div class="o-container c-topic__header" :class="'u-topic-bg__' + topic.id">
+    <div class="o-container c-topic__header">
+      <NuxtImg
+        v-if="hasImage"
+        :src="topicImageSrc(topic.id)"
+        alt=""
+        :width="1600"
+        :height="360"
+        sizes="xs:100vw sm:100vw md:100vw lg:100vw xl:100vw"
+        loading="eager"
+        fetchpriority="high"
+        class="c-topic__header__bg"
+      />
       <div class="c-topic__header__overlay">
         <div class="c-topic__header__column">
           <h1 class="c-topic__header__name u-uppercase">{{ topic.name }}</h1>
@@ -90,6 +101,7 @@ import FrequencyChart from "@/components/FrequencyChart.vue";
 import api from "@/api";
 import config from "@/config";
 import { useParliamentStore } from "@/stores/parliament";
+import { TOPICS_WITH_IMAGE, topicImageSrc } from "@/composables/useTopicImage.js";
 
 const router = useRouter();
 const route = useRoute();
@@ -216,6 +228,8 @@ const headTitle = computed(() => {
     : "Qué hacen los diputados";
 });
 
+const hasImage = computed(() => topic.value ? TOPICS_WITH_IMAGE.has(topic.value.id) : false);
+
 useHead({
   title: headTitle,
 });
@@ -309,12 +323,24 @@ onMounted(() => {
 <style lang="scss">
 .c-topic {
   &__header {
+    position: relative;
+    overflow: hidden;
     width: 100%;
     height: 360px;
-    background-size: cover;
     padding: 0;
 
+    &__bg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: 0;
+    }
+
     &__overlay {
+      position: relative;
+      z-index: 1;
       width: 100%;
       height: 100%;
 

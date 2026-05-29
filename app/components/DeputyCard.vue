@@ -13,9 +13,13 @@
         :to="{ name: 'deputy', params: { id: deputy.id } }"
         style="position: relative"
       >
-        <img
+        <NuxtImg
           :src="deputy.image"
           :title="deputy.name"
+          :alt="deputy.name"
+          :width="imgSize"
+          :height="imgSize"
+          loading="lazy"
           :class="[
             'c-deputy-card__wrapper__image',
             `c-deputy-card__wrapper__image-${layout}`,
@@ -95,6 +99,11 @@ const groupColor = computed(() => {
     (deputy?.party_name && config.STYLES.parties[deputy.party_name]?.color) ??
     "#A3D5C8"
   );
+});
+
+const imgSize = computed(() => {
+  const sizes = { small: 32, medium: 64, large: 160 };
+  return sizes[layout] ?? 64;
 });
 </script>
 
