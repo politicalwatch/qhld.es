@@ -95,6 +95,11 @@ const router = useRouter();
 const route = useRoute();
 const store = useParliamentStore();
 
+await useAsyncData('deputies', () => store.getDeputies(), {
+  getCachedData: (key, nuxtApp) =>
+    store.allDeputies.length ? store.allDeputies : nuxtApp.payload.data[key],
+});
+
 const use_alerts = config.USE_ALERTS;
 const styles = config.STYLES.topics;
 const credits = {

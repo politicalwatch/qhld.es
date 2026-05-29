@@ -230,6 +230,22 @@ const store = useParliamentStore();
 const { allTopics, footprintRange, allParliamentaryGroups } =
   storeToRefs(store);
 
+await Promise.all([
+  useAsyncData('topics', () => store.getTopics(), {
+    getCachedData: (key, nuxtApp) =>
+      store.allTopics.length ? store.allTopics : nuxtApp.payload.data[key],
+  }),
+  useAsyncData('parliamentary-groups', () => store.getParliamentaryGroups(), {
+    getCachedData: (key, nuxtApp) =>
+      store.allParliamentaryGroups.length ? store.allParliamentaryGroups : nuxtApp.payload.data[key],
+  }),
+  useAsyncData('deputies', () => store.getDeputies(), {
+    getCachedData: (key, nuxtApp) =>
+      store.allDeputies.length ? store.allDeputies : nuxtApp.payload.data[key],
+  }),
+  useAsyncData('footprint-range', () => store.getFootprintRange()),
+]);
+
 const deputy = ref(null);
 const parliamentarygroup = ref(null);
 const latestInitiatives = ref(null);

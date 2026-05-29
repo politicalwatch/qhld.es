@@ -16,24 +16,10 @@
 
 <script setup>
 import config from "@/config";
-import { useParliamentStore } from "@/stores/parliament";
-
-const store = useParliamentStore();
 
 const MENU = config.MENU;
 const DISCLAIMER = config.DISCLAIMER;
 const LOGO = config.LOGO;
-
-onMounted(() => {
-  store.getStatus();
-  store.getPlaces();
-  store.getTypes();
-  store.getTopics();
-  store.getParliamentaryGroups();
-  store.getDeputies();
-  store.getBirthdays();
-  store.getFootprintRange();
-});
 </script>
 
 <style lang="scss">

@@ -122,6 +122,21 @@ const route = useRoute();
 const store = useParliamentStore();
 const { allParliamentaryGroups, allTopics } = storeToRefs(store);
 
+await Promise.all([
+  useAsyncData('topics', () => store.getTopics(), {
+    getCachedData: (key, nuxtApp) =>
+      store.allTopics.length ? store.allTopics : nuxtApp.payload.data[key],
+  }),
+  useAsyncData('parliamentary-groups', () => store.getParliamentaryGroups(), {
+    getCachedData: (key, nuxtApp) =>
+      store.allParliamentaryGroups.length ? store.allParliamentaryGroups : nuxtApp.payload.data[key],
+  }),
+  useAsyncData('deputies', () => store.getDeputies(), {
+    getCachedData: (key, nuxtApp) =>
+      store.allDeputies.length ? store.allDeputies : nuxtApp.payload.data[key],
+  }),
+]);
+
 const styles = config.STYLES;
 
 const initiative = ref({});

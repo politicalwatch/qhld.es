@@ -43,6 +43,11 @@ const router = useRouter();
 const store = useParliamentStore();
 const { allTopics } = storeToRefs(store);
 
+await useAsyncData('topics', () => store.getTopics(), {
+  getCachedData: (key, nuxtApp) =>
+    store.allTopics.length ? store.allTopics : nuxtApp.payload.data[key],
+});
+
 const topicsStyles = config.STYLES.topics;
 const stats = ref(null);
 const loaded = ref(false);

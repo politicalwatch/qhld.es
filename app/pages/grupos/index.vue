@@ -29,5 +29,10 @@ import { useParliamentStore } from "@/stores/parliament";
 const store = useParliamentStore();
 const { allParliamentaryGroups } = storeToRefs(store);
 
+await useAsyncData('parliamentary-groups', () => store.getParliamentaryGroups(), {
+  getCachedData: (key, nuxtApp) =>
+    store.allParliamentaryGroups.length ? store.allParliamentaryGroups : nuxtApp.payload.data[key],
+});
+
 const isLoaded = () => allParliamentaryGroups.value?.length > 0;
 </script>

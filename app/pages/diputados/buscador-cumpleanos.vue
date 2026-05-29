@@ -33,6 +33,11 @@ import { useParliamentStore } from "@/stores/parliament";
 const store = useParliamentStore();
 const { allDeputies } = storeToRefs(store);
 
+await useAsyncData('deputies', () => store.getDeputies(), {
+  getCachedData: (key, nuxtApp) =>
+    store.allDeputies.length ? store.allDeputies : nuxtApp.payload.data[key],
+});
+
 const filters = ref({});
 
 const setFilters = (updatedFilters) => {

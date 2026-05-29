@@ -163,6 +163,11 @@ import { useParliamentStore } from "@/stores/parliament";
 
 const store = useParliamentStore();
 const { allTopics } = storeToRefs(store);
+
+await useAsyncData('topics', () => store.getTopics(), {
+  getCachedData: (key, nuxtApp) =>
+    store.allTopics.length ? store.allTopics : nuxtApp.payload.data[key],
+});
 </script>
 
 <style scoped lang="scss">

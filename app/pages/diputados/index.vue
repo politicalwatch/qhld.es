@@ -64,6 +64,23 @@ const store = useParliamentStore();
 const { birthdays, allDeputies, allParliamentaryGroups, allTopics } =
   storeToRefs(store);
 
+const today = new Date().toISOString().split('T')[0];
+await Promise.all([
+  useAsyncData(`birthdays-${today}`, () => store.getBirthdays()),
+  useAsyncData('deputies', () => store.getDeputies(), {
+    getCachedData: (key, nuxtApp) =>
+      store.allDeputies.length ? store.allDeputies : nuxtApp.payload.data[key],
+  }),
+  useAsyncData('parliamentary-groups', () => store.getParliamentaryGroups(), {
+    getCachedData: (key, nuxtApp) =>
+      store.allParliamentaryGroups.length ? store.allParliamentaryGroups : nuxtApp.payload.data[key],
+  }),
+  useAsyncData('topics', () => store.getTopics(), {
+    getCachedData: (key, nuxtApp) =>
+      store.allTopics.length ? store.allTopics : nuxtApp.payload.data[key],
+  }),
+]);
+
 const filters = ref({});
 
 const getGroupsLongNames = computed(() => {

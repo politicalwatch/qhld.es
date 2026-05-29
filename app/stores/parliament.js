@@ -58,112 +58,87 @@ export const useParliamentStore = defineStore("parliament", {
     },
   },
   actions: {
-    getDeputies() {
-      if (this.allDeputies.length > 0) return;
-      api
-        .getDeputies()
-        .then((response) => {
-          this.allDeputies = response;
-        })
-        .catch((error) => (this.errors = error));
+    async getDeputies() {
+      const data = await api.getDeputies();
+      this.allDeputies = data;
+      return data;
     },
-    getBirthdays() {
-      api
-        .getBirthdays()
-        .then((response) => {
-          this.birthdays = response;
-        })
-        .catch((error) => (this.errors = error));
+    async getBirthdays() {
+      const data = await api.getBirthdays();
+      this.birthdays = data;
+      return data;
     },
-    getTopics() {
-      api
-        .getTopics()
-        .then((response) => {
-          this.allTopics = response;
-        })
-        .catch((error) => (this.errors = error));
+    async getTopics() {
+      const data = await api.getTopics();
+      this.allTopics = data;
+      return data;
     },
-    getParliamentaryGroups() {
-      api
-        .getGroups()
-        .then((response) => {
-          this.allParliamentaryGroups = response;
-        })
-        .catch((error) => (this.errors = error));
+    async getParliamentaryGroups() {
+      const data = await api.getGroups();
+      this.allParliamentaryGroups = data;
+      return data;
     },
-    getPlaces(context) {
-      api
-        .getPlaces()
-        .then((response) => {
-          this.allPlaces = response;
-        })
-        .catch((error) => (this.errors = error));
+    async getPlaces() {
+      const data = await api.getPlaces();
+      this.allPlaces = data;
+      return data;
     },
-    getStatus() {
-      api
-        .getStatus()
-        .then((response) => {
-          this.allStatus = response;
-        })
-        .catch((error) => (this.errors = error));
+    async getStatus() {
+      const data = await api.getStatus();
+      this.allStatus = data;
+      return data;
     },
-    getTypes() {
-      api
-        .getTypes()
-        .then((response) => {
-          this.allTypes = response;
-        })
-        .catch((error) => (this.errors = error));
+    async getTypes() {
+      const data = await api.getTypes();
+      this.allTypes = data;
+      return data;
     },
-    getFootprintRange() {
-      api
-        .getFootprintRange()
-        .then((response) => {
-          this.footprintRange = response;
-          const maxScores = response.reduce(
-            (acc, item) => {
-              if (!item.name.startsWith("ODS")) {
-                if (item.deputy.score > acc.maxDeputyScore) {
-                  acc.maxDeputyScore = item.deputy.score;
-                }
-                if (
-                  item.parliamentarygroup.score > acc.maxParliamentaryGroupScore
-                ) {
-                  acc.maxParliamentaryGroupScore =
-                    item.parliamentarygroup.score;
-                }
-              }
-              return acc;
-            },
-            { maxDeputyScore: 0, maxParliamentaryGroupScore: 0 }
-          );
-          const minScores = response.reduce(
-            (acc, item) => {
-              if (!item.name.startsWith("ODS")) {
-                if (item.deputy.score < acc.minDeputyScore) {
-                  acc.minDeputyScore = item.deputy.score;
-                }
-                if (
-                  item.parliamentarygroup.score < acc.minParliamentaryGroupScore
-                ) {
-                  acc.minParliamentaryGroupScore =
-                    item.parliamentarygroup.score;
-                }
-              }
-              return acc;
-            },
-            { minDeputyScore: 0, minParliamentaryGroupScore: 0 }
-          );
-          this.footprintDeputyRange = {
-            max: maxScores.maxDeputyScore,
-            min: minScores.minDeputyScore,
-          };
-          this.footprintParliamentaryGroupRange = {
-            max: maxScores.maxParliamentaryGroupScore,
-            min: minScores.minParliamentaryGroupScore,
-          };
-        })
-        .catch((error) => (this.errors = error));
+    async getFootprintRange() {
+      const response = await api.getFootprintRange();
+      this.footprintRange = response;
+      const maxScores = response.reduce(
+        (acc, item) => {
+          if (!item.name.startsWith("ODS")) {
+            if (item.deputy.score > acc.maxDeputyScore) {
+              acc.maxDeputyScore = item.deputy.score;
+            }
+            if (
+              item.parliamentarygroup.score > acc.maxParliamentaryGroupScore
+            ) {
+              acc.maxParliamentaryGroupScore =
+                item.parliamentarygroup.score;
+            }
+          }
+          return acc;
+        },
+        { maxDeputyScore: 0, maxParliamentaryGroupScore: 0 }
+      );
+      const minScores = response.reduce(
+        (acc, item) => {
+          if (!item.name.startsWith("ODS")) {
+            if (item.deputy.score < acc.minDeputyScore) {
+              acc.minDeputyScore = item.deputy.score;
+            }
+            if (
+              item.parliamentarygroup.score < acc.minParliamentaryGroupScore
+            ) {
+              acc.minParliamentaryGroupScore =
+                item.parliamentarygroup.score;
+            }
+          }
+          return acc;
+        },
+        { minDeputyScore: 0, minParliamentaryGroupScore: 0 }
+      );
+      this.footprintDeputyRange = {
+        max: maxScores.maxDeputyScore,
+        min: minScores.minDeputyScore,
+      };
+      this.footprintParliamentaryGroupRange = {
+        max: maxScores.maxParliamentaryGroupScore,
+        min: minScores.minParliamentaryGroupScore,
+      };
+      return response;
     },
   },
 });

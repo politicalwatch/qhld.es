@@ -190,6 +190,18 @@ const router = useRouter();
 const store = useParliamentStore();
 const { allTopics, footprintRange } = storeToRefs(store);
 
+await Promise.all([
+  useAsyncData('topics', () => store.getTopics(), {
+    getCachedData: (key, nuxtApp) =>
+      store.allTopics.length ? store.allTopics : nuxtApp.payload.data[key],
+  }),
+  useAsyncData('deputies', () => store.getDeputies(), {
+    getCachedData: (key, nuxtApp) =>
+      store.allDeputies.length ? store.allDeputies : nuxtApp.payload.data[key],
+  }),
+  useAsyncData('footprint-range', () => store.getFootprintRange()),
+]);
+
 const use_alerts = config.USE_ALERTS;
 const topicsStyles = config.STYLES.topics;
 
