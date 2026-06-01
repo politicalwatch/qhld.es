@@ -457,7 +457,7 @@ watch(() => allTopics.value, prepareForm);
   gap: 0.5rem;
 }
 
-.dp__theme_light {
+.dp--theme-light {
   --dp-background-color: #ffffff;
   --dp-text-color: #212121;
   --dp-hover-color: #f3f3f3;

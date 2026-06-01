@@ -73,12 +73,12 @@ const getResults = () => {
 };
 </script>
 
-<style lang="scss">
+<style lang="scss" scoped>
 .c-initiatives-form {
   .o-grid {
     align-items: center;
   }
-  button {
+  button[type="submit"] {
     width: 100%;
   }
 }
