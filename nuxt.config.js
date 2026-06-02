@@ -31,12 +31,19 @@ export default defineNuxtConfig({
     },
   },
 
-  modules: ["@pinia/nuxt", "@nuxt/image"],
+  modules: ["@pinia/nuxt", "@nuxt/image", "@nuxt/fonts"],
 
   image: {
     domains: ["www.congreso.es"],
     format: ["webp"],
     quality: 80,
+  },
+
+  fonts: {
+    families: [
+      { name: 'Fjalla One', provider: 'google', weights: [400] },
+      { name: 'Rubik', provider: 'google', weights: [300, 400, 500] },
+    ],
   },
 
   devtools: {
