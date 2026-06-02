@@ -4,7 +4,7 @@
     href="#"
     @click.prevent="saveAlert"
   >
-    <Icon icon="mdi:bell" color="#2d4252" />
+    <Icon name="mdi:bell" style="color: #2d4252" />
     Crea una alerta
   </a>
 </template>
@@ -12,7 +12,6 @@
 <script setup>
 import { ref, toRefs } from "vue";
 import Swal from "sweetalert2";
-import { Icon } from "@iconify/vue";
 
 import api from "@/api";
 

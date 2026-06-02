@@ -16,7 +16,7 @@
         </p>
       </div>
       <div v-else class="c-callout__birthday-message">
-        <icon icon="mdi:birthday-cake-outline" height="24px" />
+        <Icon name="mdi:birthday-cake-outline" size="24" />
         <p class="u-text-center u-margin-0">
           ¡Vaya! Hoy no celebran cumpleaños en el Congreso. Puedes consultar
           nuestro
@@ -51,7 +51,6 @@
 definePageMeta({ name: 'deputies' });
 import { ref, computed } from "vue";
 import { storeToRefs } from "pinia";
-import { Icon } from "@iconify/vue";
 
 import DeputiesForm from "@/components/DeputiesForm.vue";
 import PageHeader from "@/components/PageHeader.vue";

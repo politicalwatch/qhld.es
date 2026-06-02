@@ -43,7 +43,7 @@
         </router-link>
         <p>{{ deputy.parliamentarygroup }}</p>
         <h5 v-if="layout == 'large'">
-          <icon icon="mdi:location" color="#2d4252" :width="18" />{{
+          <Icon name="mdi:location" style="color: #2d4252" :size="18" />{{
             deputy.constituency
           }}
         </h5>
@@ -54,7 +54,6 @@
 
 <script setup>
 import { computed } from "vue";
-import { Icon } from "@iconify/vue";
 
 import config from "@/config";
 import Footprint from "@/components/Footprint.vue";

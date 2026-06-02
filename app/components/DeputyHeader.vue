@@ -30,13 +30,13 @@
           </h3>
           <div class="c-deputy__extra">
             <span class="c-deputy__personal"
-              ><icon v-if="isBirthday" icon="mdi:birthday-cake-outline" />{{
+              ><Icon v-if="isBirthday" name="mdi:birthday-cake-outline" />{{
                 getAge()
               }}
               años</span
             >
             <span class="c-deputy__personal">
-              <icon icon="mdi:location" color="#2d4252" :width="18" />{{
+              <Icon name="mdi:location" style="color: #2d4252" :size="18" />{{
                 getConstituency()
               }}
             </span>
@@ -48,13 +48,13 @@
         <div class="o-grid__col u-12 u-12@sm c-deputy__more">
           <a href="#" @click="collapse"
             >{{ getCollapseMessage()
-            }}<icon :icon="getCollapseIcon()" color="#F00"
+            }}<Icon :name="getCollapseIcon()" style="color: #F00"
           /></a>
         </div>
         <div :class="getCollapsedClass()" class="o-grid__col u-12 u-4@sm">
           <h3>Declaraciones</h3>
           <p v-for="(link, title) in deputy.extra.declarations" :key="title">
-            <icon icon="mdi:file-document-outline" /><a :href="link">{{
+            <Icon name="mdi:file-document-outline" /><a :href="link">{{
               title
             }}</a>
           </p>
@@ -76,7 +76,6 @@
 
 <script setup>
 import { ref, computed } from "vue";
-import { Icon } from "@iconify/vue";
 
 import PartyLogo from "@/components/PartyLogo.vue";
 

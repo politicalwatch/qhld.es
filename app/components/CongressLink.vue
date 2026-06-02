@@ -6,12 +6,11 @@
     title="Ver en el Congreso.es"
   >
     Ver en el Congreso.es
-    <Icon icon="mdi:external-link" color="#2d4252" :width="20" />
+    <Icon name="mdi:external-link" style="color: #2d4252" :size="20" />
   </a>
 </template>
 
 <script setup>
-import { Icon } from "@iconify/vue";
 
 const { url } = defineProps({
   url: { type: String },

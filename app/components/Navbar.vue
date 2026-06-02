@@ -22,7 +22,7 @@
         aria-label="Close Disclaimer"
         @click="closeDisclaimer"
       >
-        <Icon icon="mdi:close-circle" color="#2d4252" />
+        <Icon name="mdi:close-circle" style="color: #2d4252" />
       </button>
     </div>
 
@@ -64,14 +64,14 @@
               target="_blank"
             >
               {{ link.name }}
-              <icon
-                :icon="link.icon"
+              <Icon
+                :name="link.icon"
                 :class="{
                   'c-menu__link': true,
                   'c-menu__link--icon': link.icon,
                 }"
                 v-if="link.icon"
-                :height="20"
+                :size="20"
               />
             </a>
             <router-link
@@ -79,11 +79,11 @@
               :to="{ name: link.route }"
               :class="{ 'c-menu__link': true, 'c-menu__link--icon': link.icon }"
             >
-              <icon
-                :icon="link.icon"
+              <Icon
+                :name="link.icon"
                 class="c-menu__icon"
                 v-if="link.icon"
-                :height="20"
+                :size="20"
               />
               <span>{{ link.name }}</span>
             </router-link>
@@ -96,7 +96,6 @@
 
 <script setup>
 import { ref, computed } from "vue";
-import { Icon } from "@iconify/vue";
 
 import Logo from "@/assets/logo.svg";
 

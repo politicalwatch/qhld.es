@@ -3,10 +3,10 @@
     <div class="c-info-dropdown__title_wrapper" @click="shown = !shown">
       <h3 class="c-info-dropdown__title">{{ title }}</h3>
       <div v-show="shown" class="c-info-dropdown__icon">
-        Mostrar menos<icon icon="mdi:minus" :width="22" />
+        Mostrar menos<Icon name="mdi:minus" :size="22" />
       </div>
       <div v-show="!shown" class="c-info-dropdown__icon">
-        Mostrar más<icon icon="mdi:plus" :width="22" />
+        Mostrar más<Icon name="mdi:plus" :size="22" />
       </div>
     </div>
     <div class="c-info-dropdown__content" v-if="shown">
@@ -17,7 +17,6 @@
 
 <script setup>
 import { ref } from "vue";
-import { Icon } from "@iconify/vue";
 
 const { title } = defineProps({
   title: { type: String },

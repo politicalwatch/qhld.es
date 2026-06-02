@@ -23,13 +23,12 @@
       class="c-topics__topic c-topics__topic__small"
       style="background-color: #a3d5c8"
     >
-      <icon icon="mdi:dots-horizontal" />
+      <Icon name="mdi:dots-horizontal" />
     </div>
   </div>
 </template>
 
 <script setup>
-import { Icon } from "@iconify/vue";
 
 import * as Utils from "@/utils";
 

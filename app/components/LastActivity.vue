@@ -6,7 +6,7 @@
     </h4>
     <div v-for="type in types" class="c-last-activity__stat">
       <h1 class="c-last-activity__number">
-        <icon :icon="getIcon(type)" :color="getIconColor(type)" />{{
+        <Icon :name="getIcon(type)" :style="{ color: getIconColor(type) }" />{{
           lastdays[type].initiatives
         }}
       </h1>
@@ -17,7 +17,6 @@
 </template>
 
 <script setup>
-import { Icon } from "@iconify/vue";
 
 const { lastdays } = defineProps({
   lastdays: {

@@ -31,12 +31,16 @@ export default defineNuxtConfig({
     },
   },
 
-  modules: ["@pinia/nuxt", "@nuxt/image", "@nuxt/fonts"],
+  modules: ["@pinia/nuxt", "@nuxt/image", "@nuxt/fonts", "@nuxt/icon"],
 
   image: {
     domains: ["www.congreso.es"],
     format: ["webp"],
     quality: 80,
+  },
+
+  icon: {
+    serverBundle: "local",
   },
 
   fonts: {

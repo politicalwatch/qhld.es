@@ -24,7 +24,7 @@
           <p class="c-topic__header__description">{{ topic.description[0] }}</p>
           <h6 class="u-uppercase c-topic__header__author">
             <a :href="credits[topic.id].url" target="_blank"
-              ><icon icon="mdi:camera" />Unsplash:
+              ><Icon name="mdi:camera" />Unsplash:
               {{ credits[topic.id].name }}</a
             >
           </h6>
@@ -91,7 +91,6 @@
 definePageMeta({ name: 'topic' });
 import { ref, computed, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { Icon } from "@iconify/vue";
 
 import Results from "@/components/Results.vue";
 import CardGrid from "@/components/CardGrid.vue";

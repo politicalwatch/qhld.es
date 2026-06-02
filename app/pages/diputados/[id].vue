@@ -87,10 +87,10 @@
               {{ deputy.party_name ?? "" }}
             </span>
             <span class="c-deputy__personal"
-              ><Icon icon="mdi:location" />{{ deputy.constituency }}</span
+              ><Icon name="mdi:location" />{{ deputy.constituency }}</span
             >
             <span class="c-deputy__personal">
-              <icon v-if="isBirthday()" icon="mdi:birthday-cake-outline" />
+              <Icon v-if="isBirthday()" name="mdi:birthday-cake-outline" />
               {{ deputy.age }}
               años
             </span>
@@ -211,7 +211,6 @@ import { storeToRefs } from "pinia";
 import { useRoute, useRouter } from "vue-router";
 import { useParliamentStore } from "@/stores/parliament";
 import { useElementSize } from "@vueuse/core";
-import { Icon } from "@iconify/vue";
 
 import Footprint from "@/components/Footprint.vue";
 import CongressLink from "@/components/CongressLink.vue";

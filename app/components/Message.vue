@@ -1,14 +1,13 @@
 <template>
   <div :class="`c-message c-message--${type} ${icon ? 'c-message--icon' : ''}`">
     <div class="c-message__wrapper">
-      <icon class="c-message__icon" v-if="icon" :icon="getIcon()" />
+      <Icon class="c-message__icon" v-if="icon" :name="getIcon()" />
       <slot />
     </div>
   </div>
 </template>
 
 <script setup>
-import { Icon } from "@iconify/vue";
 
 const { type, icon } = defineProps({
   type: {

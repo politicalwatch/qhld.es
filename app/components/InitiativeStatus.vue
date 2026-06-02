@@ -5,7 +5,7 @@
         initiative.status
       )}`"
     >
-      <Icon :icon="getIcon(initiative)" color="#ffffff" />
+      <Icon :name="getIcon(initiative)" style="color: #ffffff" />
     </div>
     <div class="c-initiative-status__message">
       {{ getStateMessage(initiative) }}
@@ -21,7 +21,6 @@
 <script setup>
 import formatDistanceToNow from "date-fns/formatDistanceToNow";
 import es from "date-fns/locale/es";
-import { Icon } from "@iconify/vue";
 
 const { initiative, hasLastUpdate, mappedStatus } = defineProps({
   initiative: { type: Object, required: true },

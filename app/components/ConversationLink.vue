@@ -4,13 +4,12 @@
     class="c-conversation-link u-uppercase u-border-link"
     :title="getName()"
   >
-    {{ getName() }} <icon icon="mdi:conversation" color="#2d4252" :width="18" />
+    {{ getName() }} <Icon name="mdi:conversation" style="color: #2d4252" :size="18" />
   </RouterLink>
 </template>
 
 <script setup>
 import { toRefs } from "vue";
-import { Icon } from "@iconify/vue";
 
 const props = defineProps({
   id: {

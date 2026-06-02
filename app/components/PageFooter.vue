@@ -90,21 +90,21 @@
                   href="https://www.instagram.com/_PoliticalWatch/"
                   aria-label="Go to Instagram"
                   target="_blank"
-                  ><icon icon="mdi:instagram" class="c-icon--white"
+                  ><Icon name="mdi:instagram" class="c-icon--white"
                 /></a>
                 <a
                   href="https://t.me/quehacenlosdiputados"
                   aria-label="Go to Telegram"
                   target="_blank"
                 >
-                  <icon icon="mdi:telegram" class="c-icon--white" />
+                  <Icon name="mdi:telegram" class="c-icon--white" />
                 </a>
                 <a
                   href="https://github.com/politicalwatch/quehacenlosdiputados.es"
                   aria-label="Go to Github"
                   target="_blank"
                 >
-                  <icon icon="mdi:github" class="c-icon--white" />
+                  <Icon name="mdi:github" class="c-icon--white" />
                 </a>
               </div>
             </div>
@@ -168,7 +168,6 @@ import { defineAsyncComponent, shallowRef } from "vue";
 import VueCookieAcceptDecline from "vue-cookie-accept-decline";
 import "vue-cookie-accept-decline/dist/vue-cookie-accept-decline.css";
 import { addGtag, consent } from "vue-gtag";
-import { Icon } from "@iconify/vue";
 
 import LogoPW from "@/assets/logo-political-watch.svg";
 

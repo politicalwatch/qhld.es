@@ -211,7 +211,7 @@
           class="c-button c-button--advanced u-padding-left-0"
           @click.prevent="toggleAdvanced"
         >
-          <Icon icon="mdi:mixer-settings" />
+          <Icon name="mdi:mixer-settings" />
           <span v-if="!advanced">Mostrar búsqueda avanzada</span>
           <span v-else>Ocultar búsqueda avanzada</span>
         </a>
@@ -236,7 +236,6 @@ import { ref, toRefs, computed, onMounted, watch, nextTick } from "vue";
 import { VueDatePicker } from "@vuepic/vue-datepicker";
 import "@vuepic/vue-datepicker/dist/main.css";
 import Multiselect from "vue-multiselect";
-import { Icon } from "@iconify/vue";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 

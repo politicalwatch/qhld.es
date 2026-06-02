@@ -6,7 +6,7 @@
       @click="closeCallout(closeCallback())"
       aria-label="Close"
     >
-      <Icon icon="mdi:close" />
+      <Icon name="mdi:close" />
     </button>
     <div class="c-callout__content">
       <slot></slot>
@@ -16,7 +16,6 @@
 
 <script setup>
 import { ref, onMounted } from "vue";
-import { Icon } from "@iconify/vue";
 
 const { closeId, checkClosed, closeCallback } = defineProps({
   canClose: { type: Boolean, default: true },

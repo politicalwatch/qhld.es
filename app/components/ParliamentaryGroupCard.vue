@@ -31,7 +31,7 @@
       >
         <h3 class="u-uppercase">{{ getGroupName() }}</h3>
         <h4 class="u-uppercase">
-          <Icon icon="mdi:person" class="c-icon--secondary c-icon--white" />{{
+          <Icon name="mdi:person" class="c-icon--secondary c-icon--white" />{{
             parliamentaryGroup.composition.deputies
           }}
           Diputados/as
@@ -59,7 +59,6 @@
 </template>
 
 <script setup>
-import { Icon } from "@iconify/vue";
 
 import PartyLogoIcon from "@/components/PartyLogoIcon.vue";
 

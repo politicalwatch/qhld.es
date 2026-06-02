@@ -27,7 +27,7 @@
         />
         <Icon
           v-if="initiative.deputies.length > 10"
-          icon="mdi:dots-horizontal"
+          name="mdi:dots-horizontal"
         />
       </div>
       <RouterLink
@@ -51,7 +51,6 @@
 </template>
 
 <script setup>
-import { Icon } from "@iconify/vue";
 
 import { useParliamentStore } from "@/stores/parliament";
 import TopicPill from "@/components/TopicPill.vue";
