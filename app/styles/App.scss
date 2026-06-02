@@ -1,11 +1,4 @@
-@import "01_settings/settings__variables";
-@import "variables"; // Rewrite main variables
-@import "01_settings/settings__breakpoints";
-@import "01_settings/settings__colors";
-@import "01_settings/settings__fonts";
-@import "01_settings/settings__icons";
-@import "02_tools/tools__functions";
-@import "02_tools/tools__mixins";
+@import "resources";
 @import "03_generic/generic__normalize";
 @import "03_generic/generic__box-sizing";
 @import "03_generic/generic__global";

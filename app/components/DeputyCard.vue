@@ -135,7 +135,7 @@ const imgSize = computed(() => {
     &__image-small {
       width: rem($spacer-unit * 2);
       height: rem($spacer-unit * 2);
-      margin-right: rem(calc($spacer-unit / 2));
+      margin-right: rem(math.div($spacer-unit, 2));
       border: 2px solid $primary;
     }
 
@@ -160,7 +160,7 @@ const imgSize = computed(() => {
       p,
       h5 {
         margin-top: 0px;
-        margin-bottom: rem(calc($spacer-unit / 4));
+        margin-bottom: rem(math.div($spacer-unit, 4));
         display: flex;
         justify-content: start;
         align-items: center;

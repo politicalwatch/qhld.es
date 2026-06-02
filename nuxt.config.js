@@ -50,13 +50,15 @@ export default defineNuxtConfig({
     enabled: true
   },
 
+  css: ["~/styles/App.scss"],
+
   vite: {
     plugins: [svgLoader({ svgoConfig })],
     css: {
       preprocessorOptions: {
         scss: {
           silenceDeprecations: ["import"],
-          additionalData: `@import "@/styles/App.scss";`,
+          additionalData: `@use "sass:math"; @import "@/styles/resources";`,
         },
       },
     },

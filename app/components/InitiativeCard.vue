@@ -134,7 +134,7 @@ const getDeputies = (initiative) => {
       flex-direction: column;
 
       :deep(span) {
-        margin-bottom: rem(calc($spacer-unit / 2));
+        margin-bottom: rem(math.div($spacer-unit, 2));
       }
     }
   }

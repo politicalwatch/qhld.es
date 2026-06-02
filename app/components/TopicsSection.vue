@@ -192,7 +192,7 @@ const getP2030SearchLink = (params) => {
 
     flex: 0 0 auto;
     color: $topic-pill-color;
-    padding: rem(calc($spacer-unit / 2));
+    padding: rem(math.div($spacer-unit, 2));
     text-decoration: none;
     margin: 0 $topic-pill-separator $topic-pill-separator 0;
 

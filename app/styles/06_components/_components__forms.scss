@@ -139,7 +139,7 @@
 
     &__single {
       color: $secondary-dark;
-      padding: rem(calc($spacer-unit / 2)) rem($spacer-unit);
+      padding: rem(math.div($spacer-unit, 2)) rem($spacer-unit);
     }
 
     &__tags {
@@ -217,7 +217,7 @@
 
     &__element {
       background-color: $lightgrey;
-      margin-bottom: rem(calc($spacer-unit / 2));
+      margin-bottom: rem(math.div($spacer-unit, 2));
 
       &::before {
         display: none;
@@ -239,8 +239,8 @@
       padding: rem($spacer-unit) rem($spacer-unit * 2) rem($spacer-unit)
         rem($spacer-unit);
       color: $secondary-dark;
-      margin-top: rem(calc($spacer-unit / 2));
-      margin-bottom: rem(calc(#{-$spacer-unit} / 2));
+      margin-top: rem(math.div($spacer-unit, 2));
+      margin-bottom: rem(math.div(-$spacer-unit, 2));
 
       &-icon {
         line-height: 29px;
@@ -335,7 +335,7 @@
     top: 2px;
     width: rem($spacer-unit * 2);
     height: rem($spacer-unit * 2);
-    margin-right: rem(calc($spacer-unit / 2));
+    margin-right: rem(math.div($spacer-unit, 2));
     outline: none;
 
     &::before {
@@ -369,7 +369,7 @@
     top: 2px;
     width: rem($spacer-unit * 2);
     height: rem($spacer-unit * 2);
-    margin-right: rem(calc($spacer-unit / 2));
+    margin-right: rem(math.div($spacer-unit, 2));
     outline: none;
 
     &::before {

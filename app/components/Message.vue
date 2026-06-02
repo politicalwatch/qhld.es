@@ -52,7 +52,7 @@ const getIcon = () => {
   &__icon {
     position: absolute;
     left: rem($spacer-unit * 2);
-    margin-top: rem(calc($spacer-unit / 4));
+    margin-top: rem(math.div($spacer-unit, 4));
 
     svg {
       path {
