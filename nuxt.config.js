@@ -17,6 +17,9 @@ const svgoConfig = {
 export default defineNuxtConfig({
   ssr: true,
 
+  app: {
+    pageTransition: { name: 'page', mode: 'out-in' },
+  },
   runtimeConfig: {
     public: {
       backendUrl:
