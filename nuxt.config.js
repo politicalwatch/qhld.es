@@ -40,7 +40,23 @@ export default defineNuxtConfig({
   },
 
   sitemap: {
-    sources: ['/api/__sitemap__/urls', '/api/__sitemap__/initiatives'],
+    // Increase cache from default 10min — data updates at most daily.
+    cacheMaxAgeSeconds: 3600,
+    sitemaps: {
+      // Static/app-discovered pages, minus noindex legal pages (those shouldn't be submitted)
+      pages: {
+        includeAppSources: true,
+        exclude: ['/aviso-legal', '/politica-de-cookies', '/politica-de-privacidad'],
+      },
+      // Dynamic entity pages (deputies, groups, topics)
+      entities: {
+        sources: ['/api/__sitemap__/entities'],
+      },
+      // Recent initiatives (~2,000 newest, 24h cached). Full inclusion deferred to FastAPI migration.
+      initiatives: {
+        sources: ['/api/__sitemap__/initiatives'],
+      },
+    },
   },
 
   runtimeConfig: {
