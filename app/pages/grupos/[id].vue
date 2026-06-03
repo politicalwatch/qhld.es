@@ -252,6 +252,7 @@ defineOgImage('Group', {
   name: parliamentarygroup.value.name,
   groupId: parliamentarygroup.value.id,
   deputyCount,
+  groupColor: parliamentarygroup.value.color ?? '#ff6565',
 });
 
 const calculatePercentage = (value) =>

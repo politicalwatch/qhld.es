@@ -22,8 +22,11 @@ const MENU = config.MENU;
 const DISCLAIMER = config.DISCLAIMER;
 const LOGO = config.LOGO;
 
-// Site-wide default OG image — overridden per-page by detail pages
-defineOgImage('Default');
+// Site-wide default OG image — overridden per-page by detail pages via defineOgImage()
+useSeoMeta({
+  ogImage: { url: '/img/share.png', width: 871, height: 564 },
+  twitterImage: '/img/share.png',
+});
 
 // Global Schema.org — Organisation + WebSite for all pages
 useSchemaOrg([
