@@ -33,3 +33,8 @@
 @import "07_trumps/trumps__colors";
 @import "07_trumps/trumps__texts";
 @import "07_trumps/trumps__borders";
+
+.page-enter-active,
+.page-leave-active { transition: opacity 0.1s ease; }
+.page-enter-from,
+.page-leave-to    { opacity: 0; }

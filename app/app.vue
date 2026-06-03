@@ -1,5 +1,6 @@
 <template>
   <div id="app">
+    <NuxtLoadingIndicator color="rgb(163, 213, 200)" :height="8" />
     <NuxtRouteAnnouncer />
     <Navbar
       pre-image="/img/yellow.png"
@@ -26,8 +27,9 @@ const LOGO = config.LOGO;
 .page-container {
   min-height: 80vh;
   display: flex;
+  flex-direction: column;
   justify-content: center;
-  align-items: center;
+  align-items: stretch;
 }
 
 input[type="email"].swal2-input {
