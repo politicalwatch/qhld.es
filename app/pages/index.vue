@@ -1,5 +1,6 @@
 <template>
   <div id="home" class="o-container u-margin-bottom-10 u-padding-top-4 c-home">
+    <!-- Hero / related initiatives block -->
     <div v-if="home" class="o-grid u-margin-bottom-6 u-border-bottom">
       <div class="o-grid__col u-12">
         <ImageHeader
@@ -10,15 +11,9 @@
           class="u-margin-bottom-4"
         />
 
-        <loader
-          v-if="!homeLoaded"
-          title="Cargando datos"
-          subtitle="Puede llevar algun tiempo"
-        />
-
         <div
           class="o-section c-home__initiatives"
-          v-if="home && relatedInitiatives.length"
+          v-if="relatedInitiatives.length"
         >
           <h1 class="u-uppercase c-home__initiatives_title">
             Iniciativas relacionadas
@@ -29,9 +24,8 @@
             >Más iniciativas</a
           >
         </div>
-
         <Results
-          v-if="home && relatedInitiatives.length"
+          v-if="relatedInitiatives.length"
           :initiatives="relatedInitiatives"
           :topicsStyles="topicsStyles"
         />
@@ -54,55 +48,62 @@
       </div>
     </div>
 
+    <!-- Initiative status chart -->
     <div class="o-grid u-margin-bottom-6">
       <div class="o-grid__col u-12">
-        <InitiativeStatusChart
-          v-if="initiativesLoaded"
-          :initiativesStats="initiativesStats"
-        />
-        <Loader
-          v-else
-          title="Cargando estado de las iniciativas"
-          subtitle="Puede llevar algun tiempo"
-        />
+        <AsyncSection
+          :status="initiativesStatus"
+          loading-title="Cargando estado de las iniciativas"
+          loading-subtitle="Puede llevar algun tiempo"
+          error-message="No se pudo cargar el estado de las iniciativas."
+        >
+          <InitiativeStatusChart :initiativesStats="initiativesStats" />
+        </AsyncSection>
       </div>
     </div>
 
+    <!-- Approved initiatives -->
     <div class="o-grid u-margin-bottom-4">
       <div class="o-grid__col u-12">
-        <ApprovedInitiatives
-          v-if="approvedInitiatives.length > 0 && initiativesLoaded"
-          :initiatives="approvedInitiatives"
-        />
-        <Loader
-          v-else
-          title="Cargando iniciativas legislativas aprobadas"
-          subtitle="Puede llevar algun tiempo"
-        />
+        <AsyncSection
+          :status="approvedStatus"
+          loading-title="Cargando iniciativas legislativas aprobadas"
+          loading-subtitle="Puede llevar algun tiempo"
+          error-message="No se pudieron cargar las iniciativas aprobadas."
+        >
+          <ApprovedInitiatives
+            v-if="approvedInitiatives.length"
+            :initiatives="approvedInitiatives"
+          />
+        </AsyncSection>
       </div>
     </div>
 
+    <!-- Group thematic priorities -->
     <div class="o-grid u-margin-bottom-4">
       <div class="o-grid__col u-12">
-        <GroupThematicPriorities
-          v-if="allParliamentaryGroups.length && allTopics.length"
-        />
-        <loader
-          v-else
-          title="Cargando prioridades temáticas"
-          subtitle="Puede llevar algun tiempo"
-        />
+        <AsyncSection
+          :status="groupsStatus"
+          loading-title="Cargando prioridades temáticas"
+          loading-subtitle="Puede llevar algun tiempo"
+          error-message="No se pudieron cargar las prioridades temáticas."
+        >
+          <GroupThematicPriorities v-if="allParliamentaryGroups.length && allTopics.length" />
+        </AsyncSection>
       </div>
     </div>
 
+    <!-- Last days activity -->
     <div class="o-grid u-margin-bottom-4">
       <div class="o-grid__col u-12">
-        <LastActivity v-if="lastdays" :lastdays="lastdays" />
-        <Loader
-          v-else
-          title="Cargando evolución de los últimos días"
-          subtitle="Puede llevar algun tiempo"
-        />
+        <AsyncSection
+          :status="lastdaysStatus"
+          loading-title="Cargando evolución de los últimos días"
+          loading-subtitle="Puede llevar algun tiempo"
+          error-message="No se pudo cargar la actividad reciente."
+        >
+          <LastActivity v-if="lastdays" :lastdays="lastdays" />
+        </AsyncSection>
       </div>
     </div>
   </div>
@@ -110,229 +111,138 @@
 
 <script setup>
 definePageMeta({ name: 'home' });
-import { ref, onMounted, watch, computed } from "vue";
-import { storeToRefs } from "pinia";
+import { ref, computed } from "vue";
 
-import api from "@/api";
 import config from "@/config";
-import { useParliamentStore } from "@/stores/parliament";
 import ImageHeader from "@/components/ImageHeader.vue";
 import Results from "@/components/Results.vue";
 import InitiativesFormCompact from "@/components/InitiativesFormCompact.vue";
 import GroupThematicPriorities from "@/components/GroupThematicPriorities.vue";
 import ApprovedInitiatives from "@/components/ApprovedInitiatives.vue";
-import InProcessInitiatives from "@/components/InProcessInitiatives.vue";
 import InitiativeStatusChart from "@/components/InitiativeStatusChart.vue";
 import LastActivity from "@/components/LastActivity.vue";
-import Loader from "@/components/Loader.vue";
+import AsyncSection from "@/components/AsyncSection.vue";
 
+const { $api } = useNuxtApp();
 const topicsStyles = config.STYLES.topics;
-const store = useParliamentStore();
-const { allParliamentaryGroups, allTopics } = storeToRefs(store);
 
-await Promise.all([
-  useAsyncData('topics', () => store.getTopics(), {
-    getCachedData: (key, nuxtApp) =>
-      store.allTopics.length ? store.allTopics : nuxtApp.payload.data[key],
-  }),
-  useAsyncData('parliamentary-groups', () => store.getParliamentaryGroups(), {
-    getCachedData: (key, nuxtApp) =>
-      store.allParliamentaryGroups.length ? store.allParliamentaryGroups : nuxtApp.payload.data[key],
-  }),
-  useAsyncData('deputies', () => store.getDeputies(), {
-    getCachedData: (key, nuxtApp) =>
-      store.allDeputies.length ? store.allDeputies : nuxtApp.payload.data[key],
-  }),
-  useAsyncData('footprint-range', () => store.getFootprintRange()),
-]);
+// Reference data — blocking SSR so GroupThematicPriorities has data immediately
+const { data: allParliamentaryGroups, status: groupsStatus } = await useParliamentaryGroups();
+const { data: allTopics } = await useTopics();
+await Promise.all([useDeputies(), useFootprintRange()]);
 
-const homeLoaded = ref(false);
-const initiativesLoaded = ref(false);
-const errors = ref(null);
+const formData = ref({ topic: '', author: '', page: 1 });
 
-const formData = ref({
-  topic: "",
-  author: "",
-  page: 1,
-});
+// ── Lazy client-side fetches ────────────────────────────────────────────────
 
-const home = ref(null);
-const relatedInitiatives = ref([]);
+// Home block + related initiatives (combined to avoid a waterfall)
+const { data: homeBlock } = useAsyncData(
+  'home-block',
+  async () => {
+    const homeObj = await $api.getHome();
+    if (!homeObj) return { home: null, relatedInitiatives: [] };
 
-const approvedInitiatives = ref([]);
-const inProcessInitiatives = ref([]);
-const rejectedInitiatives = ref([]);
-const initiativesStats = computed(() => {
-  return {
-    approved: approvedInitiatives.value.length,
-    inProcess: inProcessInitiatives.value.length,
-    rejected: rejectedInitiatives.value.length,
-  };
-});
-const lastdays = ref(null);
+    // Parse the flat Initiative1..N fields into a RelatedInitiativesIds array
+    if (homeObj.RelatedInitiativesIds === undefined) {
+      const RELATED = 6;
+      homeObj.RelatedInitiativesIds = [...Array(RELATED).keys()]
+        .map((i) => homeObj[`Initiative${i + 1}`])
+        .filter(Boolean);
+    }
 
-const getHome = () => {
-  api
-    .getHome()
-    .then((response) => {
-      home.value = response;
-      if (home.value) {
-        _parseRelatedInitiatives();
-        getRelatedInitiatives();
-      }
-    })
-    .catch((error) => (errors.value = error));
-};
+    const relatedInitiatives = await Promise.all(
+      homeObj.RelatedInitiativesIds.map((id) => $api.getInitiative(id, false))
+    );
+    return { home: homeObj, relatedInitiatives };
+  },
+  { lazy: true, server: false, default: () => ({ home: null, relatedInitiatives: [] }) }
+);
+
+const home = computed(() => homeBlock.value.home);
+const relatedInitiatives = computed(() => homeBlock.value.relatedInitiatives);
 
 const getHomeImageSrcset = () => {
-  return home.value.Image
-    ? `${api.getHomeResourceUrl(home.value.Image.formats.small.url)} 500w, ${api.getHomeResourceUrl(home.value.Image.formats.medium.url)} 750w, ${api.getHomeResourceUrl(home.value.Image.formats.large.url)} 1000w`
+  if (!home.value?.Image) return null;
+  return [
+    `${$api.getHomeResourceUrl(home.value.Image.formats.small.url)} 500w`,
+    `${$api.getHomeResourceUrl(home.value.Image.formats.medium.url)} 750w`,
+    `${$api.getHomeResourceUrl(home.value.Image.formats.large.url)} 1000w`,
+  ].join(', ');
+};
+const getHomeImage = () =>
+  home.value?.Image
+    ? $api.getHomeResourceUrl(home.value.Image.formats.large.url)
     : null;
-};
-const getHomeImage = () => {
-  return home.value.Image
-    ? api.getHomeResourceUrl(home.value.Image.formats.large.url)
-    : null;
-};
-const getRelatedInitiatives = () => {
-  home.value.RelatedInitiativesIds.forEach((id) => {
-    api
-      .getInitiative(id, false)
-      .then((initiative) => {
-        relatedInitiatives.value.push(initiative);
-        homeLoaded.value = true;
-      })
-      .catch((error) => (errors.value = error));
-  });
-};
-const _parseRelatedInitiatives = () => {
-  if (home.value.RelatedInitiativesIds !== undefined) {
-    return;
-  }
-  const RELATED_INITIATIVES = 6;
-  home.value.RelatedInitiativesIds = [...Array(RELATED_INITIATIVES).keys()]
-    .map((el) => el + 1)
-    .map((el) => home.value["Initiative" + el])
-    .filter((element) => element !== null);
-  // for (let i=1; i<=RELATED_INITIATIVES; i++) delete this.home['Initiative'+i];
-};
 
-const per_page = 1000;
-const legislativeTypeIds = [
-  "120",
-  "121",
-  "122",
-  "123",
-  "124",
-  "125",
-  "127",
-  "130",
-  "131",
-  "132",
-];
+// Legislative-type initiative lists (approved, in-process, rejected)
 const legislativeTypeNames = [
-  "Iniciativa legislativa popular",
-  "Proyecto de ley",
-  "Proposición de ley de Grupos Parlamentarios del Congreso",
-  "Proposición de ley de Diputados",
-  "Proposición de ley del Senado",
-  "Proposición de ley de Comunidades y Ciudades Autónomas",
-  "Propuesta de reforma de Estatuto de Autonomía",
-  "Real Decreto-Ley",
-  "Real Decreto legislativo en desarrollo de Ley de Bases",
-  "Real Decreto legislativo que aprueba texto refundido",
+  'Iniciativa legislativa popular',
+  'Proyecto de ley',
+  'Proposición de ley de Grupos Parlamentarios del Congreso',
+  'Proposición de ley de Diputados',
+  'Proposición de ley del Senado',
+  'Proposición de ley de Comunidades y Ciudades Autónomas',
+  'Propuesta de reforma de Estatuto de Autonomía',
+  'Real Decreto-Ley',
+  'Real Decreto legislativo en desarrollo de Ley de Bases',
+  'Real Decreto legislativo que aprueba texto refundido',
 ];
+const per_page = 1000;
 
-const getApprovedInitiatives = () => {
-  const newInitiatives = [];
+const { data: approvedInitiatives, status: approvedStatus } = useAsyncData(
+  'home-approved',
+  async () => {
+    const [approvedResp, ratifiedResp] = await Promise.all([
+      $api.getInitiatives({ per_page, type: legislativeTypeNames, status: 'Aprobada' }),
+      $api.getInitiatives({ per_page, type: 'Real Decreto-Ley', status: 'Convalidada' }),
+    ]);
+    return [
+      ...(approvedResp.initiatives ?? []),
+      ...(ratifiedResp.initiatives ?? []),
+    ];
+  },
+  { lazy: true, server: false, default: () => [] }
+);
 
-  const paramsApproved = {
-    per_page,
-    type: legislativeTypeNames,
-    status: "Aprobada",
-  };
+const { data: inProcessInitiatives, status: initiativesStatus } = useAsyncData(
+  'home-in-process',
+  async () => {
+    const resp = await $api.getInitiatives({
+      per_page,
+      type: legislativeTypeNames,
+      status: 'En tramitación',
+    });
+    return resp.initiatives ?? [];
+  },
+  { lazy: true, server: false, default: () => [] }
+);
 
-  const paramsRatified = {
-    per_page,
-    type: "Real Decreto-Ley",
-    status: "Convalidada",
-  };
+const { data: rejectedInitiatives } = useAsyncData(
+  'home-rejected',
+  async () => {
+    const [rejectedResp, notDebatedResp] = await Promise.all([
+      $api.getInitiatives({ per_page, type: legislativeTypeNames, status: 'Rechazada' }),
+      $api.getInitiatives({ per_page, type: legislativeTypeNames, status: 'No debatida' }),
+    ]);
+    return [
+      ...(rejectedResp.initiatives ?? []),
+      ...(notDebatedResp.initiatives ?? []),
+    ];
+  },
+  { lazy: true, server: false, default: () => [] }
+);
 
-  Promise.all([
-    api.getInitiatives(paramsApproved),
-    api.getInitiatives(paramsRatified),
-  ])
-    .then((responses) => {
-      responses.forEach((response) => {
-        newInitiatives.push(...response.initiatives);
-      });
-      approvedInitiatives.value = newInitiatives;
-    })
-    .catch((error) => (errors.value = error));
-};
+// Each section gets its own status — no watch, no shared "initiativesLoaded" flag
+const initiativesStats = computed(() => ({
+  approved: approvedInitiatives.value.length,
+  inProcess: inProcessInitiatives.value.length,
+  rejected: rejectedInitiatives.value.length,
+}));
 
-const getInProcessInitiatives = () => {
-  const params = {
-    per_page,
-    type: legislativeTypeNames,
-    status: "En tramitación",
-  };
-
-  api
-    .getInitiatives(params)
-    .then((response) => (inProcessInitiatives.value = response.initiatives))
-    .catch((error) => (errors.value = error));
-};
-
-const getRejectedInitiatives = () => {
-  const newInitiatives = [];
-
-  const paramsRejected = {
-    per_page,
-    type: legislativeTypeNames,
-    status: "Rechazada",
-  };
-
-  const paramsNotDebated = {
-    per_page,
-    type: legislativeTypeNames,
-    status: "No debatida",
-  };
-
-  Promise.all([
-    api.getInitiatives(paramsRejected),
-    api.getInitiatives(paramsNotDebated),
-  ])
-    .then((responses) => {
-      responses.forEach((response) => {
-        newInitiatives.push(...response.initiatives);
-      });
-      rejectedInitiatives.value = newInitiatives;
-    })
-    .catch((error) => (errors.value = error));
-};
-
-const getLastdays = () => {
-  api
-    .getLastdaysStats()
-    .then((response) => (lastdays.value = response))
-    .catch((error) => (errors.value = error));
-};
-
-onMounted(() => {
-  getHome();
-  getApprovedInitiatives();
-  getInProcessInitiatives();
-  getRejectedInitiatives();
-  getLastdays();
-});
-
-watch(
-  () => initiativesStats.value,
-  (newValue) => {
-    if (newValue.approved && newValue.inProcess && newValue.rejected)
-      initiativesLoaded.value = true;
-  }
+const { data: lastdays, status: lastdaysStatus } = useAsyncData(
+  'home-lastdays',
+  () => $api.getLastdaysStats(),
+  { lazy: true, server: false, default: () => null }
 );
 </script>
 

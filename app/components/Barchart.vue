@@ -23,8 +23,6 @@
 
 <script setup>
 import { computed } from "vue";
-import { storeToRefs } from "pinia";
-import { useParliamentStore } from "@/stores/parliament";
 
 const {
   result,
@@ -69,8 +67,7 @@ const {
   },
 });
 
-const store = useParliamentStore();
-const { footprintRange } = storeToRefs(store);
+const { data: footprintRange } = useFootprintRange();
 
 const rows = computed(() => {
   if (!footprintRange.value.length) return [];

@@ -155,7 +155,7 @@
             deselectLabel="Pulsa para deseleccionar"
             v-model="formData.author"
             :options="
-              store.getAllParliamentaryGroupsWithGoverment.map(
+              ['Gobierno', ...allParliamentaryGroups].map(
                 (group) => group.name || group
               )
             "
@@ -193,7 +193,7 @@
             selectLabel=""
             deselectLabel="Pulsa para deseleccionar"
             v-model="formData.place"
-            :options="store.getAllPlacesName"
+            :options="allPlaces.map((p) => p.name)"
             :allow-empty="true"
             name="place"
             id="place"
@@ -240,9 +240,6 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale";
 
 import * as Utils from "@/utils";
-import api from "@/api";
-import { useParliamentStore } from "@/stores/parliament";
-import { storeToRefs } from "pinia";
 
 const props = defineProps({
   formData: Object,
@@ -252,8 +249,15 @@ const { formData } = toRefs(props);
 
 const emit = defineEmits(["getResults", "clearInitiatives"]);
 
-const store = useParliamentStore();
-const { allTopics, allStatus } = storeToRefs(store);
+const { $api } = useNuxtApp();
+const { data: allTopics } = useTopics();
+const { data: allStatus } = useStatus();
+const { data: allTypes } = useTypes();
+const { data: allPlaces } = usePlaces();
+const { data: allDeputies } = useDeputies();
+const { data: allParliamentaryGroups } = useParliamentaryGroups();
+const getGroupByName = useGroupByName();
+const getDeputiesByGroupShortname = useDeputiesByGroup();
 
 const textInputOptions = {
   enterSubmit: true,
@@ -308,29 +312,17 @@ const cleanForm = () => {
   clearSubtopicsAndTags();
 };
 
-const getTypes = () => {
-  const options = [];
-  for (const type of store.getAllTypesName) {
-    options.push(type);
-  }
-  return options;
-};
+const getTypes = () => allTypes.value?.map((t) => t.name) ?? [];
 
 const getDeputies = () => {
   const { author } = formData.value;
-  if (author == "Gobierno") {
-    return [];
-  }
-
+  if (author === 'Gobierno') return [];
   if (author) {
-    const parliamentaryGroup = store.getParliamentaryGroupByName(author);
-    const deputies = store.getDeputiesByParliamentaryGroup(
-      parliamentaryGroup.shortname
-    );
-    return deputies.map((deputy) => deputy.name);
+    const group = getGroupByName(author);
+    return getDeputiesByGroupShortname(group?.shortname ?? '')
+      .map((d) => d.name);
   }
-
-  return store.getAllDeputiesName;
+  return allDeputies.value?.map((d) => d.name) ?? [];
 };
 
 const fillSubtopicsAndTags = (selectedTopic, clearValues) => {
@@ -387,7 +379,7 @@ const prepareForm = () => {
 };
 
 const getSubtopicsAndTags = (topicID) => {
-  api
+  $api
     .getTags(topicID)
     .then((tempTags) => {
       subtopics.value = [...new Set(tempTags.map((tag) => tag.subtopic))].sort(
@@ -434,7 +426,7 @@ const toggleAdvanced = () => {
   advanced.value = !advanced.value;
 };
 
-watch(() => allTopics.value, prepareForm);
+watch(allTopics, prepareForm);
 </script>
 
 <style lang="scss">

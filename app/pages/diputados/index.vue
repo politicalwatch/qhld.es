@@ -50,35 +50,16 @@
 <script setup>
 definePageMeta({ name: 'deputies' });
 import { ref, computed } from "vue";
-import { storeToRefs } from "pinia";
 
 import DeputiesForm from "@/components/DeputiesForm.vue";
 import PageHeader from "@/components/PageHeader.vue";
 import Loader from "@/components/Loader.vue";
 import CardGrid from "@/components/CardGrid.vue";
 import Callout from "@/components/Callout.vue";
-import { useParliamentStore } from "@/stores/parliament";
 
-const store = useParliamentStore();
-const { birthdays, allDeputies, allParliamentaryGroups, allTopics } =
-  storeToRefs(store);
-
-const today = new Date().toISOString().split('T')[0];
-await Promise.all([
-  useAsyncData(`birthdays-${today}`, () => store.getBirthdays()),
-  useAsyncData('deputies', () => store.getDeputies(), {
-    getCachedData: (key, nuxtApp) =>
-      store.allDeputies.length ? store.allDeputies : nuxtApp.payload.data[key],
-  }),
-  useAsyncData('parliamentary-groups', () => store.getParliamentaryGroups(), {
-    getCachedData: (key, nuxtApp) =>
-      store.allParliamentaryGroups.length ? store.allParliamentaryGroups : nuxtApp.payload.data[key],
-  }),
-  useAsyncData('topics', () => store.getTopics(), {
-    getCachedData: (key, nuxtApp) =>
-      store.allTopics.length ? store.allTopics : nuxtApp.payload.data[key],
-  }),
-]);
+const { data: birthdays } = await useBirthdays();
+const [{ data: allDeputies }, { data: allParliamentaryGroups }, { data: allTopics }] =
+  await Promise.all([useDeputies(), useParliamentaryGroups(), useTopics()]);
 
 const filters = ref({});
 

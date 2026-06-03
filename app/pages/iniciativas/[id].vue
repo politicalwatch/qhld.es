@@ -1,7 +1,7 @@
 <template>
   <div class="c-initiative">
     <div
-      v-if="loaded"
+      v-if="initiative"
       id="initiative"
       class="o-container o-section u-margin-bottom-10"
     >
@@ -76,7 +76,7 @@
             <DeputyCard
               v-for="deputyName in initiative.deputies"
               :key="deputyName"
-              :deputy="store.getDeputyByName(deputyName)"
+              :deputy="getDeputyByName(deputyName)"
               layout="medium"
             />
           </div>
@@ -98,8 +98,7 @@
 
 <script setup>
 definePageMeta({ name: 'initiative' });
-import { ref, computed, onMounted, watch } from "vue";
-import { storeToRefs } from "pinia";
+import { computed } from "vue";
 import { useRoute } from "vue-router";
 
 import ParliamentaryGroupCard from "@/components/ParliamentaryGroupCard.vue";
@@ -111,37 +110,29 @@ import TopicsSection from "@/components/TopicsSection.vue";
 import InitiativeStatus from "@/components/InitiativeStatus.vue";
 import DeputyCard from "@/components/DeputyCard.vue";
 import Loader from "@/components/Loader.vue";
-import api from "@/api";
 import config from "@/config";
-import { useParliamentStore } from "@/stores/parliament";
 
 import format from "date-fns/format";
 
 const route = useRoute();
+const { $api } = useNuxtApp();
 
-const store = useParliamentStore();
-const { allParliamentaryGroups, allTopics } = storeToRefs(store);
+const { data: allParliamentaryGroups } = await useParliamentaryGroups();
+await Promise.all([useTopics(), useDeputies()]);
 
-await Promise.all([
-  useAsyncData('topics', () => store.getTopics(), {
-    getCachedData: (key, nuxtApp) =>
-      store.allTopics.length ? store.allTopics : nuxtApp.payload.data[key],
-  }),
-  useAsyncData('parliamentary-groups', () => store.getParliamentaryGroups(), {
-    getCachedData: (key, nuxtApp) =>
-      store.allParliamentaryGroups.length ? store.allParliamentaryGroups : nuxtApp.payload.data[key],
-  }),
-  useAsyncData('deputies', () => store.getDeputies(), {
-    getCachedData: (key, nuxtApp) =>
-      store.allDeputies.length ? store.allDeputies : nuxtApp.payload.data[key],
-  }),
-]);
+// Fetch the main entity via SSR so meta tags have data during server render
+const { data: initiative, error: initiativeError } = await useAsyncData(
+  () => `initiative-${route.params.id}`,
+  () => $api.getInitiative(route.params.id),
+  { getCachedData: getCachedPayload },
+);
+if (initiativeError.value || !initiative.value) {
+  throw createError({ statusCode: 404, statusMessage: 'Iniciativa no encontrada', fatal: true });
+}
 
 const styles = config.STYLES;
+const getDeputyByName = useDeputyByName();
 
-const initiative = ref({});
-const loaded = ref(false);
-const errors = ref([]);
 
 const headTitle = computed(() => {
   return initiative.value?.title
@@ -151,6 +142,9 @@ const headTitle = computed(() => {
 
 useHead({
   title: headTitle,
+const formattedDate = computed(() => {
+  if (!initiative.value?.created) return '';
+  return format(new Date(initiative.value.created), "dd/MM/y");
 });
 
 const dataLoaded = computed(() => {
@@ -161,19 +155,6 @@ const formattedDate = computed(() => {
   return format(new Date(initiative.value.created), "dd/MM/y");
 });
 
-const getInitiative = () => {
-  api
-    .getInitiative(route.params.id)
-    .then((response) => {
-      initiative.value = response;
-      loaded.value = true;
-    })
-    .catch((error) => {
-      errors.value.push(error);
-      loaded.value = true;
-    });
-};
-
 const getGroup = (parliamentary_group) => {
   for (const group of allParliamentaryGroups.value) {
     if (group.name == parliamentary_group) {
@@ -183,18 +164,16 @@ const getGroup = (parliamentary_group) => {
 };
 
 const isAGovernmentInitiative = () => {
-  return initiative.value.authors.includes("Gobierno");
+  return initiative.value.authors?.includes("Gobierno") ?? false;
 };
 
 const isAGroupInitiative = () => {
-  if (initiative.value.authors.length == 0) return false;
-  else {
-    const aPossibleGroup = initiative.value.authors[0];
-    for (const group of allParliamentaryGroups.value) {
-      if (group.name == aPossibleGroup) return true;
-    }
-    return false;
+  if (!initiative.value.authors?.length) return false;
+  const aPossibleGroup = initiative.value.authors[0];
+  for (const group of allParliamentaryGroups.value) {
+    if (group.name == aPossibleGroup) return true;
   }
+  return false;
 };
 
 const showConversation = () => {
@@ -207,14 +186,6 @@ const showConversation = () => {
 const isAnswer = () => {
   return initiative.value.initiative_type_alt == "Respuesta";
 };
-
-onMounted(() => {
-  getInitiative();
-});
-
-watch(route, () => {
-  getInitiative();
-});
 </script>
 
 <style lang="scss" scoped>

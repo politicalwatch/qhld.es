@@ -13,8 +13,6 @@
 import { ref, toRefs } from "vue";
 import Swal from "sweetalert2";
 
-import api from "@/api";
-
 const props = defineProps({
   searchParams: {
     type: Object,
@@ -23,6 +21,7 @@ const props = defineProps({
 
 const { searchParams } = toRefs(props);
 
+const { $api } = useNuxtApp();
 const errors = ref(null);
 
 const saveAlert = async () => {
@@ -77,7 +76,7 @@ const saveAlert = async () => {
       email: email,
       search: JSON.stringify(search_params),
     };
-    api
+    $api
       .saveAlert(params)
       .then(() => {
         Swal.fire({

@@ -1,13 +1,10 @@
 <template>
-  <div
-    v-if="loaded"
-    class="o-container o-section u-padding-bottom-10 u-margin-bottom-10"
-  >
+  <div class="o-container o-section u-padding-bottom-10 u-margin-bottom-10">
     <page-header title="Temáticas" />
-    <div class="o-grid" v-if="stats">
+    <div class="o-grid">
       <div
         class="o-grid__col u-12 u-4@sm"
-        v-for="topic in getTopics()"
+        v-for="topic in topicsWithStats"
         :key="topic.id"
       >
         <topic-link
@@ -20,67 +17,36 @@
       </div>
     </div>
   </div>
-  <div v-else class="o-container o-section u-margin-bottom-10">
-    <loader title="Cargando datos" subtitle="Puede llevar unos segundos" />
-  </div>
 </template>
 
 <script setup>
 definePageMeta({ name: 'topics' });
-import { ref, onMounted } from "vue";
-import { storeToRefs } from "pinia";
-import { useRouter } from "vue-router";
+import { computed } from "vue";
 
-import api from "@/api";
-import config from "@/config";
 import PageHeader from "@/components/PageHeader.vue";
 import TopicLink from "@/components/TopicLink.vue";
-import Loader from "@/components/Loader.vue";
-import { useParliamentStore } from "@/stores/parliament";
+import config from "@/config";
 
-const router = useRouter();
+const { $api } = useNuxtApp();
 
-const store = useParliamentStore();
-const { allTopics } = storeToRefs(store);
-
-await useAsyncData('topics', () => store.getTopics(), {
-  getCachedData: (key, nuxtApp) =>
-    store.allTopics.length ? store.allTopics : nuxtApp.payload.data[key],
-});
+const [{ data: allTopics }, { data: stats }] = await Promise.all([
+  useTopics(),
+  useAsyncData(
+    'topics-overall-stats',
+    async () => (await $api.getOverallStats()).topics?.politicas ?? [],
+    { default: () => [], getCachedData: getCachedPayload }
+  ),
+]);
 
 const topicsStyles = config.STYLES.topics;
-const stats = ref(null);
-const loaded = ref(false);
 
-const getTopics = () => {
-  let topics = [];
-  for (const topic of allTopics.value) {
-    topic.initiatives = getTopicStat(topic);
-    topics.push(topic);
-  }
-  return topics.sort(function (a, b) {
-    return b.initiatives - a.initiatives;
-  });
-};
-
-const getTopicStat = (topic) => {
-  for (const stat of stats.value) {
-    if (stat["_id"] == topic.name) {
-      return stat["initiatives"];
-    }
-  }
-};
-
-onMounted(() => {
-  api
-    .getOverallStats()
-    .then((response) => {
-      stats.value = response.topics.politicas;
-      loaded.value = true;
+const topicsWithStats = computed(() => {
+  if (!stats.value?.length) return allTopics.value;
+  return allTopics.value
+    .map((topic) => {
+      const stat = stats.value.find((s) => s._id === topic.name);
+      return { ...topic, initiatives: stat?.initiatives ?? 0 };
     })
-    .catch((error) => {
-      console.log(error);
-      router.push({ name: "Page404", params: { 0: "404" } });
-    });
+    .sort((a, b) => b.initiatives - a.initiatives);
 });
 </script>

@@ -1,5 +1,5 @@
 <template>
-  <div v-if="loaded" class="c-topic">
+  <div v-if="topic" class="c-topic">
     <div class="o-container c-topic__header">
       <NuxtImg
         v-if="hasImage"
@@ -15,7 +15,7 @@
       <div class="c-topic__header__overlay">
         <div class="c-topic__header__column">
           <h1 class="c-topic__header__name u-uppercase">{{ topic.name }}</h1>
-          <h3 class="c-topic__header__stat">{{ getTopicStat(topic) }}</h3>
+          <h3 class="c-topic__header__stat">{{ topicStat }}</h3>
           <h4 class="c-topic__header__stat u-uppercase">
             iniciativas vinculadas
           </h4>
@@ -33,83 +33,113 @@
     </div>
 
     <div id="topic" class="o-container o-section">
-      <div class="u-padding-top-2" v-if="deputies.length > 0">
-        <h2 class="u-uppercase u-margin-bottom-2 c-topic__title">
-          Frecuencia de las iniciativas
-        </h2>
-        <FrequencyChart
-          :topicsStyles="styles"
-          :topic="topic"
-          :dataset="topicsByWeek"
-          :aggreagatedDataset="allTopicsByWeek"
-          @update:showComparativeMode="getAllTopicsByWeek()"
-          v-if="topicsByWeek != null"
-        />
-      </div>
-      <div class="u-padding-top-2" v-if="deputies.length">
-        <h2 class="u-uppercase u-margin-bottom-4 c-topic__title">
-          En esta temática destacan...
-        </h2>
-        <CardGrid
-          :items="deputies"
-          type="deputy"
-          layout="large"
-          :footprintByTopic="topic.name"
-        />
-      </div>
-      <div class="u-padding-top-4" v-if="latestInitiatives">
-        <div class="c-topic__initiatives__header">
-          <h2 class="u-uppercase c-topic__title">Últimas iniciativas</h2>
+      <!-- Frequency chart + deputies ranking -->
+      <AsyncSection
+        :status="deputiesStatus"
+        loading-title="Cargando datos"
+        loading-subtitle="Puede llevar unos segundos"
+        error-message="No se pudieron cargar los datos de esta temática."
+        class="u-padding-top-2"
+      >
+        <template v-if="deputies.length > 0">
+          <div class="u-padding-top-2">
+            <h2 class="u-uppercase u-margin-bottom-2 c-topic__title">
+              Frecuencia de las iniciativas
+            </h2>
+            <FrequencyChart
+              v-if="topicsByWeek"
+              :topicsStyles="styles"
+              :topic="topic"
+              :dataset="topicsByWeek"
+              :aggreagatedDataset="allTopicsByWeek"
+              @update:showComparativeMode="loadAllTopicsByWeek()"
+            />
+            <Loader
+              v-else-if="weeklyStatus === 'pending'"
+              title="Cargando gráfico"
+              subtitle="Puede llevar unos segundos"
+            />
+          </div>
+          <div class="u-padding-top-2">
+            <h2 class="u-uppercase u-margin-bottom-4 c-topic__title">
+              En esta temática destacan...
+            </h2>
+            <CardGrid
+              :items="deputies"
+              type="deputy"
+              layout="large"
+              :footprintByTopic="topic.name"
+            />
+          </div>
+        </template>
+      </AsyncSection>
+
+      <!-- Latest initiatives -->
+      <AsyncSection
+        :status="initiativesStatus"
+        loading-title="Cargando iniciativas"
+        loading-subtitle="Puede llevar unos segundos"
+        error-message="No se pudieron cargar las iniciativas."
+        class="u-padding-top-4"
+      >
+        <div v-if="latestInitiatives.length" class="u-padding-top-4">
+          <div class="c-topic__initiatives__header">
+            <h2 class="u-uppercase c-topic__title">Últimas iniciativas</h2>
+            <router-link
+              class="u-border-link u-uppercase u-hide u-inline@sm"
+              :to="{ path: '/buscar', query: { topic: topic.name } }"
+            >
+              Ver todas
+            </router-link>
+          </div>
+          <results :initiatives="latestInitiatives" :topicsStyles="styles" />
           <router-link
-            class="u-border-link u-uppercase u-hide u-inline@sm"
+            class="u-border-link u-uppercase u-hide@sm"
             :to="{ path: '/buscar', query: { topic: topic.name } }"
           >
             Ver todas
           </router-link>
         </div>
-        <results :initiatives="latestInitiatives" :topicsStyles="styles" />
-        <router-link
-          class="u-border-link u-uppercase u-hide@sm"
-          :to="{ path: '/buscar', query: { topic: topic.name } }"
-        >
-          Ver todas
-        </router-link>
-      </div>
+      </AsyncSection>
     </div>
+
     <save-alert
       v-if="use_alerts"
       :searchparams="{ topic: topic.name }"
       :text="topic.name"
     />
   </div>
-  <div v-else class="o-container o-section u-margin-bottom-10">
-    <loader title="Cargando datos" subtitle="Puede llevar unos segundos" />
-  </div>
 </template>
 
 <script setup>
 definePageMeta({ name: 'topic' });
-import { ref, computed, onMounted } from "vue";
-import { useRoute, useRouter } from "vue-router";
+import { computed } from "vue";
+import { useRoute } from "vue-router";
 
 import Results from "@/components/Results.vue";
 import CardGrid from "@/components/CardGrid.vue";
 import Loader from "@/components/Loader.vue";
 import SaveAlert from "@/components/SaveAlert.vue";
 import FrequencyChart from "@/components/FrequencyChart.vue";
-import api from "@/api";
+import AsyncSection from "@/components/AsyncSection.vue";
 import config from "@/config";
-import { useParliamentStore } from "@/stores/parliament";
 import { TOPICS_WITH_IMAGE, topicImageSrc } from "@/composables/useTopicImage.js";
 
-const router = useRouter();
 const route = useRoute();
-const store = useParliamentStore();
+const { $api } = useNuxtApp();
 
-await useAsyncData('deputies', () => store.getDeputies(), {
-  getCachedData: (key, nuxtApp) =>
-    store.allDeputies.length ? store.allDeputies : nuxtApp.payload.data[key],
-});
+// Deputies list needed to enrich the ranking; load blocking-SSR
+const { data: allDeputies } = await useDeputies();
+
+// Fetch the main entity via SSR so meta tags have data during server render
+const { data: topic, error: topicError } = await useAsyncData(
+  () => `topic-${route.params.id}`,
+  () => $api.getTopic(route.params.id),
+  { getCachedData: getCachedPayload },
+);
+if (topicError.value || !topic.value) {
+  throw createError({ statusCode: 404, statusMessage: 'Temática no encontrada', fatal: true });
+}
 
 const use_alerts = config.USE_ALERTS;
 const styles = config.STYLES.topics;
@@ -212,111 +242,70 @@ const credits = {
   },
 };
 
-const topic = ref(null);
-const deputies = ref([]);
-const latestInitiatives = ref(null);
-const topicsByWeek = ref(null);
-const allTopicsByWeek = ref(null);
-const loaded = ref(false);
-const errors = ref([]);
-const stats = ref(null);
-
-const headTitle = computed(() => {
-  return topic.value?.name
-    ? `${topic.value.name} - Qué hacen los diputados`
-    : "Qué hacen los diputados";
-});
-
 const hasImage = computed(() => topic.value ? TOPICS_WITH_IMAGE.has(topic.value.id) : false);
 
 useHead({
   title: headTitle,
 });
 
-const getTopic = () => {
-  api
-    .getTopic(route.params.id)
-    .then((response) => {
-      topic.value = response;
-      getLatestInitiatives(topic.value.name);
-      getDeputiesRanking(topic.value.name);
-      getTopicsByWeek(topic.value.name);
-    })
-    .catch((error) => {
-      errors.value = error;
-      router.push({ name: "Page404", params: { 0: "404" } });
-    });
-};
 
-const getDeputiesRanking = (topic) => {
-  api
-    .getDeputiesRanking(topic, 6)
-    .then((response) => {
-      const deputies_ranking = response;
-      deputies_ranking.forEach((d) => {
-        let deputy = store.getDeputyByName(d.name);
-        deputy.footprint = d.score;
-        deputies.value.push(deputy);
-      });
-      loaded.value = true;
-    })
-    .catch((error) => {
-      errors.value.push(error);
-      console.log(error);
-    });
-};
+// ── Lazy client-side fetches ────────────────────────────────────────────────
 
-const getLatestInitiatives = (topic) => {
-  api
-    .getInitiatives({ topic: topic, per_page: 6 })
-    .then((response) => {
-      if (response.initiatives) latestInitiatives.value = response.initiatives;
-    })
-    .catch((error) => errors.value.push(error));
-};
+// Stats for the header counter (lazy — header shows '' until loaded, then updates)
+const { data: stats } = useAsyncData(
+  () => `topic-stats-${route.params.id}`,
+  async () => (await $api.getOverallStats()).topics?.politicas ?? [],
+  { default: () => [] }
+);
 
-const getStats = () => {
-  api
-    .getOverallStats()
-    .then((response) => {
-      stats.value = response.topics.politicas;
-    })
-    .catch((error) => {
-      errors.value.push(error);
-      router.push({ name: "Page404", params: { 0: "404" } });
-    });
-};
-
-const getTopicStat = (topic) => {
-  for (const stat of stats.value) {
-    if (stat["_id"] == topic["name"]) {
-      return stat["initiatives"];
-    }
-  }
-};
-
-const getTopicsByWeek = (topic) => {
-  api
-    .getTopicsByWeek(topic)
-    .then((response) => {
-      topicsByWeek.value = response.data;
-    })
-    .catch((error) => errors.value.push(error));
-};
-
-const getAllTopicsByWeek = () => {
-  api
-    .getAllTopicsByWeek(topic)
-    .then((response) => {
-      allTopicsByWeek.value = response.data;
-    })
-    .catch((error) => errors.value.push(error));
-};
-
-onMounted(() => {
-  getTopic();
-  getStats();
+const topicStat = computed(() => {
+  if (!stats.value?.length) return '';
+  const found = stats.value.find((s) => s._id === topic.value?.name);
+  return found?.initiatives ?? '';
 });
+
+// Deputies ranking — enriched with full deputy data from the cached deputies list
+const { data: deputies, status: deputiesStatus } = useAsyncData(
+  () => `topic-deputies-${route.params.id}`,
+  async () => {
+    const ranking = await $api.getDeputiesRanking(topic.value.name, 6);
+    return ranking
+      .map((d) => {
+        const deputy = allDeputies.value?.find((dep) => dep.name === d.name);
+        if (!deputy) return null;
+        return { ...deputy, footprint: d.score };
+      })
+      .filter(Boolean);
+  },
+  { lazy: true, server: false, default: () => [] }
+);
+
+// Topics-by-week for the frequency chart
+const { data: topicsByWeek, status: weeklyStatus } = useAsyncData(
+  () => `topic-by-week-${route.params.id}`,
+  () => $api.getTopicsByWeek(topic.value.name),
+  { lazy: true, server: false, default: () => null }
+);
+
+// All-topics-by-week for the comparative chart overlay; only loaded on demand
+const { data: allTopicsByWeek, execute: loadAllTopicsByWeek } = useAsyncData(
+  'all-topics-by-week',
+  () => $api.getAllTopicsByWeek(),
+  { lazy: true, server: false, default: () => null, immediate: false }
+);
+
+// Latest initiatives
+const { data: latestInitiatives, status: initiativesStatus } = useAsyncData(
+  () => `topic-initiatives-${route.params.id}`,
+  async () => {
+    const response = await $api.getInitiatives({
+      topic: topic.value.name,
+      per_page: 6,
+    });
+    return response.initiatives ?? [];
+  },
+  { lazy: true, server: false, default: () => [] }
+);
 </script>
 
 <style lang="scss">
@@ -338,10 +327,9 @@ onMounted(() => {
     }
 
     &__overlay {
-      position: relative;
+      position: absolute;
+      inset: 0;
       z-index: 1;
-      width: 100%;
-      height: 100%;
 
       display: flex;
       justify-content: space-between;

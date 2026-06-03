@@ -32,16 +32,13 @@
 
 <script setup>
 import { ref, computed } from "vue";
-import { storeToRefs } from "pinia";
 import { useElementSize } from "@vueuse/core";
 
-import { useParliamentStore } from "@/stores/parliament";
 import FootprintRangeChart from "@/components/FootprintRangeChart.vue";
 
-const store = useParliamentStore();
-
-const { allParliamentaryGroups, allTopics, footprintRange } =
-  storeToRefs(store);
+const { data: allParliamentaryGroups } = useParliamentaryGroups();
+const { data: allTopics } = useTopics();
+const { data: footprintRange } = useFootprintRange();
 
 const groupThematicPrioritiesWrapper = ref(null);
 const { width: parentWidth } = useElementSize(groupThematicPrioritiesWrapper);

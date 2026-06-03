@@ -22,7 +22,7 @@
         <DeputyCard
           v-for="deputyName in getDeputies(initiative)"
           v-bind:key="deputyName"
-          :deputy="store.getDeputyByName(deputyName)"
+          :deputy="getDeputyByName(deputyName)"
           layout="small"
         />
         <Icon
@@ -52,7 +52,6 @@
 
 <script setup>
 
-import { useParliamentStore } from "@/stores/parliament";
 import TopicPill from "@/components/TopicPill.vue";
 import InitiativeStatus from "@/components/InitiativeStatus.vue";
 import DeputyCard from "@/components/DeputyCard.vue";
@@ -63,7 +62,7 @@ const { initiative, topicsStyles, extendedLayout } = defineProps({
   extendedLayout: { type: Boolean },
 });
 
-const store = useParliamentStore();
+const getDeputyByName = useDeputyByName();
 
 const __cleansIfItsAGroup = (value) => {
   return value.replace("Grupo Parlamentario", "GP");

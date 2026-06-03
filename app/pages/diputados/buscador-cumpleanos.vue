@@ -22,21 +22,13 @@
 <script setup>
 definePageMeta({ name: 'deputies-birthday-search' });
 import { ref, computed } from "vue";
-import { storeToRefs } from "pinia";
 
 import DeputiesBirthdayForm from "@/components/DeputiesBirthdayForm.vue";
 import PageHeader from "@/components/PageHeader.vue";
 import Loader from "@/components/Loader.vue";
 import CardGrid from "@/components/CardGrid.vue";
-import { useParliamentStore } from "@/stores/parliament";
 
-const store = useParliamentStore();
-const { allDeputies } = storeToRefs(store);
-
-await useAsyncData('deputies', () => store.getDeputies(), {
-  getCachedData: (key, nuxtApp) =>
-    store.allDeputies.length ? store.allDeputies : nuxtApp.payload.data[key],
-});
+const { data: allDeputies } = await useDeputies();
 
 const filters = ref({});
 

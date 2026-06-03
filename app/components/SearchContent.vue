@@ -60,7 +60,6 @@ import { ref, computed, nextTick, onUpdated, onMounted, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import VueScrollTo from "vue-scrollto";
 
-import api from "@/api";
 import config from "@/config";
 import InitiativesForm from "@/components/InitiativesForm.vue";
 import AlertButton from "@/components/AlertButton.vue";
@@ -68,6 +67,7 @@ import PageHeader from "@/components/PageHeader.vue";
 import Results from "@/components/Results.vue";
 import NotFound from "@/components/NotFound.vue";
 
+const { $api } = useNuxtApp();
 const route = useRoute();
 const router = useRouter();
 
@@ -153,7 +153,7 @@ const getResults = (event) => {
     .push({ path: "/buscar", query: urlParams })
     .catch((e) => e);
 
-  api
+  $api
     .getInitiatives(formData.value)
     .then((response) => {
       if (!isNewSearch) {
@@ -189,7 +189,7 @@ const loadCSVItems = (event) => {
   if (!canDownloadCSV.value) return false;
   event.target.innerText = "Procesando descarga...";
   let params = Object.assign({ per_page: LIMITCSV }, formData.value);
-  api
+  $api
     .getInitiatives(params)
     .then((response) => {
       csvItems.value = response.initiatives.map((initiative) => ({

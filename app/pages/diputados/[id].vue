@@ -155,44 +155,51 @@
       </p>
     </div>
 
-    <div
-      v-if="latestInitiatives && latestInitiatives.length"
+    <!-- Latest initiatives (lazy-loaded) -->
+    <AsyncSection
+      :status="initiativesStatus"
+      loading-title="Cargando iniciativas"
+      loading-subtitle="Puede llevar unos segundos"
+      error-message="No se pudieron cargar las iniciativas."
       class="o-container o-section"
     >
-      <div class="c-deputy__initiatives-header">
-        <h2 class="c-deputy__title u-margin-bottom-4 u-uppercase">
-          Últimas iniciativas
-        </h2>
+      <template v-if="latestInitiatives.length">
+        <div class="c-deputy__initiatives-header">
+          <h2 class="c-deputy__title u-margin-bottom-4 u-uppercase">
+            Últimas iniciativas
+          </h2>
+          <router-link
+            v-if="totalInitiatives > initiativesToShow"
+            :to="{
+              path: '/buscar',
+              query: { deputy: deputy.name, author: parliamentarygroup?.name },
+            }"
+            class="c-deputy__initiatives-more u-border-link u-hide u-block@sm u-uppercase"
+            >Ver todas
+          </router-link>
+        </div>
+        <results
+          layout="extended"
+          :initiatives="latestInitiatives"
+          :topicsStyles="styles.topics"
+        />
         <router-link
           v-if="totalInitiatives > initiativesToShow"
           :to="{
             path: '/buscar',
-            query: { deputy: deputy.name, author: parliamentarygroup.name },
+            query: { deputy: deputy.name, author: parliamentarygroup?.name },
           }"
-          class="c-deputy__initiatives-more u-border-link u-hide u-block@sm u-uppercase"
+          class="c-deputy__initiatives-more u-border-link u-hide@sm u-uppercase"
           >Ver todas
         </router-link>
-      </div>
-      <results
-        layout="extended"
-        :initiatives="latestInitiatives"
-        :topicsStyles="styles.topics"
-      />
-      <router-link
-        v-if="totalInitiatives > initiativesToShow"
-        :to="{
-          path: '/buscar',
-          query: { deputy: deputy.name, author: parliamentarygroup.name },
-        }"
-        class="c-deputy__initiatives-more u-border-link u-hide@sm u-uppercase"
-        >Ver todas
-      </router-link>
-    </div>
-    <div class="o-container" v-else>
-      <message type="info" icon>
-        No se han encontrado iniciativas para este diputado/a
-      </message>
-    </div>
+      </template>
+      <template v-else>
+        <message type="info" icon>
+          No se han encontrado iniciativas para este diputado/a
+        </message>
+      </template>
+    </AsyncSection>
+
     <save-alert
       v-if="use_alerts"
       :searchparams="{ deputy: deputy.name }"
@@ -206,11 +213,8 @@
 
 <script setup>
 definePageMeta({ name: 'deputy' });
-import { ref, computed, onBeforeMount } from "vue";
-import { storeToRefs } from "pinia";
-import { useRoute, useRouter } from "vue-router";
-import { useParliamentStore } from "@/stores/parliament";
-import { useElementSize } from "@vueuse/core";
+import { computed } from "vue";
+import { useRoute } from "vue-router";
 
 import Footprint from "@/components/Footprint.vue";
 import CongressLink from "@/components/CongressLink.vue";
@@ -223,38 +227,29 @@ import SaveAlert from "@/components/SaveAlert.vue";
 import SocialIcon from "@/components/SocialIcon.vue";
 import FootprintRangeChart from "@/components/FootprintRangeChart.vue";
 import Tooltip from "@/components/Tooltip.vue";
-import api from "@/api";
+import AsyncSection from "@/components/AsyncSection.vue";
 import config from "@/config";
 
 const route = useRoute();
-const router = useRouter();
+const { $api } = useNuxtApp();
 
-const store = useParliamentStore();
-const { allTopics, footprintRange, allParliamentaryGroups } =
-  storeToRefs(store);
+// Reference data (blocking SSR — needed for footprintByTopics computed)
+const { data: allTopics } = await useTopics();
+const { data: allParliamentaryGroups } = await useParliamentaryGroups();
+const { data: footprintRange } = await useFootprintRange();
+await useDeputies(); // cache deputies for Barchart child
 
-await Promise.all([
-  useAsyncData('topics', () => store.getTopics(), {
-    getCachedData: (key, nuxtApp) =>
-      store.allTopics.length ? store.allTopics : nuxtApp.payload.data[key],
-  }),
-  useAsyncData('parliamentary-groups', () => store.getParliamentaryGroups(), {
-    getCachedData: (key, nuxtApp) =>
-      store.allParliamentaryGroups.length ? store.allParliamentaryGroups : nuxtApp.payload.data[key],
-  }),
-  useAsyncData('deputies', () => store.getDeputies(), {
-    getCachedData: (key, nuxtApp) =>
-      store.allDeputies.length ? store.allDeputies : nuxtApp.payload.data[key],
-  }),
-  useAsyncData('footprint-range', () => store.getFootprintRange()),
-]);
+// Fetch the main entity via SSR so meta tags have data during server render
+const { data: deputy, error: deputyError } = await useAsyncData(
+  () => `deputy-${route.params.id}`,
+  () => $api.getDeputy(route.params.id),
+  { getCachedData: getCachedPayload },
+);
+if (deputyError.value || !deputy.value) {
+  throw createError({ statusCode: 404, statusMessage: 'Diputado no encontrado', fatal: true });
+}
 
-const deputy = ref(null);
-const parliamentarygroup = ref(null);
-const latestInitiatives = ref(null);
-const totalInitiatives = ref(null);
 const initiativesToShow = 6;
-const errors = ref(null);
 const use_alerts = config.USE_ALERTS;
 const styles = config.STYLES;
 
@@ -263,30 +258,34 @@ const headTitle = computed(() => {
     ? `${deputy.value.name} - Qué hacen los diputados`
     : "Qué hacen los diputados";
 });
+const parliamentarygroup = computed(() =>
+  allParliamentaryGroups.value.find(
+    (pg) => pg.shortname === deputy.value?.parliamentarygroup
+  ) ?? null
+);
 
 const footprintByTopics = computed(() => {
-  if (deputy.value) {
-    const deputyFootprintByTopic = deputy.value.footprint_by_topics
-      .filter((item) =>
-        allTopics.value.some((topic) => topic.name === item.name)
-      )
-      .filter((item) => item.score > 0)
-      .slice(0, 5)
-      .map((item) => {
-        const topic = footprintRange.value.find(
-          (topic) => topic.name === item.name
-        );
-        return {
-          ...item,
-          max: topic?.deputy?.max.score ?? 100,
-          min: topic?.deputy?.min.score ?? 0,
-        };
-      });
-
-    return deputyFootprintByTopic;
-  }
-  return [];
+  if (!deputy.value) return [];
+  return deputy.value.footprint_by_topics
+    .filter((item) => allTopics.value.some((t) => t.name === item.name))
+    .filter((item) => item.score > 0)
+    .slice(0, 5)
+    .map((item) => {
+      const topic = footprintRange.value.find((t) => t.name === item.name);
+      return {
+        ...item,
+        max: topic?.deputy?.max.score ?? 100,
+        min: topic?.deputy?.min.score ?? 0,
+      };
+    });
 });
+
+const groupColor = computed(
+  () =>
+    (deputy.value?.party_name &&
+      config.STYLES.parties[deputy.value.party_name]?.color) ??
+    '#efca53'
+);
 
 useSeoMeta({
   title: () => headTitle.value,
@@ -302,45 +301,27 @@ const isBirthday = () => {
   );
 };
 
-const groupColor = computed(() => {
-  return (
-    (deputy.value.party_name &&
-      config.STYLES.parties[deputy.value.party_name]?.color) ??
-    "#efca53"
-  );
-});
+const getLegislatures = () => 'Legislaturas ' + deputy.value.legislatures;
 
-const getDeputy = async () => {
-  api
-    .getDeputy(route.params.id)
-    .then((response) => {
-      deputy.value = response;
-      parliamentarygroup.value = allParliamentaryGroups.value.find(
-        (allPG) => allPG.shortname === deputy.value.parliamentarygroup
-      );
-      getLatestInitiatives();
-    })
-    .catch((error) => {
-      errors.value = error;
-      router.push({ name: "Page404" });
+// ── Lazy client-side fetch ───────────────────────────────────────────────────
+
+const { data: initiativesData, status: initiativesStatus } = useAsyncData(
+  () => `deputy-initiatives-${route.params.id}`,
+  async () => {
+    const response = await $api.getInitiatives({
+      deputy: deputy.value.name,
+      per_page: initiativesToShow,
     });
-};
-const getLatestInitiatives = () => {
-  api
-    .getInitiatives({ deputy: deputy.value.name, per_page: initiativesToShow })
-    .then((response) => {
-      if (response.initiatives) {
-        latestInitiatives.value = response.initiatives;
-        totalInitiatives.value = response.query_meta.total;
-      }
-    })
-    .catch((error) => (errors.value = error));
-};
-const getLegislatures = () => {
-  return "Legislaturas " + deputy.value.legislatures;
-};
+    return {
+      initiatives: response.initiatives ?? [],
+      total: response.query_meta?.total ?? 0,
+    };
+  },
+  { lazy: true, server: false, default: () => ({ initiatives: [], total: 0 }) }
+);
 
-onBeforeMount(getDeputy);
+const latestInitiatives = computed(() => initiativesData.value.initiatives);
+const totalInitiatives = computed(() => initiativesData.value.total);
 </script>
 
 <style lang="scss" scoped>

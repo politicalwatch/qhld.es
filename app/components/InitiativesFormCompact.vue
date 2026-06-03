@@ -32,7 +32,7 @@
             deselectLabel="Pulsa para deseleccionar"
             v-model="formData.author"
             :options="
-              store.getAllParliamentaryGroupsWithGoverment.map(
+              ['Gobierno', ...allParliamentaryGroups].map(
                 (group) => group.name || group
               )
             "
@@ -53,10 +53,8 @@
 
 <script setup>
 import { toRefs } from "vue";
-import { storeToRefs } from "pinia";
 import { useRouter } from "vue-router";
 import Multiselect from "vue-multiselect";
-import { useParliamentStore } from "@/stores/parliament";
 
 const props = defineProps({
   formData: Object,
@@ -65,8 +63,8 @@ const { formData } = toRefs(props);
 
 const router = useRouter();
 
-const store = useParliamentStore();
-const { allTopics } = storeToRefs(store);
+const { data: allTopics } = useTopics();
+const { data: allParliamentaryGroups } = useParliamentaryGroups();
 
 const getResults = () => {
   router.push({ path: "/buscar", query: { ...formData.value } });

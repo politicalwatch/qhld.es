@@ -107,39 +107,45 @@
         </p>
       </div>
 
-      <div
-        v-if="latestInitiatives && latestInitiatives.length"
+      <!-- Latest initiatives (lazy-loaded) -->
+      <AsyncSection
+        :status="initiativesStatus"
+        loading-title="Cargando iniciativas"
+        loading-subtitle="Puede llevar unos segundos"
+        error-message="No se pudieron cargar las iniciativas."
         class="o-container o-section"
       >
-        <div class="c-parliamentarygroup__initiatives-header">
-          <h2 class="c-parliamentarygroup__title u-margin-bottom-4 u-uppercase">
-            Últimas iniciativas
-          </h2>
+        <div v-if="latestInitiatives.length" class="o-container o-section">
+          <div class="c-parliamentarygroup__initiatives-header">
+            <h2 class="c-parliamentarygroup__title u-margin-bottom-4 u-uppercase">
+              Últimas iniciativas
+            </h2>
+            <router-link
+              v-if="totalInitiatives > initiativesToShow"
+              :to="{
+                path: '/buscar',
+                query: { author: parliamentarygroup.name },
+              }"
+              class="c-parliamentarygroup__initiatives-more u-border-link u-hide u-block@sm u-uppercase"
+              >Ver todas
+            </router-link>
+          </div>
+          <results
+            layout="extended"
+            :initiatives="latestInitiatives"
+            :topicsStyles="topicsStyles"
+          />
           <router-link
             v-if="totalInitiatives > initiativesToShow"
             :to="{
               path: '/buscar',
               query: { author: parliamentarygroup.name },
             }"
-            class="c-parliamentarygroup__initiatives-more u-border-link u-hide u-block@sm u-uppercase"
+            class="c-parliamentarygroup__initiatives-more u-border-link u-hide@sm u-uppercase"
             >Ver todas
           </router-link>
         </div>
-        <results
-          layout="extended"
-          :initiatives="latestInitiatives"
-          :topicsStyles="topicsStyles"
-        />
-        <router-link
-          v-if="totalInitiatives > initiativesToShow"
-          :to="{
-            path: '/buscar',
-            query: { author: parliamentarygroup.name },
-          }"
-          class="c-parliamentarygroup__initiatives-more u-border-link u-hide@sm u-uppercase"
-          >Ver todas
-        </router-link>
-      </div>
+      </AsyncSection>
 
       <save-alert
         v-if="use_alerts"
@@ -168,9 +174,8 @@
 
 <script setup>
 definePageMeta({ name: 'parliamentarygroup' });
-import { ref, computed, watch, onMounted } from "vue";
-import { storeToRefs } from "pinia";
-import { useRoute, useRouter } from "vue-router";
+import { ref, computed } from "vue";
+import { useRoute } from "vue-router";
 import { useElementSize } from "@vueuse/core";
 
 import CardGrid from "@/components/CardGrid.vue";
@@ -180,36 +185,30 @@ import Gender from "@/components/Gender.vue";
 import Loader from "@/components/Loader.vue";
 import SaveAlert from "@/components/SaveAlert.vue";
 import FootprintRangeChart from "@/components/FootprintRangeChart.vue";
-import api from "@/api";
+import AsyncSection from "@/components/AsyncSection.vue";
 import config from "@/config";
-import { useParliamentStore } from "@/stores/parliament";
 
 const route = useRoute();
-const router = useRouter();
+const { $api } = useNuxtApp();
 
-const store = useParliamentStore();
-const { allTopics, footprintRange } = storeToRefs(store);
+// Reference data (blocking SSR)
+const { data: allTopics } = await useTopics();
+const { data: allDeputies } = await useDeputies();
+const { data: footprintRange } = await useFootprintRange();
 
-await Promise.all([
-  useAsyncData('topics', () => store.getTopics(), {
-    getCachedData: (key, nuxtApp) =>
-      store.allTopics.length ? store.allTopics : nuxtApp.payload.data[key],
-  }),
-  useAsyncData('deputies', () => store.getDeputies(), {
-    getCachedData: (key, nuxtApp) =>
-      store.allDeputies.length ? store.allDeputies : nuxtApp.payload.data[key],
-  }),
-  useAsyncData('footprint-range', () => store.getFootprintRange()),
-]);
+// Fetch the main entity via SSR so meta tags have data during server render
+const { data: parliamentarygroup, error: groupError } = await useAsyncData(
+  () => `group-${route.params.id}`,
+  () => $api.getGroup(route.params.id),
+  { getCachedData: getCachedPayload },
+);
+if (groupError.value || !parliamentarygroup.value) {
+  throw createError({ statusCode: 404, statusMessage: 'Grupo parlamentario no encontrado', fatal: true });
+}
 
 const use_alerts = config.USE_ALERTS;
 const topicsStyles = config.STYLES.topics;
-
-const parliamentarygroup = ref(null);
-const latestInitiatives = ref([]);
-const totalInitiatives = ref(null);
 const initiativesToShow = 6;
-const errors = ref([]);
 
 const footprintRangeWrapper = ref(null);
 const { width: parentWidth } = useElementSize(footprintRangeWrapper);
@@ -218,88 +217,59 @@ const headTitle = computed(() => {
   return parliamentarygroup.value?.name
     ? `${parliamentarygroup.value.name} - Qué hacen los diputados`
     : "Qué hacen los diputados";
+const deputies = computed(() => {
+  if (!parliamentarygroup.value) return [];
+  return allDeputies.value
+    .filter(
+      (d) =>
+        d.parliamentarygroup === parliamentarygroup.value.shortname && d.active
+    );
 });
 
 useHead({
   title: headTitle,
-});
-
-const deputies = computed(() => {
-  if (parliamentarygroup.value) {
-    return store
-      .getDeputiesByParliamentaryGroup(parliamentarygroup.value.shortname)
-      .filter((deputy) => deputy.active)
-      .map((deputy) => deputy);
-  }
-  return [];
-});
-
 const footprintByTopics = computed(() => {
-  if (parliamentarygroup.value) {
-    const parliamentarygroupFootprintByTopic =
-      parliamentarygroup.value.footprint_by_topics
-        .filter((item) =>
-          allTopics.value.some((topic) => topic.name === item.name)
-        )
-        .filter((item) => item.score > 0)
-        .slice(0, 5)
-        .map((item) => {
-          const topic = footprintRange.value.find(
-            (topic) => topic.name === item.name
-          );
-          return {
-            ...item,
-            max: topic?.parliamentarygroup?.max.score ?? 100,
-            min: topic?.parliamentarygroup?.min.score ?? 0,
-          };
-        });
-
-    return parliamentarygroupFootprintByTopic;
-  }
-  return [];
+  if (!parliamentarygroup.value) return [];
+  return parliamentarygroup.value.footprint_by_topics
+    .filter((item) => allTopics.value.some((t) => t.name === item.name))
+    .filter((item) => item.score > 0)
+    .slice(0, 5)
+    .map((item) => {
+      const topic = footprintRange.value.find((t) => t.name === item.name);
+      return {
+        ...item,
+        max: topic?.parliamentarygroup?.max.score ?? 100,
+        min: topic?.parliamentarygroup?.min.score ?? 0,
+      };
+    });
 });
 
-const getParliamentaryGroup = () => {
-  api
-    .getGroup(route.params.id)
-    .then((response) => {
-      parliamentarygroup.value = response;
-      getLatestInitiatives();
-    })
-    .catch((error) => {
-      errors.value.push(error);
-      router.push({ name: "Page404", params: { 0: "404" } });
-    });
-};
+});
 
-const getLatestInitiatives = () => {
-  api
-    .getInitiatives({
+});
+
+const calculatePercentage = (value) =>
+  Math.round((value / parliamentarygroup.value.composition.deputies) * 100);
+
+// ── Lazy client-side fetch ───────────────────────────────────────────────────
+
+const { data: initiativesData, status: initiativesStatus } = useAsyncData(
+  () => `group-initiatives-${route.params.id}`,
+  async () => {
+    const response = await $api.getInitiatives({
       author: parliamentarygroup.value.name,
       per_page: initiativesToShow,
-    })
-    .then((response) => {
-      if (response.initiatives) {
-        latestInitiatives.value = response.initiatives;
-        totalInitiatives.value = response.query_meta.total;
-      }
-    })
-    .catch((error) => errors.value.push(error));
-};
+    });
+    return {
+      initiatives: response.initiatives ?? [],
+      total: response.query_meta?.total ?? 0,
+    };
+  },
+  { lazy: true, server: false, default: () => ({ initiatives: [], total: 0 }) }
+);
 
-const calculatePercentage = (value) => {
-  return Math.round(
-    (value / parliamentarygroup.value.composition.deputies) * 100
-  );
-};
-
-onMounted(() => {
-  getParliamentaryGroup();
-});
-
-watch(route, () => {
-  getParliamentaryGroup();
-});
+const latestInitiatives = computed(() => initiativesData.value.initiatives);
+const totalInitiatives = computed(() => initiativesData.value.total);
 </script>
 
 <style lang="scss" scoped>

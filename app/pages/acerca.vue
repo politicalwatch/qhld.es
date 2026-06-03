@@ -156,18 +156,9 @@
 
 <script setup>
 definePageMeta({ name: 'about' });
-import { storeToRefs } from "pinia";
-
 import PageHeader from "@/components/PageHeader.vue";
-import { useParliamentStore } from "@/stores/parliament";
 
-const store = useParliamentStore();
-const { allTopics } = storeToRefs(store);
-
-await useAsyncData('topics', () => store.getTopics(), {
-  getCachedData: (key, nuxtApp) =>
-    store.allTopics.length ? store.allTopics : nuxtApp.payload.data[key],
-});
+const { data: allTopics } = await useTopics();
 </script>
 
 <style scoped lang="scss">
