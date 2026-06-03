@@ -9,7 +9,7 @@
     <div v-if="layout == 'large'" class="c-parliamentary_group_card__wrapper">
       <h1 class="u-uppercase">{{ getGroupName() }}</h1>
       <h3 class="u-uppercase">
-        <Icon icon="mdi:person" class="c-icon--secondary c-icon--white" />{{
+        <Icon name="mdi:person" class="c-icon--secondary c-icon--white" />{{
           parliamentaryGroup.composition.deputies
         }}
         Diputados/as
