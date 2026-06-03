@@ -111,6 +111,11 @@
 
 <script setup>
 definePageMeta({ name: 'home' });
+useSeoMeta({
+  title: 'Inicio',
+  ogTitle: 'Inicio',
+  ogType: 'website',
+});
 import { ref, computed } from "vue";
 
 import config from "@/config";

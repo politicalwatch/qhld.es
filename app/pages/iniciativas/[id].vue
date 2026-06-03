@@ -133,26 +133,27 @@ if (initiativeError.value || !initiative.value) {
 const styles = config.STYLES;
 const getDeputyByName = useDeputyByName();
 
-
-const headTitle = computed(() => {
-  return initiative.value?.title
-    ? `${initiative.value.title} - Qué hacen los diputados`
-    : "Qué hacen los diputados";
-});
-
-useHead({
-  title: headTitle,
 const formattedDate = computed(() => {
   if (!initiative.value?.created) return '';
   return format(new Date(initiative.value.created), "dd/MM/y");
 });
 
-const dataLoaded = computed(() => {
-  return Object.keys(initiative.value).length && allTopics.value.length > 0;
+// SSR-ready meta — initiative data is available at server render time
+const initiativeDescription = `${initiative.value.initiative_type_alt ?? ''} · ${initiative.value.reference ?? ''} · Presentada el ${formattedDate.value}. Estado: ${initiative.value.status ?? ''}.`;
+useSeoMeta({
+  title: initiative.value.title,
+  ogTitle: initiative.value.title,
+  description: initiativeDescription,
+  ogDescription: initiativeDescription,
+  ogType: 'article',
 });
 
-const formattedDate = computed(() => {
-  return format(new Date(initiative.value.created), "dd/MM/y");
+defineOgImage('Initiative', {
+  title: initiative.value.title,
+  initiativeType: initiative.value.initiative_type_alt ?? '',
+  reference: initiative.value.reference ?? '',
+  date: formattedDate.value,
+  status: initiative.value.status ?? '',
 });
 
 const getGroup = (parliamentary_group) => {

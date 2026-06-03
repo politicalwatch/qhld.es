@@ -24,6 +24,11 @@
 
 <script setup>
 definePageMeta({ name: 'contact' });
+useSeoMeta({
+  title: 'Contacto',
+  ogTitle: 'Contacto',
+  ogType: 'website',
+});
 import PageHeader from "@/components/PageHeader.vue";
 </script>
 

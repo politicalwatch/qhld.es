@@ -85,6 +85,11 @@
 
 <script setup>
 definePageMeta({ name: 'manifest' });
+useSeoMeta({
+  title: 'Manifiesto',
+  ogTitle: 'Manifiesto',
+  ogType: 'website',
+});
 import PageHeader from "@/components/PageHeader.vue";
 </script>
 

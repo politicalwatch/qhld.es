@@ -253,11 +253,6 @@ const initiativesToShow = 6;
 const use_alerts = config.USE_ALERTS;
 const styles = config.STYLES;
 
-const headTitle = computed(() => {
-  return deputy.value
-    ? `${deputy.value.name} - Qué hacen los diputados`
-    : "Qué hacen los diputados";
-});
 const parliamentarygroup = computed(() =>
   allParliamentaryGroups.value.find(
     (pg) => pg.shortname === deputy.value?.parliamentarygroup
@@ -287,11 +282,35 @@ const groupColor = computed(
     '#efca53'
 );
 
+// SSR-ready meta
 useSeoMeta({
-  title: () => headTitle.value,
-  ogTitle: () => headTitle.value,
-  ogImage: () => (deputy.value ? deputy.value.image : null),
+  title: deputy.value.name,
+  ogTitle: deputy.value.name,
+  description: `${deputy.value.name}, ${deputy.value.party_name ?? ''} por ${deputy.value.constituency ?? ''}. Consulta su actividad parlamentaria en el Congreso de los Diputados.`,
+  ogDescription: `${deputy.value.name}, ${deputy.value.party_name ?? ''} por ${deputy.value.constituency ?? ''}. Consulta su actividad parlamentaria en el Congreso de los Diputados.`,
+  ogType: 'profile',
 });
+
+defineOgImage('Deputy', {
+  name: deputy.value.name,
+  image: deputy.value.image,
+  party: deputy.value.party_name ?? '',
+  partyColor: config.STYLES.parties[deputy.value.party_name]?.color ?? '#efca53',
+  constituency: deputy.value.constituency ?? '',
+  footprint: deputy.value.footprint ?? 0,
+});
+
+useSchemaOrg([
+  definePerson({
+    name: deputy.value.name,
+    image: deputy.value.image,
+    jobTitle: deputy.value.public_position?.[0] ?? 'Diputado/a',
+    memberOf: deputy.value.party_name
+      ? { '@type': 'Organization', name: deputy.value.party_name }
+      : undefined,
+    url: deputy.value.url,
+  }),
+]);
 
 const isBirthday = () => {
   const date = new Date(deputy.value.birthdate);

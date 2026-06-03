@@ -207,6 +207,12 @@
 
 <script setup>
 definePageMeta({ name: 'legalnotice' });
+useSeoMeta({
+  title: 'Aviso legal',
+  ogTitle: 'Aviso legal',
+  robots: 'noindex, follow',
+  ogType: 'website',
+});
 import PageHeader from "@/components/PageHeader.vue";
 </script>
 

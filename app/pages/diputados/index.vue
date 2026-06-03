@@ -49,6 +49,11 @@
 
 <script setup>
 definePageMeta({ name: 'deputies' });
+useSeoMeta({
+  title: 'Diputados',
+  ogTitle: 'Diputados',
+  ogType: 'website',
+});
 import { ref, computed } from "vue";
 
 import DeputiesForm from "@/components/DeputiesForm.vue";

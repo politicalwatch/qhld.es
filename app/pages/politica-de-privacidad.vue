@@ -303,6 +303,12 @@
 
 <script setup>
 definePageMeta({ name: 'privacypolicy' });
+useSeoMeta({
+  title: 'Política de privacidad',
+  ogTitle: 'Política de privacidad',
+  robots: 'noindex, follow',
+  ogType: 'website',
+});
 import PageHeader from "@/components/PageHeader.vue";
 </script>
 

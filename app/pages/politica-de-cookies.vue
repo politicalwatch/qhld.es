@@ -74,6 +74,12 @@
 
 <script setup>
 definePageMeta({ name: 'cookiepolicy' });
+useSeoMeta({
+  title: 'Política de cookies',
+  ogTitle: 'Política de cookies',
+  robots: 'noindex, follow',
+  ogType: 'website',
+});
 import PageHeader from "@/components/PageHeader.vue";
 </script>
 

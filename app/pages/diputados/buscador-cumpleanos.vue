@@ -21,6 +21,11 @@
 
 <script setup>
 definePageMeta({ name: 'deputies-birthday-search' });
+useSeoMeta({
+  title: 'Buscador de cumpleaños',
+  ogTitle: 'Buscador de cumpleaños',
+  ogType: 'website',
+});
 import { ref, computed } from "vue";
 
 import DeputiesBirthdayForm from "@/components/DeputiesBirthdayForm.vue";

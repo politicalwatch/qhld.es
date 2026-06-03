@@ -213,10 +213,6 @@ const initiativesToShow = 6;
 const footprintRangeWrapper = ref(null);
 const { width: parentWidth } = useElementSize(footprintRangeWrapper);
 
-const headTitle = computed(() => {
-  return parliamentarygroup.value?.name
-    ? `${parliamentarygroup.value.name} - Qué hacen los diputados`
-    : "Qué hacen los diputados";
 const deputies = computed(() => {
   if (!parliamentarygroup.value) return [];
   return allDeputies.value
@@ -226,8 +222,6 @@ const deputies = computed(() => {
     );
 });
 
-useHead({
-  title: headTitle,
 const footprintByTopics = computed(() => {
   if (!parliamentarygroup.value) return [];
   return parliamentarygroup.value.footprint_by_topics
@@ -244,8 +238,20 @@ const footprintByTopics = computed(() => {
     });
 });
 
+// SSR-ready meta
+const deputyCount = parliamentarygroup.value.composition?.deputies ?? 0;
+useSeoMeta({
+  title: parliamentarygroup.value.name,
+  ogTitle: parliamentarygroup.value.name,
+  description: `Grupo parlamentario ${parliamentarygroup.value.name}. ${deputyCount} diputados/as. Consulta su actividad en el Congreso de los Diputados.`,
+  ogDescription: `Grupo parlamentario ${parliamentarygroup.value.name}. ${deputyCount} diputados/as. Consulta su actividad en el Congreso de los Diputados.`,
+  ogType: 'website',
 });
 
+defineOgImage('Group', {
+  name: parliamentarygroup.value.name,
+  groupId: parliamentarygroup.value.id,
+  deputyCount,
 });
 
 const calculatePercentage = (value) =>

@@ -21,6 +21,23 @@ import config from "@/config";
 const MENU = config.MENU;
 const DISCLAIMER = config.DISCLAIMER;
 const LOGO = config.LOGO;
+
+// Site-wide default OG image — overridden per-page by detail pages
+defineOgImage('Default');
+
+// Global Schema.org — Organisation + WebSite for all pages
+useSchemaOrg([
+  defineOrganization({
+    name: 'Qué hacen los diputados',
+    url: 'https://www.quehacenlosdiputados.es',
+    logo: '/img/logo.svg',
+    sameAs: ['https://twitter.com/QHLD_'],
+  }),
+  defineWebSite({
+    name: 'Qué hacen los diputados',
+    description: 'Que todos los días sean de puertas abiertas en el Congreso de los Diputados',
+  }),
+]);
 </script>
 
 <style lang="scss">

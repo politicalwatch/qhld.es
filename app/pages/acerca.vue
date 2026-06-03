@@ -156,6 +156,11 @@
 
 <script setup>
 definePageMeta({ name: 'about' });
+useSeoMeta({
+  title: 'Acerca de',
+  ogTitle: 'Acerca de',
+  ogType: 'website',
+});
 import PageHeader from "@/components/PageHeader.vue";
 
 const { data: allTopics } = await useTopics();

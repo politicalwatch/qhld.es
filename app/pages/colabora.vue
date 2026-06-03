@@ -130,6 +130,11 @@
 
 <script setup>
 definePageMeta({ name: 'collaborate' });
+useSeoMeta({
+  title: 'Colabora',
+  ogTitle: 'Colabora',
+  ogType: 'website',
+});
 import PageHeader from "@/components/PageHeader.vue";
 </script>
 

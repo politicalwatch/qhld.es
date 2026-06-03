@@ -244,10 +244,25 @@ const credits = {
 
 const hasImage = computed(() => topic.value ? TOPICS_WITH_IMAGE.has(topic.value.id) : false);
 
-useHead({
-  title: headTitle,
+// SSR-ready meta — topic data is available at server render time
+const rawDesc = topic.value.description?.[0] ?? '';
+const topicDescription = rawDesc.length > 160
+  ? rawDesc.slice(0, 160).replace(/\s+\S*$/, '') + '…'
+  : rawDesc;
+useSeoMeta({
+  title: topic.value.name,
+  ogTitle: topic.value.name,
+  description: topicDescription || `Temática ${topic.value.name}.`,
+  ogDescription: topicDescription || `Temática ${topic.value.name}.`,
+  ogType: 'website',
 });
 
+defineOgImage('Topic', {
+  name: topic.value.name,
+  description: topicDescription,
+  topicId: topic.value.id,
+  topicColor: config.STYLES.topics[topic.value.name]?.color ?? '#A3D5C8',
+});
 
 // ── Lazy client-side fetches ────────────────────────────────────────────────
 

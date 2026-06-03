@@ -250,6 +250,11 @@
 
 <script setup>
 definePageMeta({ name: 'footprint' });
+useSeoMeta({
+  title: 'Índice de actividad parlamentaria',
+  ogTitle: 'Índice de actividad parlamentaria',
+  ogType: 'website',
+});
 import PageHeader from "@/components/PageHeader.vue";
 import ResponsiveTable from "@/components/ResponsiveTable.vue";
 

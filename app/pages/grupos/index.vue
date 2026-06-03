@@ -19,6 +19,11 @@
 
 <script setup>
 definePageMeta({ name: 'parliamentarygroups' });
+useSeoMeta({
+  title: 'Grupos parlamentarios',
+  ogTitle: 'Grupos parlamentarios',
+  ogType: 'website',
+});
 import CardGrid from "@/components/CardGrid.vue";
 import Loader from "@/components/Loader.vue";
 import PageHeader from "@/components/PageHeader.vue";

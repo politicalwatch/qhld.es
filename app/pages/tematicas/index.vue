@@ -21,6 +21,11 @@
 
 <script setup>
 definePageMeta({ name: 'topics' });
+useSeoMeta({
+  title: 'Temáticas',
+  ogTitle: 'Temáticas',
+  ogType: 'website',
+});
 import { computed } from "vue";
 
 import PageHeader from "@/components/PageHeader.vue";

@@ -17,8 +17,26 @@ const svgoConfig = {
 export default defineNuxtConfig({
   ssr: true,
 
+  site: {
+    url: process.env.BASE_URL || 'https://www.quehacenlosdiputados.es',
+    name: 'Qué hacen los diputados',
+    defaultLocale: 'es',
+    description: 'Que todos los días sean de puertas abiertas en el Congreso de los Diputados',
+  },
+
   app: {
     pageTransition: { name: 'page', mode: 'out-in' },
+    head: {
+      htmlAttrs: { lang: 'es' },
+      link: [
+        { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
+      ],
+      meta: [
+        { name: 'twitter:card', content: 'summary_large_image' },
+        { name: 'twitter:site', content: '@QHLD_' },
+        { name: 'twitter:creator', content: '@QHLD_' },
+      ],
+    },
   },
   runtimeConfig: {
     public: {
