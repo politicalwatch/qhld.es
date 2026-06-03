@@ -3,7 +3,8 @@ import { defineEventHandler } from 'h3';
 /**
  * Dynamic sitemap URL source for @nuxtjs/sitemap.
  * Returns deputies, parliamentary groups, and topics.
- * Initiatives are excluded due to volume.
+ * Recent initiatives (~2,000 newest) are handled by the sibling initiatives.js source.
+ * Full initiative inclusion is deferred to the FastAPI migration (slim endpoint).
  */
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig(event);

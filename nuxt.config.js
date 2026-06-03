@@ -40,7 +40,7 @@ export default defineNuxtConfig({
   },
 
   sitemap: {
-    sources: ['/api/__sitemap__/urls'],
+    sources: ['/api/__sitemap__/urls', '/api/__sitemap__/initiatives'],
   },
 
   runtimeConfig: {
