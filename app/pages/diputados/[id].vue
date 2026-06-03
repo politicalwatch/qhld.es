@@ -250,7 +250,7 @@ if (deputyError.value || !deputy.value) {
 }
 
 const initiativesToShow = 6;
-const use_alerts = config.USE_ALERTS;
+const { useAlerts: use_alerts } = useRuntimeConfig().public;
 const styles = config.STYLES;
 
 const parliamentarygroup = computed(() =>

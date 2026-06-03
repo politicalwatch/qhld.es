@@ -141,7 +141,7 @@ if (topicError.value || !topic.value) {
   throw createError({ statusCode: 404, statusMessage: 'Temática no encontrada', fatal: true });
 }
 
-const use_alerts = config.USE_ALERTS;
+const { useAlerts: use_alerts } = useRuntimeConfig().public;
 const styles = config.STYLES.topics;
 const credits = {
   democracia: {

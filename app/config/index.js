@@ -1,14 +1,4 @@
 export default {
-  SHORTNAME: import.meta.env.VITE_VUE_APP_SHORTNAME || "qhld",
-  BACKEND_URL:
-    import.meta.env.VITE_VUE_APP_BACKEND_URL || "http://localhost:5000",
-  HOMEBUILDER_URL:
-    import.meta.env.VITE_VUE_APP_HOMEBUILDER_URL ||
-    "https://homebuilder.quehacenlosdiputados.es",
-  GOOGLE_ANALYTICS: import.meta.env.VUE_APP_GOOGLE_ANALYTICS || "XXXXXXXXXXXX",
-  USE_ALERTS: import.meta.env.VITE_VUE_APP_USE_ALERTS === "true",
-  KNOWLEDGEBASE: import.meta.env.VITE_KNOWLEDGEBASE || "politicas",
-  SCANNER_HELPTEXT: import.meta.env.VUE_APP_SCANNER_HELPTEXT || "",
   MENU: [
     {
       route: "deputies",

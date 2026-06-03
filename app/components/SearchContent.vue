@@ -72,7 +72,7 @@ const route = useRoute();
 const router = useRouter();
 
 const LIMITCSV = 20000;
-const use_alerts = config.USE_ALERTS;
+const { useAlerts: use_alerts } = useRuntimeConfig().public;
 const topicsStyles = config.STYLES.topics;
 
 const errors = ref(null);

@@ -18,7 +18,7 @@ export default defineNuxtConfig({
   ssr: true,
 
   site: {
-    url: process.env.BASE_URL || 'https://www.quehacenlosdiputados.es',
+    url: process.env.NUXT_PUBLIC_SITE_URL || 'https://www.quehacenlosdiputados.es',
     name: 'Qué hacen los diputados',
     defaultLocale: 'es',
     description: 'Que todos los días sean de puertas abiertas en el Congreso de los Diputados',
@@ -62,14 +62,14 @@ export default defineNuxtConfig({
   runtimeConfig: {
     public: {
       backendUrl:
-        process.env.VITE_VUE_APP_BACKEND_URL || "http://localhost:5000",
+        process.env.NUXT_PUBLIC_BACKEND_URL || "http://localhost:5000",
       homebuilderUrl:
-        process.env.VITE_VUE_APP_HOMEBUILDER_URL ||
+        process.env.NUXT_PUBLIC_HOMEBUILDER_URL ||
         "https://homebuilder.quehacenlosdiputados.es",
-      gaId: process.env.VITE_GA_ID || "",
-      knowledgebase: process.env.VITE_KNOWLEDGEBASE || "politicas",
-      useAlerts: process.env.VITE_VUE_APP_USE_ALERTS === "true",
-      shortname: process.env.VITE_VUE_APP_SHORTNAME || "qhld",
+      gaId: process.env.NUXT_PUBLIC_GA_ID || "",
+      knowledgebase: process.env.NUXT_PUBLIC_KNOWLEDGEBASE || "politicas",
+      useAlerts: process.env.NUXT_PUBLIC_USE_ALERTS === "true",
+      shortname: process.env.NUXT_PUBLIC_SHORTNAME || "qhld",
     },
   },
 

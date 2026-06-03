@@ -206,7 +206,7 @@ if (groupError.value || !parliamentarygroup.value) {
   throw createError({ statusCode: 404, statusMessage: 'Grupo parlamentario no encontrado', fatal: true });
 }
 
-const use_alerts = config.USE_ALERTS;
+const { useAlerts: use_alerts } = useRuntimeConfig().public;
 const topicsStyles = config.STYLES.topics;
 const initiativesToShow = 6;
 
