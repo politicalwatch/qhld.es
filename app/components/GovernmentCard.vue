@@ -16,7 +16,7 @@
   position: initial;
   width: 256px;
   height: 64px;
-  background-image: url("../assets/government-bg.jpg");
+  background-image: url("~/assets/government-bg.jpg");
   background-repeat: no-repeat;
   background-size: cover;
   margin-bottom: rem($spacer-unit);

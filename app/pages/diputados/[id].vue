@@ -536,7 +536,7 @@ const totalInitiatives = computed(() => initiativesData.value.total);
   }
 
   &--birthday {
-    background: url("../assets/birthday-bg.png");
+    background: url("~/assets/birthday-bg.png");
   }
 
   &__personal-info {

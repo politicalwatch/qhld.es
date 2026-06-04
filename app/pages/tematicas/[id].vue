@@ -323,6 +323,8 @@ const { data: latestInitiatives, status: initiativesStatus } = useAsyncData(
 
 <style lang="scss">
 .c-topic {
+  width: 100%;
+
   &__header {
     position: relative;
     overflow: hidden;

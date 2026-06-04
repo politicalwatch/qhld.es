@@ -139,7 +139,7 @@ const getGroupName = () => {
 
   &__large {
     position: relative;
-    background-image: url("../assets/parliamentary-groups-bg-large.jpg");
+    background-image: url("~/assets/parliamentary-groups-bg-large.jpg");
     height: 368px;
     margin-bottom: 64px;
 
@@ -160,7 +160,7 @@ const getGroupName = () => {
   }
 
   &__medium {
-    background-image: url("../assets/parliamentary-groups-bg.jpg");
+    background-image: url("~/assets/parliamentary-groups-bg.jpg");
 
     .c-parliamentary_group_card__wrapper {
       padding: 32px;
@@ -168,7 +168,7 @@ const getGroupName = () => {
   }
 
   &__small {
-    background-image: url("../assets/parliamentary-groups-bg-small.jpg");
+    background-image: url("~/assets/parliamentary-groups-bg-small.jpg");
     width: 256px;
     height: 64px;
     position: initial;

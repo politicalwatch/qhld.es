@@ -111,7 +111,7 @@ const imgSize = computed(() => {
   @include tbody2;
 
   &--birthday {
-    background: url("../assets/birthday-bg-card.png");
+    background: url("~/assets/birthday-bg-card.png");
     background-size: contain;
     background-position: center;
   }

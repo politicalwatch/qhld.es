@@ -49,7 +49,7 @@ useSchemaOrg([
   display: flex;
   flex-direction: column;
   justify-content: center;
-  align-items: stretch;
+  align-items: center;
 }
 
 input[type="email"].swal2-input {
