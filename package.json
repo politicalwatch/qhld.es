@@ -18,7 +18,7 @@
     "@nuxt/image": "^2.0.0",
     "@nuxtjs/seo": "^5.1.3",
     "@takumi-rs/core": "^1.6.0",
-    "@vuepic/vue-datepicker": "^13.0.0",
+    "@vuepic/vue-datepicker": "^14.0.0",
     "@vueuse/core": "^14.0.0",
     "chart.js": "^4.4.4",
     "core-js": "^3.32.2",
@@ -67,5 +67,15 @@
     "> 1%",
     "last 2 versions",
     "not dead"
-  ]
+  ],
+  "allowScripts": {
+    "core-js@3.49.0": true,
+    "esbuild@0.27.7": true,
+    "esbuild@0.28.0": true,
+    "sharp@0.34.5": true,
+    "vue-demi@0.14.10": true,
+    "unrs-resolver@1.12.2": true,
+    "@parcel/watcher@2.5.6": true,
+    "fsevents@2.3.3": true
+  }
 }
