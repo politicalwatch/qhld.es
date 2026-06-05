@@ -54,7 +54,6 @@ useSeoMeta({
   ogTitle: 'Diputados',
   ogType: 'website',
 });
-import { ref, computed } from "vue";
 
 import DeputiesForm from "@/components/DeputiesForm.vue";
 import PageHeader from "@/components/PageHeader.vue";

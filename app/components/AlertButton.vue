@@ -10,7 +10,6 @@
 </template>
 
 <script setup>
-import { ref, toRefs } from "vue";
 import Swal from "sweetalert2";
 
 const props = defineProps({

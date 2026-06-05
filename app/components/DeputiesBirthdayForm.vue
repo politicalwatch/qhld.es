@@ -53,7 +53,6 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from "vue";
 import VueMultiselect from "vue-multiselect";
 
 const emit = defineEmits(["setFilters"]);

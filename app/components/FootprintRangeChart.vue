@@ -7,8 +7,6 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch, useTemplateRef } from "vue";
-import { useElementSize } from "@vueuse/core";
 import { scaleLinear, scaleBand, axisBottom, axisLeft, select } from "d3";
 
 const {

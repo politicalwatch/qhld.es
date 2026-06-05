@@ -90,7 +90,6 @@
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
 
 import VueMultiselect from "vue-multiselect";
 import FootprintInfo from "@/components/FootprintInfo.vue";

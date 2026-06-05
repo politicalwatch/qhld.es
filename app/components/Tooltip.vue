@@ -29,8 +29,6 @@
 </template>
 
 <script setup>
-import { ref, nextTick } from "vue";
-import { useElementBounding } from "@vueuse/core";
 
 const { text, position, routeLink } = defineProps({
   text: {

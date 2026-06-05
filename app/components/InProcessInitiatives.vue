@@ -32,7 +32,6 @@
 </template>
 
 <script setup>
-import { computed } from "vue";
 import { differenceInDays } from "date-fns/differenceInDays";
 
 const { initiatives, numInitiatives } = defineProps({

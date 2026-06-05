@@ -15,7 +15,6 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
 
 const { closeId, checkClosed, closeCallback } = defineProps({
   canClose: { type: Boolean, default: true },

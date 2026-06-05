@@ -28,7 +28,6 @@
 </template>
 
 <script setup>
-import { computed } from "vue";
 import { TOPICS_WITH_IMAGE, topicImageSrc } from "@/composables/useTopicImage.js";
 
 const { topic, stat } = defineProps({

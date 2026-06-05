@@ -95,7 +95,6 @@
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
 
 import Logo from "@/assets/logo.svg";
 

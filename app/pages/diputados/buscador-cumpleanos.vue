@@ -26,7 +26,6 @@ useSeoMeta({
   ogTitle: 'Buscador de cumpleaños',
   ogType: 'website',
 });
-import { ref, computed } from "vue";
 
 import DeputiesBirthdayForm from "@/components/DeputiesBirthdayForm.vue";
 import PageHeader from "@/components/PageHeader.vue";

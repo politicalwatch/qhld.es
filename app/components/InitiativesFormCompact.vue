@@ -52,8 +52,6 @@
 </template>
 
 <script setup>
-import { toRefs } from "vue";
-import { useRouter } from "vue-router";
 import Multiselect from "vue-multiselect";
 
 const props = defineProps({

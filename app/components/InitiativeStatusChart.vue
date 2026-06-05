@@ -6,7 +6,6 @@
 </template>
 
 <script setup>
-import { computed } from "vue";
 import {
   Chart,
   CategoryScale,

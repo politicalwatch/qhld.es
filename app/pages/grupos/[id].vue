@@ -174,9 +174,6 @@
 
 <script setup>
 definePageMeta({ name: 'parliamentarygroup' });
-import { ref, computed } from "vue";
-import { useRoute } from "vue-router";
-import { useElementSize } from "@vueuse/core";
 
 import CardGrid from "@/components/CardGrid.vue";
 import ParliamentaryGroupCard from "@/components/ParliamentaryGroupCard.vue";

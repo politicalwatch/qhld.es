@@ -7,7 +7,6 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, nextTick, onUnmounted, watch } from "vue";
 import { scaleLinear, axisBottom, axisLeft, select } from "d3";
 
 const { dataset, defaultHeight } = defineProps({

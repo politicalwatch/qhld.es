@@ -73,7 +73,7 @@ export default defineNuxtConfig({
     },
   },
 
-  modules: ["@nuxt/image", "@nuxt/fonts", "@nuxt/icon", "@nuxtjs/seo"],
+  modules: ["@nuxt/image", "@nuxt/fonts", "@nuxt/icon", "@nuxtjs/seo", '@vueuse/nuxt'],
 
   image: {
     domains: ["www.congreso.es"],

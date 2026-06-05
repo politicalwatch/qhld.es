@@ -33,7 +33,6 @@
 </template>
 
 <script setup>
-import { ref, toRefs, computed, watch, onMounted, onUpdated } from "vue";
 
 import InitiativeCard from "@/components/InitiativeCard.vue";
 import Loader from "@/components/Loader.vue";

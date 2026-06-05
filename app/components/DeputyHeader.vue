@@ -75,7 +75,6 @@
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
 
 import PartyLogo from "@/components/PartyLogo.vue";
 

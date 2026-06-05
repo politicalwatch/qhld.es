@@ -237,18 +237,7 @@ Since the default state is false, the chart will display the evolution of the to
 To avoid loading unused data, the dataset for the aggregated dataset is provided by the parent component when the user clicks on the relative mode switch
 */
 
-import {
-  ref,
-  computed,
-  onMounted,
-  nextTick,
-  onUnmounted,
-  watch,
-  useTemplateRef,
-} from "vue";
-import { useElementSize } from "@vueuse/core";
 import { setWeek, startOfWeek, endOfWeek, format } from "date-fns";
-import { useRouter } from "vue-router";
 import {
   min,
   max,

@@ -98,8 +98,6 @@
 
 <script setup>
 definePageMeta({ name: 'initiative' });
-import { computed } from "vue";
-import { useRoute } from "vue-router";
 
 import ParliamentaryGroupCard from "@/components/ParliamentaryGroupCard.vue";
 import GovernmentCard from "@/components/GovernmentCard.vue";

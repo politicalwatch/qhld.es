@@ -31,8 +31,6 @@
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
-import { useElementSize } from "@vueuse/core";
 
 import FootprintRangeChart from "@/components/FootprintRangeChart.vue";
 

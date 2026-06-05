@@ -92,7 +92,6 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
 import qs from "qs";
 
 import ODSIcon from "@/assets/svg/icon-ods.svg";

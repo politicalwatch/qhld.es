@@ -111,8 +111,6 @@
 
 <script setup>
 definePageMeta({ name: 'topic' });
-import { computed } from "vue";
-import { useRoute } from "vue-router";
 
 import Results from "@/components/Results.vue";
 import CardGrid from "@/components/CardGrid.vue";

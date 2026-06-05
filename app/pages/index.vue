@@ -116,7 +116,6 @@ useSeoMeta({
   ogTitle: 'Inicio',
   ogType: 'website',
 });
-import { ref, computed } from "vue";
 
 import config from "@/config";
 import ImageHeader from "@/components/ImageHeader.vue";

@@ -17,7 +17,6 @@
 </template>
 
 <script setup>
-import { computed } from "vue";
 
 import ParliamentaryGroupCard from "@/components/ParliamentaryGroupCard.vue";
 import DeputyCard from "@/components/DeputyCard.vue";

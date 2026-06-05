@@ -56,8 +56,6 @@
 </template>
 
 <script setup>
-import { ref, computed, nextTick, onUpdated, onMounted, watch } from "vue";
-import { useRoute, useRouter } from "vue-router";
 import VueScrollTo from "vue-scrollto";
 
 import config from "@/config";

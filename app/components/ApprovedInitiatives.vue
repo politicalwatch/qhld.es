@@ -34,7 +34,6 @@
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
 
 import config from "@/config";
 import Results from "@/components/Results.vue";

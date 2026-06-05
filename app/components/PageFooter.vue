@@ -164,7 +164,6 @@
 </template>
 
 <script setup>
-import { defineAsyncComponent, shallowRef } from "vue";
 import VueCookieAcceptDecline from "vue-cookie-accept-decline";
 import "vue-cookie-accept-decline/dist/vue-cookie-accept-decline.css";
 import { addGtag, consent } from "vue-gtag";

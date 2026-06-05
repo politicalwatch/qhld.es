@@ -213,8 +213,6 @@
 
 <script setup>
 definePageMeta({ name: 'deputy' });
-import { computed } from "vue";
-import { useRoute } from "vue-router";
 
 import Footprint from "@/components/Footprint.vue";
 import CongressLink from "@/components/CongressLink.vue";

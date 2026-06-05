@@ -53,7 +53,6 @@
 </template>
 
 <script setup>
-import { computed } from "vue";
 
 import config from "@/config";
 import Footprint from "@/components/Footprint.vue";
