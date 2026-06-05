@@ -1,13 +1,13 @@
 <template>
   <div v-if="parties[party]" class="c-party_logo_icon" :style="getBackground">
     <figure class="c-party_logo_icon__image" :alt="'Logo de ' + getName">
-      <inline-svg :src="svg" />
+      <component :is="LogoComponent" />
     </figure>
   </div>
 </template>
 
 <script setup>
-import InlineSvg from "vue-inline-svg";
+import IconError from "@/assets/svg/icon-error.svg?component";
 
 import config from "@/config";
 
@@ -17,18 +17,23 @@ const { party } = defineProps({
 
 const parties = config.STYLES.parties;
 
-const svg = computed(() => {
-  let svg = "";
-  try {
-    if (party in parties) {
-      svg = `../assets/party_logos/icon/${parties[party].logo}.svg`;
-    } else {
-      svg = "../assets/svg/icon-error.svg";
-    }
-  } catch (error) {
-    svg = this.icon;
-  }
-  return svg;
+// Compile-time inline SVG map — keyed by filename stem (e.g. "bng", "psoe")
+// so we don't depend on Vite's alias-resolved key format.
+const svgModules = import.meta.glob("@/assets/party_logos/icon/*.svg", {
+  query: "?component",
+  import: "default",
+  eager: true,
+});
+const logoComponents = Object.fromEntries(
+  Object.entries(svgModules).map(([path, component]) => [
+    path.split("/").pop().replace(".svg", ""),
+    component,
+  ])
+);
+
+const LogoComponent = computed(() => {
+  const logo = parties[party]?.logo;
+  return (logo && logoComponents[logo]) || IconError;
 });
 
 const getBackground = computed(() => {
