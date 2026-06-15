@@ -139,35 +139,11 @@
       </div>
     </div>
 
-    <ClientOnly>
-      <vue-cookie-accept-decline
-        :debug="false"
-        :disableDecline="false"
-        :showPostponeButton="false"
-        @clicked-accept="cookieClickedAccept"
-        @clicked-decline="cookieClickedDecline"
-        @status="cookieStatus"
-        elementId="cookiePanel"
-        ref="cookiePanel"
-        transitionName="slideFromBottom"
-        type="floating"
-      >
-        <template #message>
-          Este sitio usa cookies para asegurarte la mejor experiencia web.
-        </template>
-
-        <template #declineContent>Rechazar</template>
-        <template #acceptContent>Aceptar</template>
-      </vue-cookie-accept-decline>
-    </ClientOnly>
+    <CookieControl locale="es" />
   </footer>
 </template>
 
 <script setup>
-import VueCookieAcceptDecline from "vue-cookie-accept-decline";
-import "vue-cookie-accept-decline/dist/vue-cookie-accept-decline.css";
-import { addGtag, consent } from "vue-gtag";
-
 import LogoPW from "@/assets/logo-political-watch.svg";
 
 const DynamicLogo = shallowRef(null);
@@ -180,48 +156,13 @@ onMounted(() => {
   );
 });
 
-const cookieStatus = (val) => {
-  // console.log('Cookie status: ' + val);
-  if (val === "decline" || val == null) {
-    consent("default", {
-      ad_storage: "denied",
-      analytics_storage: "denied",
-    });
-  } else if (val === "accept") {
-    addGtag().then(() => {
-      consent("update", {
-        ad_storage: "granted",
-        analytics_storage: "granted",
-      });
-    });
-  }
-};
 
-const cookieClickedAccept = () => {
-  addGtag().then(() => {
-    consent("update", {
-      ad_storage: "granted",
-      analytics_storage: "granted",
-    });
-  });
-};
-
-const cookieClickedDecline = () => {
-  consent("default", {
-    ad_storage: "denied",
-    analytics_storage: "denied",
-  });
-};
 </script>
 
 <style scoped lang="scss">
 .c-footer {
   background-color: $secondary-dark;
   color: $white;
-
-  .cookie {
-    color: #1d1d1b;
-  }
 
   img {
     width: 200px;

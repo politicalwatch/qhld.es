@@ -66,14 +66,67 @@ export default defineNuxtConfig({
       homebuilderUrl:
         process.env.NUXT_PUBLIC_HOMEBUILDER_URL ||
         "https://homebuilder.quehacenlosdiputados.es",
-      gaId: process.env.NUXT_PUBLIC_GA_ID || "",
       knowledgebase: process.env.NUXT_PUBLIC_KNOWLEDGEBASE || "politicas",
       useAlerts: process.env.NUXT_PUBLIC_USE_ALERTS === "true",
       shortname: process.env.NUXT_PUBLIC_SHORTNAME || "qhld",
     },
   },
 
-  modules: ["@nuxt/image", "@nuxt/fonts", "@nuxt/icon", "@nuxtjs/seo", '@vueuse/nuxt'],
+  gtag: {
+    id: process.env.NUXT_PUBLIC_GA_ID,
+    initCommands: [
+      ["consent", "default", {
+        ad_storage: "denied",
+        ad_user_data: "denied",
+        ad_personalization: "denied",
+        analytics_storage: "denied",
+        wait_for_update: 500,
+      }],
+    ],
+  },
+
+  cookieControl: {
+    locales: ["es"],
+    // 6-month consent expiry (AEPD-aligned), overrides 1yr default
+    cookieExpiryOffsetMs: 1000 * 60 * 60 * 24 * 180,
+    localeTexts: {
+      es: {
+        // Override module default: removes non-compliant implied-consent sentence
+        bannerDescription: "Utilizamos cookies propias y de terceros para mostrarle la página web y comprender cómo la utiliza, con el fin de mejorar nuestros servicios. Puede aceptarlas, rechazarlas o configurar sus preferencias.",
+        // Unambiguous reject labels per AEPD (defaults: "Acepto lo necesario" / "Borrar todo")
+        decline: "Rechazar",
+        declineAll: "Rechazar todo",
+      },
+    },
+    colors: {
+      checkboxInactiveBackground: "#d0d0d0",
+      checkboxActiveBackground: "#1d1d1b",
+      barButtonHoverBackground: "#a3d5c8",
+      barButtonHoverColor: "#000",
+    },
+    cookies: {
+      necessary: [],
+      optional: [
+        {
+          id: "ga",
+          name: { es: "Google Analytics" },
+          description: { es: "Cookies de analítica. Nos ayudan a entender cómo se usa el sitio." },
+          links: { "Política de cookies": "/politica-de-cookies" },
+          targetCookieIds: ["_ga", process.env.NUXT_PUBLIC_GA_ID?.replace(/^G-/, "_ga_")].filter(Boolean),
+        },
+      ],
+    },
+  },
+
+  modules: [
+    "@nuxt/image",
+    "@nuxt/fonts",
+    "@nuxt/icon",
+    "@nuxtjs/seo",
+    '@vueuse/nuxt',
+    'nuxt-gtag',
+    '@dargmuesli/nuxt-cookie-control',
+  ],
 
   image: {
     domains: ["www.congreso.es"],
