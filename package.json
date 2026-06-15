@@ -27,7 +27,7 @@
     "date-fns": "^4.0.0",
     "js-sha1": "^0.7.0",
     "masonry-layout": "^4.2.2",
-    "nuxt": "4.4.6",
+    "nuxt": "^4.4.8",
     "pluralize": "^8.0.0",
     "qs": "^6.11.2",
     "save-svg-as-png": "^1.4.17",
