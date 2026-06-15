@@ -56,8 +56,6 @@
 </template>
 
 <script setup>
-import VueScrollTo from "vue-scrollto";
-
 import config from "@/config";
 import InitiativesForm from "@/components/InitiativesForm.vue";
 import AlertButton from "@/components/AlertButton.vue";
@@ -162,7 +160,9 @@ const getResults = (event) => {
       query_meta.value = response.query_meta;
       loadingResults.value = false;
       nextTick().then(() => {
-        VueScrollTo.scrollTo(scrollToID.value, 1500);
+        document
+          .querySelector(scrollToID.value)
+          ?.scrollIntoView({ behavior: "smooth", block: "start" });
       });
     })
     .catch((error) => (errors.value = error));
