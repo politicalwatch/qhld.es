@@ -59,7 +59,7 @@
 <script setup>
 import JsonExcel from "vue-json-excel3";
 
-const { initiatives, csvItems, canDownloadCSV, csvFields, label, buttonClass } =
+const { initiatives, csvItems, canDownloadCSV, csvFields, label } =
   defineProps({
     initiatives: {
       type: Array,
@@ -106,11 +106,7 @@ const { initiatives, csvItems, canDownloadCSV, csvFields, label, buttonClass } =
       type: String,
       default: "Descarga los datos",
     },
-    buttonClass: {
-      type: String,
-      default: "c-button--compact",
-    },
-  });
+    });
 
 const emit = defineEmits(["loadCSVItems"]);
 
@@ -136,10 +132,16 @@ const getNameFromCSV = () => {
 <style scoped lang="scss">
 .c-csv-download {
   .c-icon {
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+    vertical-align: middle;
     margin-right: 16px;
   }
 
   a {
+    display: inline-flex;
+    align-items: center;
     text-decoration: none;
 
     &:hover {
@@ -155,9 +157,5 @@ const getNameFromCSV = () => {
       fill: $neutral;
     }
   }
-}
-
-.c-button--secondary {
-  margin-right: 16px;
 }
 </style>

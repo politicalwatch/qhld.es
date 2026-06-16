@@ -71,6 +71,7 @@ const LIMITCSV = 20000;
 const { useAlerts: use_alerts } = useRuntimeConfig().public;
 const topicsStyles = config.STYLES.topics;
 
+const toast = useToast();
 const errors = ref(null);
 const initiatives = ref([]);
 const query_meta = ref({});
@@ -196,8 +197,23 @@ const loadCSVItems = (event) => {
         tags: initiative.tagged[0].tags.map((tag) => tag.tag).join(", "),
       }));
       event.target.innerText = "Descargar resultados";
+      toast.add({
+        title: "Descarga lista",
+        description: "El archivo CSV se está descargando",
+        color: "success",
+        icon: "i-lucide-check",
+      });
     })
-    .catch((error) => (errors.value = error));
+    .catch((error) => {
+      errors.value = error;
+      event.target.innerText = "Descarga los datos";
+      toast.add({
+        title: "Error en la descarga",
+        description: "Inténtalo de nuevo más tarde",
+        color: "error",
+        icon: "i-lucide-alert-circle",
+      });
+    });
 };
 
 const resetPage = () => {
