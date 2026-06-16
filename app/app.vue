@@ -55,37 +55,4 @@ useSchemaOrg([
   align-items: center;
 }
 
-input[type="email"].swal2-input {
-  width: auto;
-}
-
-.swal2-actions {
-  flex-direction: row-reverse;
-  font-family: "Fjalla One", sans-serif;
-
-  .swal2-confirm {
-    background-color: #fff;
-    border: solid 4px #1d1d1b;
-    border-radius: 0;
-    color: black;
-    text-transform: uppercase;
-    transition: all 0.15s ease-in-out;
-    &:hover {
-      background-color: black;
-      color: white;
-    }
-  }
-  .swal2-cancel {
-    background-color: transparent;
-    color: $secondary-dark;
-
-    &:hover {
-      background-color: transparent;
-      color: #8095a0;
-    }
-    &.swal2-styled:hover {
-      background-image: none !important;
-    }
-  }
-}
 </style>

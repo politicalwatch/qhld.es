@@ -4,6 +4,11 @@ export default defineAppConfig({
       primary: 'brand',
       neutral: 'zinc',
     },
+    toast: {
+      slots: {
+        root: 'qhld-toast',
+      },
+    },
     selectMenu: {
       slots: {
         base: 'qhld-select__trigger',

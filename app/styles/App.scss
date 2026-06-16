@@ -36,7 +36,12 @@
 
 .page-enter-active,
 .page-leave-active { transition: opacity 0.1s ease; }
+
 .page-enter-from,
 .page-leave-to    { opacity: 0; }
 
 .cookieControl__ModalContent li::before { content: none; }
+
+// Toast: rounded corners + remove the global ol li::before counter ("1.") that bleeds into toasts
+.qhld-toast { border-radius: rem($spacer-unit * 0.75); }
+.qhld-toast::before { content: none; }
