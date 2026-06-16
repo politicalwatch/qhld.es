@@ -35,6 +35,7 @@
 
   label {
     @include overline;
+
     font-size: rem(12px);
     display: block;
     padding-bottom: rem($spacer-unit);
@@ -100,176 +101,10 @@
 
   label {
     @include overline;
+
     font-size: rem(12px);
     display: block;
     margin-bottom: rem($spacer-unit);
-  }
-
-  &::after {
-    position: absolute;
-    content: "";
-    top: 0;
-    right: rem($spacer-unit * 2);
-    pointer-events: none;
-    width: rem($spacer-unit * 4);
-    height: rem($spacer-unit * 3);
-    background: url("../../assets/svg/icon-chevron-down.svg") no-repeat right
-      center;
-  }
-
-  .multiselect {
-    min-height: 24px;
-
-    &__select {
-      min-height: 24px;
-
-      &::before {
-        display: none;
-      }
-    }
-
-    &__single,
-    &__placeholder {
-      @include tbody;
-
-      margin: 0;
-      padding: 0;
-      color: $secondary;
-    }
-
-    &__single {
-      color: $secondary-dark;
-      padding: rem(math.div($spacer-unit, 2)) rem($spacer-unit);
-    }
-
-    &__tags {
-      border: none;
-      padding-top: 0;
-      padding-left: 0;
-      min-height: 24px;
-      background-color: transparent;
-    }
-
-    &__content {
-      ul {
-        background-color: $lightgrey;
-        li {
-          background-color: $lightgrey;
-          &::before {
-            display: none;
-          }
-        }
-      }
-    }
-
-    &__content-wrapper {
-      border: none;
-      border-radius: 0;
-      background-color: $lightgrey;
-    }
-
-    &__option {
-      @include tbody;
-
-      display: block;
-      padding: rem($spacer-unit);
-
-      &::after {
-        background-color: $completed;
-      }
-
-      &--highlight {
-        background-color: $lightgrey;
-        cursor: pointer;
-        font-weight: bold;
-        cursor: pointer;
-        color: $black;
-
-        &::after {
-          background-color: $lightgrey;
-        }
-      }
-
-      &--selected {
-        background-color: $secondary;
-
-        &::after {
-          background-color: $secondary;
-          color: $black;
-        }
-
-        span {
-          color: $black;
-        }
-      }
-
-      &--selected.multiselect__option--highlight {
-        background-color: $lightgrey;
-        font-weight: bold;
-        color: $black;
-
-        &::after {
-          background-color: $lightgrey;
-          font-weight: bold;
-        }
-      }
-    }
-
-    &__element {
-      background-color: $lightgrey;
-      margin-bottom: rem(math.div($spacer-unit, 2));
-
-      &::before {
-        display: none;
-      }
-    }
-
-    &__input {
-      margin-bottom: 0;
-      padding: 0;
-    }
-
-    &__tags-wrap {
-      line-height: 1;
-    }
-
-    &__tag {
-      border-radius: 0;
-      background-color: $white;
-      padding: rem($spacer-unit) rem($spacer-unit * 2) rem($spacer-unit)
-        rem($spacer-unit);
-      color: $secondary-dark;
-      margin-top: rem(math.div($spacer-unit, 2));
-      margin-bottom: rem(math.div(-$spacer-unit, 2));
-
-      &-icon {
-        line-height: 29px;
-        border-radius: 0;
-
-        &:hover {
-          background-color: $secondary-medium;
-          font-weight: bold;
-
-          &::after {
-            color: $white;
-          }
-        }
-
-        &::after {
-          color: $secondary-medium;
-        }
-      }
-    }
-
-    &--disabled {
-      background-color: transparent;
-
-      .multiselect {
-        &__select {
-          background-color: transparent;
-        }
-      }
-    }
   }
 
   &--disabled {
@@ -309,6 +144,7 @@
 
   label {
     @include overline;
+
     font-size: rem(12px);
     display: block;
     margin-bottom: rem($spacer-unit);
@@ -326,6 +162,159 @@
       center;
   }
 
+}
+
+// ---------------------------------------------------------------------------
+// USelectMenu hook classes
+// The trigger lives inside .c-select-label; panel/dropdown is teleported to
+// <body> by Reka UI (popper), so panel rules must be at the top level.
+// Unlayered SCSS beats Tailwind's @layer utilities → no !important needed.
+// ---------------------------------------------------------------------------
+
+// Trigger button — blends into the parent .c-select-label gray box
+.qhld-select__trigger {
+  @include tbody;
+
+  width: 100%;
+  padding: 0 rem($spacer-unit * 1.5) 0 0; // right pad clears chevron
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  min-height: auto;
+  color: $secondary-dark;
+
+  &:hover,
+  &:focus,
+  &:focus-visible {
+    background: transparent;
+    box-shadow: none;
+    outline: none;
+  }
+}
+
+.qhld-select__value {
+  color: $secondary-dark;
+}
+
+.qhld-select__placeholder {
+  @include tbody;
+
+  color: $secondary;
+}
+
+.qhld-select__chevron {
+  color: $secondary-dark;
+}
+
+// Dropdown panel — teleported to <body>, matches the gray-box aesthetic
+.qhld-select__panel {
+  background-color: $lightgrey;
+  border-radius: 0;
+
+  // One box-shadow overrides theme's ring + shadow-lg composite → no ring
+  box-shadow: 0 4px 12px rgb(0 0 0 / 12%);
+
+  // Taller cap so 4–6 options are visible (default was 15rem)
+  max-height: min(22rem, var(--reka-select-content-available-height, 22rem));
+}
+
+// Search box: .qhld-select__search lands on UInput's root wrapper
+// (.qhld-select__search > input is the actual <input> with variant:none → transparent)
+.qhld-select__search {
+  @include tbody;
+
+  display: block;
+  width: 100%;
+  margin-bottom: rem(math.div($spacer-unit, 2));
+  border: 1px solid $secondary;
+  border-radius: 0;
+  background-color: $white;
+
+  input {
+    background-color: $white;
+    padding: rem(math.div($spacer-unit, 2)) rem($spacer-unit);
+    font-size: rem(14px);
+    color: $secondary-dark;
+
+    &:focus {
+      outline: none;
+    }
+
+    &::placeholder {
+      color: $secondary;
+    }
+  }
+}
+
+.qhld-select__option {
+  @include tbody;
+
+  padding: rem($spacer-unit * 0.75) rem($spacer-unit);
+  font-size: rem(14px);
+  color: $secondary-dark;
+  border-radius: 0;
+  cursor: pointer;
+
+  // Keyboard/mouse highlight: solid $primary bg, suppress theme's ::before overlay
+  &[data-highlighted] {
+    background-color: $primary;
+    color: $secondary-dark;
+
+    &::before {
+      display: none;
+    }
+  }
+
+  // Selected item: bold weight
+  &[data-state="checked"],
+  &[aria-selected="true"] {
+    font-weight: 700;
+  }
+}
+
+.qhld-select__empty {
+  @include tbody;
+
+  padding: rem($spacer-unit) rem($spacer-unit * 2);
+  color: $secondary;
+}
+
+// Neutralise viewport dividers (virtualize:false adds divide-y)
+.qhld-select__viewport > * {
+  border: 0;
+}
+
+// Multi-select chip display (Etiquetas, Tipo in InitiativesForm)
+.qhld-select__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: rem(math.div($spacer-unit, 2));
+  padding: rem(math.div($spacer-unit, 2)) 0;
+}
+
+.qhld-select__chip {
+  @include tbody;
+
+  display: inline-flex;
+  align-items: center;
+  gap: rem(math.div($spacer-unit, 2));
+  background-color: $primary;
+  color: $secondary-dark;
+  padding: rem(math.div($spacer-unit, 2)) rem($spacer-unit);
+  font-size: rem(12px);
+  line-height: 1;
+
+  button {
+    display: inline-flex;
+    align-items: center;
+    border: 0;
+    background: transparent;
+    padding: 0;
+    cursor: pointer;
+    color: $secondary-dark;
+    line-height: 1;
+  }
 }
 
 .c-checkbox {

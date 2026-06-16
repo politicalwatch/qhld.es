@@ -9,20 +9,12 @@
       <div class="o-grid__col u-12 u-6@sm u-padding-bottom-4">
         <div class="c-select-label u-block">
           <label for="topic">Temática</label>
-          <multiselect
-            selectedLabel="Seleccionado"
-            selectLabel=""
-            deselectLabel="Pulsa para deseleccionar"
-            @select="fillSubtopicsAndTags"
-            @remove="clearSubtopicsAndTags"
+          <USelectMenu
             v-model="formData.topic"
-            :options="allTopics.map((topic) => topic.name)"
-            :allow-empty="true"
-            name="topic"
-            id="topic"
+            :items="allTopics?.map((topic) => topic.name) ?? []"
             placeholder="Todas"
-          >
-          </multiselect>
+            @update:model-value="handleTopicChange"
+          />
         </div>
       </div>
       <div class="o-grid__col u-12 u-6@sm u-padding-bottom-4">
@@ -31,23 +23,26 @@
           :class="{ 'c-select-label--disabled': !filteredTags.length }"
         >
           <label for="tags">Etiquetas</label>
-          <multiselect
-            selectedLabel="Seleccionada"
-            selectLabel=""
-            deselectLabel="Pulsa para deseleccionar"
+          <USelectMenu
             v-model="formData.tags"
-            :multiple="true"
-            :options="filteredTags"
-            :allow-empty="true"
-            :hide-selected="true"
+            multiple
+            :items="filteredTags"
             :disabled="!tagsInputEnabled"
-            :placeholder="
-              tagsInputEnabled ? 'Todas' : 'Selecciona previamente una temática'
-            "
-            name="tags"
-            id="tags"
           >
-          </multiselect>
+            <template #default>
+              <span v-if="!formData.tags || !formData.tags.length" class="qhld-select__placeholder">
+                {{ tagsInputEnabled ? 'Todas' : 'Selecciona previamente una temática' }}
+              </span>
+              <span v-else class="qhld-select__chips">
+                <span v-for="tag in formData.tags" :key="tag" class="qhld-select__chip">
+                  {{ tag }}
+                  <button type="button" aria-label="Quitar" @click.stop="removeTag(tag)">
+                    <Icon name="mdi:close" />
+                  </button>
+                </span>
+              </span>
+            </template>
+          </USelectMenu>
         </div>
       </div>
       <div class="o-grid__col u-12 u-6@sm u-padding-bottom-4">
@@ -112,18 +107,11 @@
       <div class="o-grid__col u-12 u-4@sm u-padding-bottom-4">
         <div class="c-select-label u-block">
           <label for="status">Estado</label>
-          <multiselect
-            selectedLabel="Seleccionado"
-            selectLabel=""
-            deselectLabel="Pulsa para deseleccionar"
+          <USelectMenu
             v-model="formData.status"
-            :options="allStatus"
-            :allow-empty="true"
-            name="status"
-            id="status"
+            :items="allStatus ?? []"
             placeholder="Cualquiera"
-          >
-          </multiselect>
+          />
         </div>
       </div>
     </div>
@@ -132,74 +120,53 @@
       <div class="o-grid__col u-12 u-6@sm u-padding-bottom-4">
         <div class="c-select-label u-block">
           <label for="author_deputies">Diputado/a</label>
-          <multiselect
-            selectedLabel="Seleccionado"
-            selectLabel=""
-            deselectLabel="Pulsa para deseleccionar"
+          <USelectMenu
             v-model="formData.deputy"
-            :options="getDeputies()"
-            :allow-empty="true"
-            name="deputy"
-            id="deputy"
+            :items="getDeputies()"
             placeholder="Apellidos, Nombre"
-          >
-          </multiselect>
+          />
         </div>
       </div>
       <div class="o-grid__col u-12 u-6@sm u-padding-bottom-4">
         <div class="c-select-label u-block">
           <label for="author">Grupo</label>
-          <multiselect
-            selectedLabel="Seleccionado"
-            selectLabel=""
-            deselectLabel="Pulsa para deseleccionar"
+          <USelectMenu
             v-model="formData.author"
-            :options="
-              ['Gobierno', ...allParliamentaryGroups].map(
-                (group) => group.name || group
-              )
-            "
-            :allow-empty="true"
-            name="author"
-            id="author"
+            :items="['Gobierno', ...(allParliamentaryGroups ?? [])].map((group) => group.name || group)"
             placeholder="Todos"
-          >
-          </multiselect>
+          />
         </div>
       </div>
       <div class="o-grid__col u-12 u-6@sm u-padding-bottom-4">
         <div class="c-select-label u-block">
           <label for="type">Tipo</label>
-          <multiselect
-            selectedLabel="Seleccionado"
-            selectLabel=""
-            deselectLabel="Pulsa para deseleccionar"
+          <USelectMenu
             v-model="formData.type"
-            :options="getTypes()"
-            :allow-empty="true"
-            :multiple="true"
-            name="type"
-            id="type"
-            placeholder="Cualquiera"
+            multiple
+            :items="getTypes()"
           >
-          </multiselect>
+            <template #default>
+              <span v-if="!formData.type || !formData.type.length" class="qhld-select__placeholder">Cualquiera</span>
+              <span v-else class="qhld-select__chips">
+                <span v-for="type in formData.type" :key="type" class="qhld-select__chip">
+                  {{ type }}
+                  <button type="button" aria-label="Quitar" @click.stop="removeType(type)">
+                    <Icon name="mdi:close" />
+                  </button>
+                </span>
+              </span>
+            </template>
+          </USelectMenu>
         </div>
       </div>
       <div class="o-grid__col u-12 u-6@sm u-padding-bottom-4">
         <div class="c-select-label u-block">
           <label for="place">Lugar</label>
-          <multiselect
-            selectedLabel="Seleccionado"
-            selectLabel=""
-            deselectLabel="Pulsa para deseleccionar"
+          <USelectMenu
             v-model="formData.place"
-            :options="allPlaces.map((p) => p.name)"
-            :allow-empty="true"
-            name="place"
-            id="place"
+            :items="allPlaces?.map((p) => p.name) ?? []"
             placeholder="Cualquiera"
-          >
-          </multiselect>
+          />
         </div>
       </div>
     </div>
@@ -234,7 +201,6 @@
 <script setup>
 import { VueDatePicker } from "@vuepic/vue-datepicker";
 import "@vuepic/vue-datepicker/dist/main.css";
-import Multiselect from "vue-multiselect";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 
@@ -335,6 +301,25 @@ const fillSubtopicsAndTags = (selectedTopic, clearValues) => {
   );
   if (!currentTopic) return;
   getSubtopicsAndTags(currentTopic.id);
+};
+
+// Replaces @select / @remove from vue-multiselect: single handler covers
+// both select (truthy value) and clear (null/undefined value).
+const handleTopicChange = (newTopic) => {
+  if (newTopic) {
+    fillSubtopicsAndTags(newTopic);
+  } else {
+    clearSubtopicsAndTags();
+  }
+};
+
+// Remove a single chip from multi-value fields (called by the chip × button)
+const removeTag = (tag) => {
+  formData.value.tags = (formData.value.tags || []).filter((t) => t !== tag);
+};
+
+const removeType = (type) => {
+  formData.value.type = (formData.value.type || []).filter((t) => t !== type);
 };
 
 const getResults = (event) => {
@@ -467,10 +452,5 @@ watch(allTopics, prepareForm);
   --dp-icon-color: #959595;
   --dp-danger-color: #ff6f60;
   --dp-highlight-color: rgba(25, 118, 210, 0.1);
-}
-span.multiselect__option--selected {
-  span {
-    color: white;
-  }
 }
 </style>

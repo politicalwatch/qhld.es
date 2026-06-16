@@ -1,21 +1,24 @@
 <template>
-  <div id="app">
-    <NuxtLoadingIndicator color="rgb(163, 213, 200)" :height="8" />
-    <NuxtRouteAnnouncer />
-    <Navbar
-      pre-image="/img/yellow.png"
-      :links="MENU"
-      :logo="LOGO"
-      :disclaimer="DISCLAIMER"
-    />
-    <div class="page-container">
-      <NuxtPage />
+  <UApp :locale="es">
+    <div id="app">
+      <NuxtLoadingIndicator color="rgb(163, 213, 200)" :height="8" />
+      <NuxtRouteAnnouncer />
+      <Navbar
+        pre-image="/img/yellow.png"
+        :links="MENU"
+        :logo="LOGO"
+        :disclaimer="DISCLAIMER"
+      />
+      <div class="page-container">
+        <NuxtPage />
+      </div>
+      <PageFooter />
     </div>
-    <PageFooter />
-  </div>
+  </UApp>
 </template>
 
 <script setup>
+import { es } from '@nuxt/ui/locale'
 import config from "@/config";
 
 const MENU = config.MENU;
@@ -86,4 +89,3 @@ input[type="email"].swal2-input {
   }
 }
 </style>
-<style src="vue-multiselect/dist/vue-multiselect.css"></style>

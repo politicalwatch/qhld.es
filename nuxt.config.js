@@ -119,6 +119,7 @@ export default defineNuxtConfig({
   },
 
   modules: [
+    "@nuxt/ui",
     "@nuxt/image",
     "@nuxt/fonts",
     "@nuxt/icon",
@@ -127,6 +128,11 @@ export default defineNuxtConfig({
     'nuxt-gtag',
     '@dargmuesli/nuxt-cookie-control',
   ],
+
+  colorMode: {
+    preference: 'light',
+    fallback: 'light',
+  },
 
   image: {
     domains: ["www.congreso.es"],
@@ -149,7 +155,7 @@ export default defineNuxtConfig({
     enabled: true
   },
 
-  css: ["~/styles/App.scss"],
+  css: ["~/styles/App.scss", "~/assets/css/main.css"],
 
   vite: {
     plugins: [svgLoader({ svgoConfig })],

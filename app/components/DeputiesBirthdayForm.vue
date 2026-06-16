@@ -9,37 +9,26 @@
       <div class="o-grid__col u-12 u-5@sm u-padding-bottom-4">
         <div class="c-select-label u-block">
           <label for="month">Mes</label>
-          <VueMultiselect
-            selectedLabel="Seleccionado"
-            selectLabel=""
-            deselectLabel="Pulsa para deseleccionar"
-            v-model="selectedMonth"
-            :options="monthOptions"
-            :allow-empty="true"
-            @update:model-value="emitFilters()"
-            name="month"
-            id="month"
-            :placeholder="selectedMonth?.text ?? 'Selecciona mes'"
-            label="text"
-            track-by="value"
+          <USelectMenu
+            v-model="form.month"
+            :items="monthOptions"
+            value-key="value"
+            label-key="text"
+            placeholder="Selecciona mes"
+            @update:model-value="handleMonthChange"
           />
         </div>
       </div>
       <div class="o-grid__col u-12 u-5@sm u-padding-bottom-4">
         <div class="c-select-label u-block">
           <label for="day">Día</label>
-          <VueMultiselect
-            selectedLabel="Seleccionado"
-            selectLabel=""
-            deselectLabel="Pulsa para deseleccionar"
+          <USelectMenu
             v-model="form.day"
-            :options="dayOptions"
+            :items="dayOptions"
             :disabled="!form.month"
-            :allow-empty="true"
+            :search-input="false"
+            placeholder="Selecciona día"
             @update:model-value="emitFilters()"
-            name="day"
-            id="day"
-            :placeholder="form.day?.text ?? 'Selecciona día'"
           />
         </div>
       </div>
@@ -53,8 +42,6 @@
 </template>
 
 <script setup>
-import VueMultiselect from "vue-multiselect";
-
 const emit = defineEmits(["setFilters"]);
 
 const emitFilters = () => {
@@ -103,17 +90,11 @@ const monthOptions = [
   { value: 12, text: "Diciembre" },
 ];
 
-const selectedMonth = computed({
-  get: () => {
-    return monthOptions.find((month) => {
-      return month?.value ? month.value === form.value.month : "";
-    });
-  },
-  set: (value) => {
-    form.value.month = value?.value ? value.value : value;
-    form.value.day = null;
-  },
-});
+// Reset day when month changes, then emit (preserves original setter order)
+const handleMonthChange = () => {
+  form.value.day = null;
+  emitFilters();
+};
 
 const cleanForm = () => {
   form.value = {

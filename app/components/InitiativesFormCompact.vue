@@ -9,39 +9,21 @@
       <div class="o-grid__col u-12 u-5@sm u-padding-bottom-4">
         <div class="c-select-label u-block">
           <label for="topic">Temática</label>
-          <multiselect
-            selectedLabel="Seleccionado"
-            selectLabel=""
-            deselectLabel="Pulsa para deseleccionar"
+          <USelectMenu
             v-model="formData.topic"
-            :options="allTopics.map((topic) => topic.name)"
-            :allow-empty="true"
-            name="topic"
-            id="topic"
+            :items="allTopics?.map((topic) => topic.name) ?? []"
             placeholder="Todas"
-          >
-          </multiselect>
+          />
         </div>
       </div>
       <div class="o-grid__col u-12 u-5@sm u-padding-bottom-4">
         <div class="c-select-label u-block">
           <label for="author">Grupo</label>
-          <multiselect
-            selectedLabel="Seleccionado"
-            selectLabel=""
-            deselectLabel="Pulsa para deseleccionar"
+          <USelectMenu
             v-model="formData.author"
-            :options="
-              ['Gobierno', ...allParliamentaryGroups].map(
-                (group) => group.name || group
-              )
-            "
-            :allow-empty="true"
-            name="author"
-            id="author"
+            :items="['Gobierno', ...(allParliamentaryGroups ?? [])].map((group) => group.name || group)"
             placeholder="Todos"
-          >
-          </multiselect>
+          />
         </div>
       </div>
       <div class="o-grid__col u-12 u-2@sm u-padding-bottom-4">
@@ -52,8 +34,6 @@
 </template>
 
 <script setup>
-import Multiselect from "vue-multiselect";
-
 const props = defineProps({
   formData: Object,
 });
@@ -76,11 +56,6 @@ const getResults = () => {
   }
   button[type="submit"] {
     width: 100%;
-  }
-}
-span.multiselect__option--selected {
-  span {
-    color: white;
   }
 }
 </style>

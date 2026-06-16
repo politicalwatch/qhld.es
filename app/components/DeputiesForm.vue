@@ -22,37 +22,23 @@
       <div class="o-grid__col u-12 u-4@sm">
         <div class="c-select-label u-block">
           <label for="group">Grupo</label>
-          <VueMultiselect
-            selectedLabel="Seleccionado"
-            selectLabel=""
-            deselectLabel="Pulsa para deseleccionar"
+          <USelectMenu
             v-model="form.group"
-            :options="groups"
-            :allow-empty="true"
-            @update:model-value="emitFilters()"
-            name="group"
-            id="group"
+            :items="groups"
             placeholder="Selecciona uno"
-          >
-          </VueMultiselect>
+            @update:model-value="emitFilters()"
+          />
         </div>
       </div>
       <div class="o-grid__col u-12 u-4@sm">
         <div class="c-select-label u-block">
           <label for="constituency">Provincia</label>
-          <VueMultiselect
-            selectedLabel="Seleccionado"
-            selectLabel=""
-            deselectLabel="Pulsa para deseleccionar"
+          <USelectMenu
             v-model="form.constituency"
-            :options="getConstituencies()"
-            :allow-empty="true"
-            @update:model-value="emitFilters()"
-            name="constituency"
-            id="constituency"
+            :items="getConstituencies()"
             placeholder="Selecciona una"
-          >
-          </VueMultiselect>
+            @update:model-value="emitFilters()"
+          />
         </div>
       </div>
     </div>
@@ -60,19 +46,12 @@
       <div class="o-grid__col u-12 u-6@sm">
         <div class="c-select-label u-block">
           <label for="footprint">Ordenar por temática</label>
-          <VueMultiselect
-            selectedLabel="Seleccionado"
-            selectLabel=""
-            deselectLabel="Pulsa para deseleccionar"
+          <USelectMenu
             v-model="form.footprint"
-            :options="ranking"
-            :allow-empty="true"
-            @update:model-value="emitFilters()"
-            name="footprint"
-            id="footprint"
+            :items="ranking"
             placeholder="Selecciona una"
-          >
-          </VueMultiselect>
+            @update:model-value="emitFilters()"
+          />
         </div>
       </div>
       <div class="o-grid__col u-12 u-6@sm">
@@ -90,8 +69,6 @@
 </template>
 
 <script setup>
-
-import VueMultiselect from "vue-multiselect";
 import FootprintInfo from "@/components/FootprintInfo.vue";
 
 const { deputies, groups, ranking } = defineProps({
