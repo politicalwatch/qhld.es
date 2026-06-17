@@ -1,0 +1,33 @@
+@import "tailwindcss";
+@import "@nuxt/ui";
+
+/*
+ * Brand color palette — "teal-mint" built from primary brand color #a3d5c8.
+ * 500 = exact brand color; 700 used as --ui-primary for interactive states
+ * (lighter shades lack sufficient contrast on white for button/focus contexts).
+ */
+@theme static {
+  --color-brand-50: #f0fbf9;
+  --color-brand-100: #d9f0ed;
+  --color-brand-200: #c4e8e2;
+  --color-brand-300: #b3e0d9;
+  --color-brand-400: #a9dbd3;
+  --color-brand-500: #a3d5c8;
+  --color-brand-600: #7db8af;
+  --color-brand-700: #508d85;
+  --color-brand-800: #336661;
+  --color-brand-900: #1a3a36;
+  --color-brand-950: #0f2220;
+}
+
+:root {
+  /* Square corners to match existing site aesthetic */
+  --ui-radius: 0;
+
+  /*
+   * Use shade 700 (#508d85) as the interactive primary colour.
+   * Shade 500 (#a3d5c8) is too light for sufficient contrast on white
+   * backgrounds (fails WCAG AA for normal text). Shade 700 passes ~4.5:1.
+   */
+  --ui-primary: var(--color-brand-700);
+}
