@@ -8,7 +8,7 @@
         <div class="o-grid__col u-12 u-8@sm">
           <p>
             <a
-                href="mailto:qhld@politicalwatch.es?subject=Contacto+a+través+de+qhld.es"
+                href="mailto:info@politicalwatch.es?subject=Contacto+a+través+de+qhld.es"
                 target="_blank"
             >
               Escríbenos un email
