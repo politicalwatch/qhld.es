@@ -16,6 +16,11 @@ export default {
       condition: true,
     },
     {
+      route: "speeches-search",
+      name: "Intervenciones",
+      condition: true,
+    },
+    {
       route: "topics",
       name: "Temáticas",
       condition: true,

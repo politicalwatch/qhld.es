@@ -62,6 +62,13 @@ export default defineNuxtPlugin(() => {
         query: { knowledgebase: allkbs ? `${kb},ods` : kb },
       }),
 
+    // ── Speeches ─────────────────────────────────────────────────────────────
+    searchSpeeches: (params = {}) =>
+      backendFetch('/speeches/search', {
+        // `exclude` is an array; ofetch repeats it (exclude=a&exclude=b) as the API expects
+        query: { ...cleanParams(params), knowledgebase: kb },
+      }),
+
     // ── Alerts ───────────────────────────────────────────────────────────────
     saveAlert: (search) =>
       backendFetch('/alerts', {
