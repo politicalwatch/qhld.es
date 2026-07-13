@@ -19,7 +19,7 @@
     "@nuxt/image": "^2.0.0",
     "@nuxt/ui": "^4.8.2",
     "@nuxtjs/seo": "^5.1.3",
-    "@takumi-rs/core": "^1.6.0",
+    "@takumi-rs/core": "^2.1.1",
     "@vuepic/vue-datepicker": "^14.0.0",
     "@vueuse/nuxt": "^14.3.0",
     "core-js": "^3.32.2",
