@@ -155,14 +155,23 @@ const formatFilterValue = (value) => {
 
 const fieldLabel = (field) => FIELD_LABELS[field] || `el criterio «${field}»`;
 
+const errorDescription = (status) => {
+  switch (status) {
+    case 422:
+      // The query wasn't a speech search (a command, a question to the
+      // assistant, an injection) — tell the user how to phrase a real search.
+      return "Esto no parece una búsqueda de intervenciones parlamentarias. Prueba a describir un tema, orador, grupo o fecha.";
+    case 503:
+      return "El buscador inteligente no está disponible en este momento";
+    default:
+      return "Inténtalo de nuevo más tarde";
+  }
+};
+
 const handleError = (error) => {
-  const status = error?.status ?? error?.statusCode;
   toast.add({
     title: "Error en la búsqueda",
-    description:
-      status === 503
-        ? "El buscador inteligente no está disponible en este momento"
-        : "Inténtalo de nuevo más tarde",
+    description: errorDescription(error?.status ?? error?.statusCode),
     color: "error",
     icon: "i-lucide-alert-circle",
   });
