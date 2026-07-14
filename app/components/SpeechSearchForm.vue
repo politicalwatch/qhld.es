@@ -13,7 +13,7 @@
         v-model="model"
         class="c-ai-search__input"
         type="search"
-        placeholder="P. ej. «¿Qué ha dicho Errejón sobre el alquiler?»"
+        placeholder="P. ej. «¿Qué ha dicho Pedro Sánchez sobre el alquiler?»"
         autocomplete="off"
         :disabled="loading"
       />

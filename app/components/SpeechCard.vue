@@ -1,13 +1,27 @@
 <template>
   <article class="c-speech-card" :id="`speech-card-${speech.id}`">
     <header class="c-speech-card__header">
-      <h2 class="c-speech-card__speaker">{{ speech.speaker }}</h2>
+      <h2 class="c-speech-card__speaker">
+        <NuxtLink
+          :to="`/intervenciones/${speech.video_id ?? speech.id}`"
+          class="c-speech-card__speaker-link"
+        >
+          {{ speech.speaker }}
+        </NuxtLink>
+      </h2>
       <p class="c-speech-card__meta">
         <span v-if="speech.group">{{ speech.group }}</span>
         <span v-if="speech.role"> · {{ speech.role }}</span>
       </p>
       <p class="c-speech-card__session">
-        {{ speech.session_name }} · {{ formattedDate }}
+        <NuxtLink
+          v-if="sessionCode"
+          :to="`/sesiones/${sessionCode}`"
+          class="c-speech-card__session-link"
+        >
+          {{ speech.session_name }} · {{ formattedDate }}
+        </NuxtLink>
+        <template v-else>{{ speech.session_name }} · {{ formattedDate }}</template>
       </p>
     </header>
     <p
@@ -27,15 +41,13 @@ const { speech, highlights } = defineProps({
 });
 
 // date arrives as a yyyymmdd integer, e.g. 20241009
-const formattedDate = computed(() => {
-  const raw = String(speech.date ?? "");
-  if (raw.length !== 8) return raw;
-  const date = new Date(`${raw.slice(0, 4)}-${raw.slice(4, 6)}-${raw.slice(6, 8)}`);
-  return new Intl.DateTimeFormat("es-ES", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  }).format(date);
+const formattedDate = computed(() => formatDateInt(speech.date));
+
+// session_link is the Diario PDF path; its filename stem is the session code
+// (e.g. /public_oficiales/L15/CONG/DS/PL/DSCD-15-PL-196.PDF → DSCD-15-PL-196)
+const sessionCode = computed(() => {
+  const stem = speech.session_link?.split("/").pop()?.replace(/\.pdf$/i, "");
+  return stem || null;
 });
 </script>
 
@@ -57,6 +69,14 @@ const formattedDate = computed(() => {
     margin-bottom: rem(math.div($spacer-unit, 4));
   }
 
+  &__speaker-link {
+    color: inherit;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
   &__meta {
     @include overline;
 
@@ -68,6 +88,15 @@ const formattedDate = computed(() => {
 
     color: $secondary-medium;
     margin: 0;
+  }
+
+  &__session-link {
+    color: inherit;
+
+    &:hover {
+      color: $secondary-dark;
+      text-decoration: underline;
+    }
   }
 
   &__highlight {

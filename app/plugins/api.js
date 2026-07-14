@@ -62,7 +62,29 @@ export default defineNuxtPlugin(() => {
         query: { knowledgebase: allkbs ? `${kb},ods` : kb },
       }),
 
+    getInitiativeByReference: async (reference) => {
+      const data = await backendFetch('/initiatives/', {
+        query: { reference, knowledgebase: kb },
+      });
+      return data.initiatives?.[0] ?? null;
+    },
+
+    // ── Sessions ─────────────────────────────────────────────────────────────
+    getSessionByCode: async (code) => {
+      const data = await backendFetch('/sessions/', {
+        query: { code, per_page: 1, knowledgebase: kb },
+      });
+      return data.sessions?.[0] ?? null;
+    },
+
     // ── Speeches ─────────────────────────────────────────────────────────────
+    getSpeech: (id) => backendFetch(`/speeches/${id}`, { query: baseQuery }),
+
+    getSpeeches: (params = {}) =>
+      backendFetch('/speeches/', {
+        query: { ...cleanParams(params), knowledgebase: kb },
+      }),
+
     searchSpeeches: (params = {}) =>
       backendFetch('/speeches/search', {
         // `exclude` is an array; ofetch repeats it (exclude=a&exclude=b) as the API expects
