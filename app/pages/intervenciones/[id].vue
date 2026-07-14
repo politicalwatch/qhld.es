@@ -240,7 +240,10 @@ const sessionCode = computed(() => {
 
 // SSR-ready meta — noindex while the feature is dev-only
 const speechTitle = `${speech.value.speaker} · ${speech.value.session_name} · ${formattedDate.value}`;
-const excerpt = (speech.value.speech?.[0]?.text ?? '').slice(0, 157).trimEnd();
+const excerpt = (speech.value.speech?.[0]?.text ?? '')
+  .replace(/\s+/g, ' ')
+  .slice(0, 157)
+  .trimEnd();
 const speechDescription = excerpt ? `${excerpt}…` : speechTitle;
 useSeoMeta({
   title: speechTitle,

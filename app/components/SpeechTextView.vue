@@ -16,7 +16,11 @@
       </button>
     </div>
 
-    <p class="c-speech-text__body">
+    <p
+      v-for="(segments, paragraphIndex) in paragraphs"
+      :key="`${activeLang}-${paragraphIndex}`"
+      class="c-speech-text__body"
+    >
       <template v-for="(segment, index) in segments" :key="index">
         <span v-if="segment.type === 'annotation'" class="c-speech-text__annotation">
           {{ segment.text }}
@@ -58,9 +62,13 @@ const activeLang = ref(
   (blocks.find((b) => b.original) ?? blocks[0])?.lang ?? null
 );
 
-const segments = computed(() => {
+// the text carries the Diario's paragraph structure as blank-line breaks
+const paragraphs = computed(() => {
   const block = blocks.find((b) => b.lang === activeLang.value) ?? blocks[0];
-  return parseSpeechText(block?.text, people);
+  return (block?.text ?? "")
+    .split(/\n{2,}/)
+    .filter((paragraph) => paragraph.trim())
+    .map((paragraph) => parseSpeechText(paragraph, people));
 });
 </script>
 
@@ -97,7 +105,11 @@ const segments = computed(() => {
     @include tbody2;
 
     line-height: 1.8;
-    margin: 0;
+    margin: 0 0 rem($spacer-unit);
+
+    &:last-child {
+      margin-bottom: 0;
+    }
   }
 
   &__annotation {
