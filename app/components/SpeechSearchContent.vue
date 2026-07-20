@@ -96,6 +96,7 @@ const { $api } = useNuxtApp();
 const route = useRoute();
 const router = useRouter();
 const toast = useToast();
+const store = useSpeechSearchStore();
 
 const PER_PAGE = 12;
 const HIGHLIGHTS = 3;
@@ -123,9 +124,10 @@ const FILTER_LABELS = {
   role: "Rol",
 };
 
+// The store is the single source of truth for results/meta, so "load more" and
+// the Back-button restore never fall out of sync (and page 2 isn't duplicated).
+const { results, queryMeta } = storeToRefs(store);
 const q = ref("");
-const results = ref([]);
-const queryMeta = ref({});
 const loading = ref("idle"); // 'idle' | 'first' | 'more'
 const searched = ref(false);
 
@@ -187,8 +189,7 @@ const search = () => {
   $api
     .searchSpeeches({ q: query, per_page: PER_PAGE, highlights: HIGHLIGHTS })
     .then((response) => {
-      results.value = response.results;
-      queryMeta.value = response.query_meta;
+      store.setSearch(query, response);
       searched.value = true;
       nextTick().then(() => {
         document
@@ -212,8 +213,7 @@ const loadMore = () => {
       exclude: results.value.map((result) => result.speech.id),
     })
     .then((response) => {
-      results.value.push(...response.results);
-      queryMeta.value = response.query_meta;
+      store.appendResults(response);
       nextTick().then(() => {
         document
           .querySelector(lastCardId)
@@ -238,8 +238,18 @@ const applySuggestion = (item) => {
 };
 
 onMounted(() => {
-  if (route.query.q) {
-    q.value = String(route.query.q);
+  const urlQuery = route.query.q ? String(route.query.q) : "";
+  // Returning via Back/refresh: restore the cached results instead of re-running
+  // the (paid, slow) semantic search. sessionStorage is client-only, so this
+  // runs on mount — never during SSR.
+  if (store.results.length && (!urlQuery || urlQuery === store.query)) {
+    // results/queryMeta already reflect the store (storeToRefs) — just the input
+    q.value = store.query;
+    searched.value = true;
+    return;
+  }
+  if (urlQuery) {
+    q.value = urlQuery;
     search();
   }
 });

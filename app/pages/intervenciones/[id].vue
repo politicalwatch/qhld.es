@@ -41,7 +41,13 @@
             El vídeo de esta intervención aún no ha sido publicado por el Congreso.
           </Message>
 
-          <SpeechTextView :blocks="speech.speech" :people="people" />
+          <SpeechTextView
+            v-model:active-lang="activeLang"
+            :blocks="speech.speech"
+            :people="people"
+            :highlight-ranges="highlightRanges"
+            :current-hl-id="currentHlId"
+          />
 
           <nav v-if="debate.length > 1" class="c-speech__nav u-padding-top-2">
             <NuxtLink
@@ -126,6 +132,17 @@
               </li>
             </ul>
           </template>
+
+          <ClientOnly>
+            <SpeechHighlightNav
+              v-if="navHighlights.length || orphanHighlights.length"
+              v-model:active-lang="activeLang"
+              v-model:current-hl-id="currentHlId"
+              :highlights="navHighlights"
+              :orphans="orphanHighlights"
+              :lang-labels="LANG_LABELS"
+            />
+          </ClientOnly>
         </div>
       </div>
     </div>
@@ -139,12 +156,14 @@
 definePageMeta({ name: 'speech' });
 
 import SpeechTextView from "@/components/SpeechTextView.vue";
+import SpeechHighlightNav from "@/components/SpeechHighlightNav.vue";
 import DeputyCard from "@/components/DeputyCard.vue";
 import Message from "@/components/Message.vue";
 import Loader from "@/components/Loader.vue";
 
 const route = useRoute();
 const { $api } = useNuxtApp();
+const store = useSpeechSearchStore();
 
 await useDeputies();
 const getDeputyByName = useDeputyByName();
@@ -227,6 +246,64 @@ const people = computed(() => [
   ...(speech.value.mentions ?? []),
   ...(speech.value.interruptions ?? []),
 ]);
+
+// ── Search highlights ─────────────────────────────────────────────────────
+// The passages that matched the user's search live in the session store (from
+// the results page), never in getSpeech. We locate each in the transcript and
+// highlight it in place, with a jump nav. sessionStorage is client-only, so
+// this is gated on mount to keep SSR and hydration identical (no marks) before
+// the highlights layer in.
+const LANG_LABELS = { es: "Castellano", ca: "Català", eu: "Euskara", gl: "Galego" };
+const mounted = useMounted();
+const activeLang = ref(null);
+const currentHlId = ref(null);
+
+const highlightModel = computed(() => {
+  const blocks = speech.value?.speech ?? [];
+  const chunks =
+    mounted.value && speech.value ? store.highlightsFor(speech.value.id) : [];
+  if (!chunks.length || !blocks.length)
+    return { ranges: {}, nav: [], orphans: [] };
+
+  // locate per block, then order by document position (block, then offset)
+  const located = [];
+  blocks.forEach((block, blockIndex) => {
+    for (const range of locateHighlights(block.text, chunks)) {
+      located.push({ ...range, blockIndex, lang: block.lang });
+    }
+  });
+  located.sort((a, b) => a.blockIndex - b.blockIndex || a.start - b.start);
+
+  const ranges = {}; // lang → [{ start, end, hlId }]
+  const nav = []; // doc-ordered [{ hlId, lang, preview }]
+  located.forEach((range, hlId) => {
+    (ranges[range.lang] ??= []).push({
+      start: range.start,
+      end: range.end,
+      hlId,
+    });
+    nav.push({
+      hlId,
+      lang: range.lang,
+      preview: chunks[range.chunkIndex].replace(/\s+/g, " ").trim().slice(0, 120),
+    });
+  });
+
+  // A few chunks may not be locatable when the stored transcript was re-cleaned
+  // after Qdrant indexing (data drift, self-heals on re-index). Still surface
+  // the passage so the user never loses a match they searched for.
+  const locatedIdx = new Set(located.map((r) => r.chunkIndex));
+  const orphans = chunks
+    .map((text, index) => ({ text, index }))
+    .filter((chunk) => !locatedIdx.has(chunk.index))
+    .map((chunk) => chunk.text.replace(/\s+/g, " ").trim());
+
+  return { ranges, nav, orphans };
+});
+
+const highlightRanges = computed(() => highlightModel.value.ranges);
+const navHighlights = computed(() => highlightModel.value.nav);
+const orphanHighlights = computed(() => highlightModel.value.orphans);
 
 const speakerDeputy = computed(() => getDeputyByName(speech.value.speaker));
 

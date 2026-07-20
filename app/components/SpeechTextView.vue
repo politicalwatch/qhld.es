@@ -17,37 +17,44 @@
     </div>
 
     <p
-      v-for="(segments, paragraphIndex) in paragraphs"
+      v-for="(pieces, paragraphIndex) in paragraphs"
       :key="`${activeLang}-${paragraphIndex}`"
       class="c-speech-text__body"
     >
-      <template v-for="(segment, index) in segments" :key="index">
-        <span v-if="segment.type === 'annotation'" class="c-speech-text__annotation">
-          {{ segment.text }}
-        </span>
-        <NuxtLink
-          v-else-if="segment.type === 'mention' && segment.isDeputy"
-          :to="{ name: 'deputy', params: { id: segment.personId } }"
-          class="c-speech-text__mention c-speech-text__mention--linked"
+      <template v-for="(piece, index) in pieces" :key="index">
+        <component
+          :is="piece.highlighted ? 'mark' : 'span'"
+          :id="piece.anchorId != null ? `speech-hl-${piece.anchorId}` : undefined"
+          :class="pieceClass(piece)"
         >
-          {{ segment.text }}
-        </NuxtLink>
-        <span v-else-if="segment.type === 'mention'" class="c-speech-text__mention">
-          {{ segment.text }}
-        </span>
-        <template v-else>{{ segment.text }}</template>
+          <NuxtLink
+            v-if="piece.type === 'mention' && piece.isDeputy"
+            :to="{ name: 'deputy', params: { id: piece.personId } }"
+            class="c-speech-text__mention c-speech-text__mention--linked"
+          >
+            {{ piece.text }}
+          </NuxtLink>
+          <template v-else>{{ piece.text }}</template>
+        </component>
       </template>
     </p>
   </div>
 </template>
 
 <script setup>
-const { blocks, people } = defineProps({
+const { blocks, people, highlightRanges, currentHlId } = defineProps({
   // speech[] from the API: [{ lang, text, original }]
   blocks: { type: Array, required: true },
   // mentions + interruptions, for surface-form highlighting
   people: { type: Array, default: () => [] },
+  // search highlights per language: { [lang]: [{ start, end, hlId }] }
+  highlightRanges: { type: Object, default: () => ({}) },
+  // the highlight the jump nav is currently tracking (for emphasis)
+  currentHlId: { type: Number, default: null },
 });
+
+// owned here by default, but the jump nav needs to switch tabs → expose as model
+const activeLang = defineModel("activeLang", { default: null });
 
 const LANG_LABELS = {
   es: "Castellano",
@@ -57,19 +64,29 @@ const LANG_LABELS = {
 };
 const langLabel = (lang) => LANG_LABELS[lang] ?? lang;
 
-// the as-delivered language is shown first
-const activeLang = ref(
-  (blocks.find((b) => b.original) ?? blocks[0])?.lang ?? null
-);
+// default to the as-delivered language when the parent hasn't set one
+if (activeLang.value == null) {
+  activeLang.value = (blocks.find((b) => b.original) ?? blocks[0])?.lang ?? null;
+}
 
-// the text carries the Diario's paragraph structure as blank-line breaks
+// the text carries the Diario's paragraph structure as blank-line breaks;
+// search highlights (if any) are layered on top per active language block
 const paragraphs = computed(() => {
   const block = blocks.find((b) => b.lang === activeLang.value) ?? blocks[0];
-  return (block?.text ?? "")
-    .split(/\n{2,}/)
-    .filter((paragraph) => paragraph.trim())
-    .map((paragraph) => parseSpeechText(paragraph, people));
+  const ranges = highlightRanges[activeLang.value] ?? [];
+  return buildSpeechParagraphs(block?.text ?? "", people, ranges);
 });
+
+const pieceClass = (piece) => {
+  const classes = [];
+  if (piece.type === "annotation") classes.push("c-speech-text__annotation");
+  else if (piece.type === "mention" && !piece.isDeputy)
+    classes.push("c-speech-text__mention");
+  if (piece.highlighted) classes.push("c-speech-text__hl");
+  if (currentHlId != null && piece.hlIds?.includes(currentHlId))
+    classes.push("c-speech-text__hl--current");
+  return classes;
+};
 </script>
 
 <style lang="scss" scoped>
@@ -129,6 +146,28 @@ const paragraphs = computed(() => {
         background-color: var(--color-brand-200);
         text-decoration: underline;
       }
+    }
+  }
+
+  // search-match highlight — amber, deliberately distinct from the mint mentions
+  &__hl {
+    $hl: #fce6a2;
+    $hl-current: #f6c945;
+
+    background-color: $hl;
+    color: inherit;
+    padding: 0 rem(1px);
+    box-shadow: 0 rem(1px) 0 rgba($black, 0.12);
+    scroll-margin-top: rem($spacer-unit * 6);
+    transition: background-color 0.2s ease;
+
+    // a mention sitting inside a match keeps its own tint readable on amber
+    .c-speech-text__mention {
+      background-color: rgba($black, 0.06);
+    }
+
+    &--current {
+      background-color: $hl-current;
     }
   }
 }
