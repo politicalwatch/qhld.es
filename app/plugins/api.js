@@ -91,6 +91,11 @@ export default defineNuxtPlugin(() => {
         query: { ...cleanParams(params), knowledgebase: kb },
       }),
 
+    // All relevant passages of one speech for a query (detail-page highlighting).
+    // No `knowledgebase`: speeches carry no topic classification.
+    getSpeechPassages: (id, q) =>
+      backendFetch(`/speeches/${id}/passages`, { query: { q } }),
+
     // ── Alerts ───────────────────────────────────────────────────────────────
     saveAlert: (search) =>
       backendFetch('/alerts', {

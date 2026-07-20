@@ -253,15 +253,41 @@ const people = computed(() => [
 // highlight it in place, with a jump nav. sessionStorage is client-only, so
 // this is gated on mount to keep SSR and hydration identical (no marks) before
 // the highlights layer in.
+//
+// The store holds only the 3 passages shown on the result card — too few for a
+// full transcript. When there is a query in context we fetch EVERY relevant
+// passage of this speech (reranker-floored, no cap) and highlight all of them;
+// the store's 3 are the instant fallback shown until that resolves (and if the
+// call fails). A cold visit (no query) shows a plain transcript, no nav.
 const LANG_LABELS = { es: "Castellano", ca: "Català", eu: "Euskara", gl: "Galego" };
 const mounted = useMounted();
 const activeLang = ref(null);
 const currentHlId = ref(null);
+const passageChunks = ref(null); // null = not (yet) fetched → fall back to store
+
+watch(
+  mounted,
+  async (isMounted) => {
+    if (!isMounted || !speech.value || !store.query) return;
+    try {
+      const { passages } = await $api.getSpeechPassages(
+        route.params.id,
+        store.query
+      );
+      passageChunks.value = passages ?? [];
+    } catch {
+      passageChunks.value = null; // keep the store's 3 as a graceful fallback
+    }
+  },
+  { immediate: true }
+);
 
 const highlightModel = computed(() => {
   const blocks = speech.value?.speech ?? [];
   const chunks =
-    mounted.value && speech.value ? store.highlightsFor(speech.value.id) : [];
+    mounted.value && speech.value
+      ? passageChunks.value ?? store.highlightsFor(speech.value.id)
+      : [];
   if (!chunks.length || !blocks.length)
     return { ranges: {}, nav: [], orphans: [] };
 
