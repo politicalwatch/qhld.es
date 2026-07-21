@@ -42,28 +42,27 @@
       </div>
 
       <div v-if="searched && results.length > 0" id="speech-results">
-        <h2 class="u-uppercase u-margin-bottom-4">
-          Mostrando {{ results.length }} intervenciones
-        </h2>
-        <section class="o-grid">
-          <div
-            class="o-grid__col u-12 u-4@sm"
+        <div class="c-speech-search__results-toolbar">
+          <p class="c-speech-search__results-count">
+            Mostrando {{ results.length }} intervenciones
+          </p>
+        </div>
+        <section class="c-speech-search__results-grid">
+          <SpeechCard
             v-for="result in results"
             :key="result.speech.id"
-          >
-            <SpeechCard :speech="result.speech" :highlights="result.highlights" />
-          </div>
+            :speech="result.speech"
+            :highlights="result.highlights"
+          />
         </section>
-        <div class="o-grid o-grid--center" v-if="queryMeta.has_more">
-          <div class="o-grid__col">
-            <a href="#" class="u-border-link" @click.prevent="loadMore">
-              <Icon
-                :name="loading === 'more' ? 'mdi:loading' : 'mdi:reload'"
-                :class="{ 'c-speech-search__spin': loading === 'more' }"
-              />
-              {{ loading === 'more' ? 'Cargando…' : 'Cargar más intervenciones' }}
-            </a>
-          </div>
+        <div class="c-speech-search__load-more" v-if="queryMeta.has_more">
+          <a href="#" class="u-border-link" @click.prevent="loadMore">
+            <Icon
+              :name="loading === 'more' ? 'mdi:loading' : 'mdi:reload'"
+              :class="{ 'c-speech-search__spin': loading === 'more' }"
+            />
+            {{ loading === 'more' ? 'Cargando…' : 'Cargar más intervenciones' }}
+          </a>
         </div>
       </div>
 
@@ -146,6 +145,10 @@ const { results, queryMeta } = storeToRefs(store);
 const q = ref("");
 const loading = ref("idle"); // 'idle' | 'first' | 'more'
 const searched = ref(false);
+
+// Warm the deputies cache so the result cards can borrow the speaker's photo +
+// party colour (SpeechCard reads it via useDeputyByName; the fetch is dedup'd).
+useDeputies();
 
 // Empty-state example queries (from app/config). Shown whenever no search is
 // being displayed — `searched` gates the results, NOT the store, so a cached

@@ -228,6 +228,34 @@
     color: var(--color-brand-700);
   }
 
+  &__results-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: rem($spacer-unit);
+    margin-bottom: rem($spacer-unit * 2);
+  }
+
+  &__results-count {
+    font-family: $font-headline;
+    text-transform: uppercase;
+    color: $black;
+    margin: 0;
+  }
+
+  &__results-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(rem(280px), 1fr));
+    gap: rem(16px);
+  }
+
+  &__load-more {
+    display: flex;
+    justify-content: center;
+    margin-top: rem($spacer-unit * 4);
+  }
+
   &__unresolved {
     margin-top: rem($spacer-unit * 2);
 
