@@ -1,10 +1,10 @@
 <template>
-  <aside v-if="highlights.length || orphans.length" class="c-speech-hl">
+  <aside v-if="loading || highlights.length || orphans.length" class="c-speech-hl">
     <div class="c-speech-hl__head">
       <span class="c-speech-hl__title">
-        {{ highlights.length || orphans.length }} coincidencias
+        {{ loading ? "Buscando coincidencias" : `${highlights.length || orphans.length} coincidencias` }}
       </span>
-      <span v-if="highlights.length > 1" class="c-speech-hl__cnt">
+      <span v-if="!loading && highlights.length > 1" class="c-speech-hl__cnt">
         <button
           type="button"
           class="c-speech-hl__step"
@@ -23,7 +23,15 @@
         </button>
       </span>
     </div>
-    <ol v-if="highlights.length" class="c-speech-hl__list">
+
+    <!-- while the full passage set loads, show a loader so the panel doesn't flash
+         the card's preview passages and then jump to the full set -->
+    <div v-if="loading" class="c-speech-hl__loading" role="status" aria-live="polite">
+      <Icon name="mdi:loading" :size="16" class="c-speech-hl__spin" />
+      Localizando todas las coincidencias…
+    </div>
+
+    <ol v-else-if="highlights.length" class="c-speech-hl__list">
       <li v-for="(hl, index) in highlights" :key="hl.hlId" class="c-speech-hl__item">
         <button
           type="button"
@@ -66,6 +74,8 @@ const { highlights, orphans, langLabels } = defineProps({
   // matched passages that couldn't be located in the transcript (shown as text)
   orphans: { type: Array, default: () => [] },
   langLabels: { type: Object, default: () => ({}) },
+  // the full passage set is still being fetched — show a loader, not the partial set
+  loading: { type: Boolean, default: false },
 });
 
 const activeLang = defineModel("activeLang", { default: null });
@@ -189,6 +199,19 @@ watch([() => highlights, activeLang], refreshMarks);
     }
   }
 
+  &__loading {
+    @include overline;
+
+    display: flex;
+    align-items: center;
+    gap: rem(6px);
+    color: $secondary-medium;
+  }
+
+  &__spin {
+    animation: c-speech-hl-spin 0.8s linear infinite;
+  }
+
   &__list {
     list-style: none;
     margin: 0;
@@ -277,6 +300,18 @@ watch([() => highlights, activeLang], refreshMarks);
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 4;
     overflow: hidden;
+  }
+}
+
+@keyframes c-speech-hl-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .c-speech-hl__spin {
+    animation: none;
   }
 }
 </style>

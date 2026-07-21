@@ -177,12 +177,13 @@
           <!-- sticky, LAST in the aside so it never overlaps the lists above -->
           <ClientOnly>
             <SpeechHighlightNav
-              v-if="navHighlights.length || orphanHighlights.length"
+              v-if="navHighlights.length || orphanHighlights.length || passagesPending"
               v-model:active-lang="activeLang"
               v-model:current-hl-id="currentHlId"
               :highlights="navHighlights"
               :orphans="orphanHighlights"
               :lang-labels="LANG_LABELS"
+              :loading="passagesPending"
             />
           </ClientOnly>
         </aside>
@@ -305,11 +306,13 @@ const mounted = useMounted();
 const activeLang = ref(null);
 const currentHlId = ref(null);
 const passageChunks = ref(null); // null = not (yet) fetched → fall back to store
+const passagesLoading = ref(false);
 
 watch(
   mounted,
   async (isMounted) => {
     if (!isMounted || !speech.value || !store.query) return;
+    passagesLoading.value = true;
     try {
       const { passages } = await $api.getSpeechPassages(
         route.params.id,
@@ -318,19 +321,30 @@ watch(
       passageChunks.value = passages ?? [];
     } catch {
       passageChunks.value = null; // keep the store's 3 as a graceful fallback
+    } finally {
+      passagesLoading.value = false;
     }
   },
   { immediate: true }
 );
 
+// The card's highlights are only a preview: the grouped search reranks a small
+// per-speech candidate pool (capped at HIGHLIGHTS), while this detail fetch
+// re-searches ALL of the speech's passages — so it can surface more or different
+// matches at any count, which the preview can't predict. While the fetch is in
+// flight we hold back the preview and show a loader, so the panel (and transcript
+// marks) never flash the card's passages and then jump to the full set. If it
+// fails, the model falls back to the preview.
+const passagesPending = computed(() => passagesLoading.value);
+
 const highlightModel = computed(() => {
   const blocks = speech.value?.speech ?? [];
   const chunks =
-    mounted.value && speech.value
+    mounted.value && speech.value && !passagesPending.value
       ? passageChunks.value ?? store.highlightsFor(speech.value.id)
       : [];
   if (!chunks.length || !blocks.length)
-    return { ranges: {}, nav: [], orphans: [] };
+    return { ranges: {}, nav: [], orphans: [], matchedLang: null };
 
   // locate per block, then order by document position (block, then offset)
   const located = [];
@@ -365,12 +379,40 @@ const highlightModel = computed(() => {
     .filter((chunk) => !locatedIdx.has(chunk.index))
     .map((chunk) => chunk.text.replace(/\s+/g, " ").trim());
 
-  return { ranges, nav, orphans };
+  // The matched language = the block of the top-ranked passage (chunks arrive in
+  // reranked order, so the lowest located chunkIndex is the best match). The page
+  // opens on this tab so the highlights panel isn't empty when the best match is
+  // in a translation rather than the original block.
+  const matchedLang =
+    [...located].sort((a, b) => a.chunkIndex - b.chunkIndex)[0]?.lang ?? null;
+
+  return { ranges, nav, orphans, matchedLang };
 });
 
 const highlightRanges = computed(() => highlightModel.value.ranges);
-const navHighlights = computed(() => highlightModel.value.nav);
+// The transcript shows one language block at a time, so the jump nav lists only
+// the active language's matches (a passage's other-language twin lives in another
+// block and appears when that tab is selected).
+const navHighlights = computed(() =>
+  highlightModel.value.nav.filter((hl) => hl.lang === activeLang.value)
+);
 const orphanHighlights = computed(() => highlightModel.value.orphans);
+
+// Open on the best-matching language's tab (once) instead of the as-delivered
+// default SpeechTextView picks — otherwise a match found only in a translation
+// would leave the panel empty until the user switched tabs. A manual tab change
+// afterwards is respected (the one-shot has already fired).
+let didAutoSelectLang = false;
+watch(
+  () => highlightModel.value.matchedLang,
+  (lang) => {
+    if (lang && !didAutoSelectLang) {
+      activeLang.value = lang;
+      didAutoSelectLang = true;
+    }
+  },
+  { immediate: true }
+);
 
 const speakerDeputy = computed(() => getDeputyByName(speech.value.speaker));
 const speakerColor = computed(() => partyColor(speakerDeputy.value?.party_name));
