@@ -63,8 +63,6 @@
 </template>
 
 <script setup>
-import config from "@/config";
-
 const { speech, highlights } = defineProps({
   speech: { type: Object, required: true },
   highlights: { type: Array, default: () => [] },
@@ -77,12 +75,7 @@ const { speech, highlights } = defineProps({
 const getDeputyByName = useDeputyByName();
 const deputy = computed(() => getDeputyByName(speech.speaker));
 
-const groupColor = computed(
-  () =>
-    (deputy.value?.party_name &&
-      config.STYLES.parties[deputy.value.party_name]?.color) ||
-    "#a3d5c8"
-);
+const groupColor = computed(() => partyColor(deputy.value?.party_name));
 
 // "Apellido1 Apellido2, Nombre" → "PA" (given-name initial + first surname).
 const initials = computed(() => {

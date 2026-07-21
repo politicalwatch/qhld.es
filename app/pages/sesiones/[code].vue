@@ -1,73 +1,101 @@
 <template>
   <div class="c-session">
     <div v-if="session" class="o-container o-section u-margin-bottom-10">
-      <div class="o-grid o-grid--between">
-        <div class="o-grid__col u-12 u-8@md">
-          <h2>{{ session.name }} · {{ formattedDate }}</h2>
-          <div class="o-grid u-padding-top-2 u-margin-bottom-4">
-            <div class="o-grid__col o-grid__col--fill">
-              <h6 class="u-uppercase">Diario de sesiones</h6>
-              <p class="c-session__info">{{ session.code }}</p>
-            </div>
-            <div class="o-grid__col u-12 u-8@sm c-session__actions">
-              <CongressLink v-if="congressUrl" :url="congressUrl" />
-              <a
-                v-if="pdfUrl"
-                :href="pdfUrl"
-                class="u-uppercase u-border-link c-session__pdf-link"
-                target="_blank"
-                title="Descargar el Diario de Sesiones (PDF)"
-              >
-                Descargar Diario de Sesiones
-                <Icon name="mdi:file-download-outline" style="color: #2d4252" :size="20" />
-              </a>
-            </div>
-          </div>
+      <header class="c-session__head">
+        <h1 class="c-session__title">{{ sessionHeading }}</h1>
+        <p class="c-session__sub">
+          <b>{{ formattedDate }}</b> · {{ session.code }}
+        </p>
+      </header>
+
+      <div class="c-session__topgrid">
+        <div>
+          <section v-if="session.video_link" class="c-session__video">
+            <video controls preload="metadata" :src="session.video_link" />
+          </section>
+          <Message v-else type="info" icon>
+            El vídeo de esta sesión aún no ha sido publicado por el Congreso.
+          </Message>
+          <p v-if="session.video_link" class="c-session__vhint">
+            Fuente: canal audiovisual del Congreso de los Diputados.
+          </p>
+        </div>
+
+        <div class="c-session__actions">
+          <a
+            v-if="pdfUrl"
+            :href="pdfUrl"
+            class="c-session__a-link c-session__a-link--strong"
+            target="_blank"
+            title="Descargar el Diario de Sesiones (PDF)"
+          >
+            Descargar Diario
+            <Icon name="mdi:file-download-outline" :size="16" />
+          </a>
+          <a
+            v-if="congressUrl"
+            :href="congressUrl"
+            class="c-session__a-link"
+            target="_blank"
+            title="Ver en el Congreso.es"
+          >
+            Ver en el Congreso
+            <Icon name="mdi:open-in-new" :size="14" />
+          </a>
         </div>
       </div>
 
-      <section v-if="session.video_link" class="c-session__video u-margin-bottom-4">
-        <video controls preload="metadata" :src="session.video_link" />
-      </section>
-      <Message v-else type="info" icon>
-        El vídeo de esta sesión aún no ha sido publicado por el Congreso.
-      </Message>
-
-      <div class="o-grid o-grid--between">
-        <div class="o-grid__col u-12 u-8@md">
-          <h4 class="u-uppercase">Orden del día</h4>
+      <div class="c-session__cols">
+        <main>
+          <h2 class="c-session__sect-h">Orden del día</h2>
           <SessionDebateSection
-            v-for="debate in debates"
+            v-for="(debate, index) in debates"
             :key="debate.key"
             :debate="debate"
             :initiativesByRef="initiativesByRef"
+            :number="index + 1"
           />
-        </div>
+        </main>
 
-        <div class="o-grid__col u-12 u-3@md">
-          <h4 class="u-uppercase">Intervinientes</h4>
-          <ul class="c-session__speakers">
+        <aside>
+          <h2 class="c-session__sect-h">Intervinientes</h2>
+          <ul class="c-session__people">
             <li
               v-for="speaker in speakers"
               :key="speaker.name"
-              class="c-session__speaker"
+              class="c-session__person"
+              :style="{ '--grp': speaker.color }"
             >
-              <DeputyCard
-                v-if="speaker.deputy"
-                :deputy="speaker.deputy"
-                layout="medium"
-              />
-              <template v-else>
-                <span class="c-session__speaker-name">{{ speaker.name }}</span>
-                <span class="c-session__speaker-meta">
-                  <template v-if="speaker.group">{{ speaker.group }} · </template>{{ speaker.role }}
+              <span class="c-session__av-ring">
+                <UAvatar
+                  :src="speaker.image"
+                  :alt="speaker.name"
+                  :text="speaker.initials"
+                  class="c-session__av"
+                />
+              </span>
+              <div class="c-session__person-body">
+                <NuxtLink
+                  v-if="speaker.deputy"
+                  :to="{ name: 'deputy', params: { id: speaker.deputy.id } }"
+                  class="c-session__nm c-session__nm--link"
+                >
+                  {{ speaker.name }}
+                </NuxtLink>
+                <span v-else class="c-session__nm">{{ speaker.name }}</span>
+                <span class="c-session__gr">
+                  <template v-if="speaker.group">
+                    <i class="c-session__gr-dot" aria-hidden="true" />{{ speaker.group }}
+                  </template>
+                  <template v-else>{{ speaker.role }}</template>
                 </span>
-              </template>
+              </div>
             </li>
           </ul>
-        </div>
+        </aside>
       </div>
     </div>
+
     <div v-else class="o-container o-section u-margin-bottom-10">
       <Loader title="Cargando datos" subtitle="Puede llevar unos segundos" />
     </div>
@@ -78,8 +106,6 @@
 definePageMeta({ name: 'session' });
 
 import SessionDebateSection from "@/components/SessionDebateSection.vue";
-import DeputyCard from "@/components/DeputyCard.vue";
-import CongressLink from "@/components/CongressLink.vue";
 import Message from "@/components/Message.vue";
 import Loader from "@/components/Loader.vue";
 
@@ -157,22 +183,47 @@ const debates = computed(() => {
     .sort((a, b) => agendaIndex(a.references) - agendaIndex(b.references));
 });
 
-// Unique speakers in order of first intervention; deputies link to their profile
+// "Apellido1 Apellido2, Nombre" → "NA" (given initial + first surname).
+const initialsFor = (name) => {
+  const [surnames = "", given = ""] = name.split(",");
+  const first = given.trim()[0] ?? "";
+  const last = surnames.trim()[0] ?? "";
+  return `${first}${last}`.toUpperCase() || "?";
+};
+
+// Unique speakers, sorted alphabetically by first surname; each carries the
+// matched deputy (photo + party colour + profile link) when one exists.
 const speakers = computed(() => {
   const seen = new Map();
   for (const speech of details.value?.speeches ?? []) {
     if (!speech.speaker || seen.has(speech.speaker)) continue;
+    const deputy = getDeputyByName(speech.speaker);
     seen.set(speech.speaker, {
       name: speech.speaker,
+      surname:
+        speech.speaker_surname || speech.speaker.split(",")[0] || speech.speaker,
       group: speech.group,
       role: speech.role,
-      deputy: getDeputyByName(speech.speaker),
+      deputy,
+      image: deputy?.image,
+      color: partyColor(deputy?.party_name),
+      initials: initialsFor(speech.speaker),
     });
   }
-  return [...seen.values()];
+  return [...seen.values()].sort((a, b) =>
+    a.surname.localeCompare(b.surname, "es")
+  );
 });
 
 const formattedDate = computed(() => formatDateInt(session.value?.date));
+
+// The code's trailing segment is the sitting number → "Pleno núm. 196".
+const sessionHeading = computed(() => {
+  const n = session.value?.code?.split("-").pop();
+  return n && /^\d+$/.test(n)
+    ? `${session.value.name} núm. ${n}`
+    : session.value?.name ?? "";
+});
 
 const pdfUrl = computed(() =>
   session.value?.session_link
@@ -199,7 +250,7 @@ const congressUrl = computed(() => {
 });
 
 // SSR-ready meta — noindex while the feature is dev-only (like buscar-intervenciones)
-const sessionTitle = `${session.value.name} · ${formattedDate.value}`;
+const sessionTitle = `${sessionHeading.value} · ${formattedDate.value}`;
 const sessionDescription = `Sesión ${session.value.code} del Congreso de los Diputados: ${details.value?.speeches.length ?? 0} intervenciones sobre ${session.value.references.length} iniciativas.`;
 useSeoMeta({
   title: sessionTitle,
@@ -221,43 +272,139 @@ defineOgImage('Session', {
 
 <style lang="scss" scoped>
 .c-session {
-  h2 {
-    margin-bottom: 32px;
+  &__head {
+    margin-bottom: rem(28px);
   }
 
-  &__info {
-    margin-top: 0px;
+  &__title {
+    font-family: $font-headline;
+    font-weight: 400;
+    font-size: rem(30px);
+    line-height: 1.12;
+    text-transform: uppercase;
+    color: $black;
+    margin: 0 0 rem(10px);
+
+    @media (min-width: $sm) {
+      font-size: rem(38px);
+    }
+  }
+
+  &__sub {
+    font-size: rem(14px);
+    line-height: 1.4;
+    color: $secondary-medium;
+    font-variant-numeric: tabular-nums;
+    margin: 0;
+
+    b {
+      font-weight: 500;
+      color: $secondary-dark;
+    }
+  }
+
+  &__topgrid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: rem(22px);
+    align-items: start;
+    margin-bottom: rem(44px);
+
+    @media (min-width: $md) {
+      grid-template-columns: 1fr rem(300px);
+      gap: rem(48px);
+    }
+  }
+
+  &__video video {
+    display: block;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    max-height: rem(460px);
+    background-color: $black;
+  }
+
+  &__vhint {
+    font-size: rem(12px);
+    color: $secondary-medium;
+    margin: rem($spacer-unit) 0 0;
   }
 
   &__actions {
     display: flex;
     flex-direction: column;
-    align-items: flex-end;
-    gap: rem($spacer-unit);
+    gap: rem(10px);
+    width: fit-content;
   }
 
-  &__pdf-link {
+  &__a-link {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
+    justify-content: center;
+    gap: rem(8px);
+    font-family: $font-headline;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-size: rem(12px);
+    color: $secondary-dark;
+    background-color: $white;
+    border: 1px solid $neutral;
+    padding: rem(12px) rem(14px);
+    white-space: nowrap;
+    text-decoration: none;
+
+    &:hover {
+      border-color: var(--color-brand-600);
+    }
+
+    &--strong {
+      border: 3px solid $black;
+      padding: rem(9px) rem(16px);
+
+      &:hover {
+        background-color: $black;
+        color: $white;
+        border-color: $black;
+      }
+    }
   }
 
-  &__video video {
-    width: 100%;
-    max-height: rem(480px);
-    background-color: $black;
+  &__cols {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: rem(22px);
+    align-items: start;
+
+    @media (min-width: $md) {
+      grid-template-columns: 1fr rem(300px);
+      gap: rem(48px);
+    }
   }
 
-  &__speakers {
+  &__sect-h {
+    font-family: $font-headline;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-size: rem(15px);
+    line-height: 1;
+    color: $black;
+    margin: 0 0 rem(20px);
+    padding-bottom: rem(10px);
+    border-bottom: 2px solid $black;
+  }
+
+  &__people {
     list-style: none;
     margin: 0;
     padding: 0;
   }
 
-  &__speaker {
+  &__person {
     display: flex;
-    flex-direction: column;
-    margin-bottom: rem($spacer-unit);
+    align-items: center;
+    gap: rem(11px);
+    padding: rem(14px) 0;
+    border-bottom: 1px solid $neutral;
 
     // suppress the global li::before middot from 04_base/_base__lists.scss
     &::before {
@@ -265,20 +412,56 @@ defineOgImage('Session', {
     }
   }
 
-  &__speaker-name {
-    @include tbody2;
+  &__av-ring {
+    flex: none;
+    line-height: 0;
+    border-radius: 50%;
+    border: 2px solid var(--grp, var(--color-brand-500));
+  }
 
+  &__av {
+    width: rem(40px) !important;
+    height: rem(40px) !important;
+    font-family: $font-headline;
+    font-size: rem(14px);
+    background-color: var(--color-brand-50);
     color: $secondary-dark;
+  }
 
-    &--linked:hover {
+  &__person-body {
+    min-width: 0;
+  }
+
+  &__nm {
+    display: block;
+    font-family: $font-headline;
+    font-size: rem(16px);
+    line-height: 1.1;
+    color: $black;
+    text-decoration: none;
+
+    &--link:hover {
       text-decoration: underline;
+      text-underline-offset: 2px;
     }
   }
 
-  &__speaker-meta {
-    @include overline;
-
+  &__gr {
+    display: flex;
+    align-items: center;
+    gap: rem(6px);
+    margin-top: rem(2px);
+    font-size: rem(11.5px);
+    line-height: 1.3;
     color: $secondary-medium;
+  }
+
+  &__gr-dot {
+    width: 8px;
+    height: 8px;
+    flex: none;
+    display: inline-block;
+    background-color: var(--grp, var(--color-brand-500));
   }
 }
 </style>
