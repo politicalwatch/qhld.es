@@ -13,5 +13,13 @@ useSeoMeta({
 </script>
 
 <template>
-  <SpeechSearchContent />
+  <div class="speeches-search-page">
+    <SpeechSearchContent />
+  </div>
 </template>
+
+<style scoped>
+.speeches-search-page {
+  width: 100%;
+}
+</style>
