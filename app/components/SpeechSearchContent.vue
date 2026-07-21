@@ -12,7 +12,7 @@
         @search="search"
       />
 
-      <div v-if="chips.length && loading !== 'first'" class="c-speech-search__chips">
+      <div v-if="searched && chips.length && loading !== 'first'" class="c-speech-search__chips">
         <span class="c-speech-search__chips-label">Entendido como</span>
         <span v-for="chip in chips" :key="chip.label + chip.value" class="c-speech-search__chip">
           <strong>{{ chip.label }}</strong> {{ chip.value }}
@@ -25,7 +25,7 @@
         subtitle="La primera búsqueda puede tardar unos segundos"
       />
 
-      <div v-if="results.length > 0" id="speech-results">
+      <div v-if="searched && results.length > 0" id="speech-results">
         <h2 class="u-uppercase u-margin-bottom-4">
           Mostrando {{ results.length }} intervenciones
         </h2>
@@ -182,6 +182,20 @@ const handleError = (error) => {
 const search = () => {
   const query = q.value.trim();
   if (query.length < 2 || loading.value !== "idle") return;
+
+  // Repeat of the cached search → just show it again; don't re-run the (paid,
+  // slow) semantic query. The store keeps the last search across navigation.
+  if (query === store.query && store.results.length) {
+    searched.value = true;
+    router.push({ path: "/buscar-intervenciones", query: { q: query } }).catch((e) => e);
+    nextTick().then(() => {
+      document
+        .querySelector("#speech-results")
+        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+    return;
+  }
+
   loading.value = "first";
   results.value = [];
   queryMeta.value = {};
@@ -239,18 +253,36 @@ const applySuggestion = (item) => {
 
 onMounted(() => {
   const urlQuery = route.query.q ? String(route.query.q) : "";
-  // Returning via Back/refresh: restore the cached results instead of re-running
-  // the (paid, slow) semantic search. sessionStorage is client-only, so this
-  // runs on mount — never during SSR.
-  if (store.results.length && (!urlQuery || urlQuery === store.query)) {
-    // results/queryMeta already reflect the store (storeToRefs) — just the input
-    q.value = store.query;
-    searched.value = true;
-    return;
-  }
   if (urlQuery) {
+    // Returning via Back/refresh onto a results URL: restore the cached results
+    // instead of re-running the (paid, slow) semantic search. sessionStorage is
+    // client-only, so this runs on mount — never during SSR.
+    if (store.results.length && urlQuery === store.query) {
+      // results/queryMeta already reflect the store (storeToRefs) — just the input
+      q.value = store.query;
+      searched.value = true;
+      return;
+    }
+    // A query in the URL we haven't cached → run it.
     q.value = urlQuery;
     search();
+    return;
   }
+  // Clean entry (no ?q, e.g. via the menu): show the empty state WITHOUT touching
+  // the store — the last search stays cached (so repeating it is instant); it is
+  // just not displayed because `searched` is false.
 });
+
+// The page instance is kept alive across `?q=` changes (see the page's `key`),
+// so navigating to the clean /buscar-intervenciones URL won't remount it — return
+// to the empty state when the query is cleared, but keep the cached search.
+watch(
+  () => route.query.q,
+  (value) => {
+    if (!value && searched.value && loading.value === "idle") {
+      searched.value = false;
+      q.value = "";
+    }
+  }
+);
 </script>
