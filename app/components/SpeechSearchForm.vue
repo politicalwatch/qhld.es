@@ -7,7 +7,9 @@
       class="c-ai-search__box"
       :class="{ 'c-ai-search__box--loading': loading }"
     >
-      <Icon name="mdi:creation" class="c-ai-search__icon" />
+      <span class="c-ai-search__icon" aria-hidden="true">
+        <Icon name="mdi:creation" />
+      </span>
       <input
         id="speech-search-input"
         v-model="model"

@@ -9,6 +9,7 @@
 }
 
 .c-ai-search {
+  max-width: rem(760px);
   margin-bottom: rem($spacer-unit * 3);
 
   &__label {
@@ -65,15 +66,19 @@
     }
   }
 
+  // White surface on the wrapper; the mint glyph colour is `currentColor` on the
+  // nested <Icon> (@nuxt/icon renders in css-mask mode, so a background-color set
+  // directly on the icon would paint the glyph, not the box).
   &__icon {
     position: relative;
     z-index: 1;
-    align-self: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     background-color: $white;
     color: var(--color-brand-700);
-    height: 100%;
-    padding: rem($spacer-unit) 0 rem($spacer-unit) rem($spacer-unit);
-    width: rem($spacer-unit * 2.5);
+    padding: 0 rem($spacer-unit * 0.5) 0 rem($spacer-unit);
+    font-size: rem(22px);
   }
 
   &__input {
@@ -172,6 +177,55 @@
     border: 1px solid var(--color-brand-500);
     color: $secondary-dark;
     padding: rem($spacer-unit * 0.25) rem($spacer-unit * 0.75);
+  }
+
+  &__suggestions {
+    margin-bottom: rem($spacer-unit * 2);
+  }
+
+  &__suggestions-label {
+    @include tbody;
+
+    color: $secondary-medium;
+    margin: 0 0 rem($spacer-unit * 1.25);
+  }
+
+  &__examples {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: rem($spacer-unit * 0.75);
+
+    // suppress the global li::before middot from 04_base/_base__lists.scss
+    li::before {
+      content: none;
+    }
+  }
+
+  &__example {
+    @include tbody;
+
+    display: inline-flex;
+    align-items: baseline;
+    gap: rem($spacer-unit * 0.5);
+    cursor: pointer;
+    text-align: left;
+    background-color: $white;
+    border: 1px solid $neutral;
+    color: $secondary-dark;
+    padding: rem($spacer-unit * 0.75) rem($spacer-unit);
+    transition: border-color 0.18s ease, color 0.18s ease;
+
+    &:hover {
+      border-color: var(--color-brand-600);
+      color: $black;
+    }
+  }
+
+  &__example-arrow {
+    color: var(--color-brand-700);
   }
 
   &__unresolved {

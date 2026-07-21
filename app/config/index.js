@@ -26,6 +26,14 @@ export default {
       condition: true,
     },
   ],
+  // Example queries shown in the empty state of the speeches search
+  // (/buscar-intervenciones) to help users phrase a natural-language search.
+  SEARCH_SUGGESTIONS: [
+    "¿Qué se ha dicho sobre el acceso a la vivienda?",
+    "Intervenciones de Yolanda Díaz sobre empleo",
+    "Debates sobre la sequía en 2024",
+    "¿Qué ha dicho el PP sobre los impuestos?",
+  ],
   DISCLAIMER: {},
   LOGO: "/img/logo.svg",
 

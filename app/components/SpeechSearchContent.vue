@@ -1,6 +1,8 @@
 <template>
-  <div>
-    <div id="speech-search" class="o-container o-section u-margin-bottom-10">
+  <!-- .o-container (width:100%) is the root so the page fills its width in every
+       state — the app's .page-container centers a shrink-to-fit child, which made
+       the header/box jump to centre while the loading view was narrow. -->
+  <div id="speech-search" class="o-container o-section u-margin-bottom-10">
       <PageHeader
         :title="'Buscador de intervenciones'"
         :subtitle="'Pregunta en lenguaje natural sobre los debates del Congreso'"
@@ -19,11 +21,25 @@
         </span>
       </div>
 
-      <Loader
-        v-if="loading === 'first'"
-        title="Analizando tu pregunta"
-        subtitle="La primera búsqueda puede tardar unos segundos"
-      />
+      <SpeechSearchLoader v-if="loading === 'first'" />
+
+      <div v-if="showSuggestions" class="c-speech-search__suggestions">
+        <p class="c-speech-search__suggestions-label">
+          Describe un tema, una persona, un grupo o una fecha — o prueba con un ejemplo:
+        </p>
+        <ul class="c-speech-search__examples">
+          <li v-for="suggestion in suggestions" :key="suggestion">
+            <button
+              type="button"
+              class="c-speech-search__example"
+              @click="applyExample(suggestion)"
+            >
+              <span class="c-speech-search__example-arrow" aria-hidden="true">›</span>
+              {{ suggestion }}
+            </button>
+          </li>
+        </ul>
+      </div>
 
       <div v-if="searched && results.length > 0" id="speech-results">
         <h2 class="u-uppercase u-margin-bottom-4">
@@ -82,15 +98,15 @@
         />
       </div>
     </div>
-  </div>
 </template>
 
 <script setup>
 import SpeechSearchForm from "@/components/SpeechSearchForm.vue";
 import SpeechCard from "@/components/SpeechCard.vue";
 import PageHeader from "@/components/PageHeader.vue";
-import Loader from "@/components/Loader.vue";
+import SpeechSearchLoader from "@/components/SpeechSearchLoader.vue";
 import NotFound from "@/components/NotFound.vue";
+import config from "@/config";
 
 const { $api } = useNuxtApp();
 const route = useRoute();
@@ -130,6 +146,14 @@ const { results, queryMeta } = storeToRefs(store);
 const q = ref("");
 const loading = ref("idle"); // 'idle' | 'first' | 'more'
 const searched = ref(false);
+
+// Empty-state example queries (from app/config). Shown whenever no search is
+// being displayed — `searched` gates the results, NOT the store, so a cached
+// search can survive in the background while the empty state is shown.
+const suggestions = config.SEARCH_SUGGESTIONS;
+const showSuggestions = computed(
+  () => !searched.value && loading.value === "idle"
+);
 
 const chips = computed(() => {
   const meta = queryMeta.value;
@@ -213,6 +237,11 @@ const search = () => {
     })
     .catch(handleError)
     .finally(() => (loading.value = "idle"));
+};
+
+const applyExample = (query) => {
+  q.value = query;
+  search();
 };
 
 const loadMore = () => {
