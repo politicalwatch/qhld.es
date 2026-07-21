@@ -1,138 +1,180 @@
 <template>
   <div class="c-speech">
     <div v-if="speech" class="o-container o-section u-margin-bottom-10">
-      <div class="o-grid o-grid--between">
-        <div class="o-grid__col u-12 u-8@md">
-          <h2>{{ speech.speaker }}</h2>
-          <p class="c-speech__meta">
-            <span v-if="speech.group">{{ speech.group }} · </span>{{ speech.role }}
-          </p>
-          <p class="c-speech__session">
-            <NuxtLink v-if="sessionCode" :to="`/sesiones/${sessionCode}`">
-              {{ speech.session_name }} · {{ formattedDate }}
-            </NuxtLink>
-            <template v-else>{{ speech.session_name }} · {{ formattedDate }}</template>
-          </p>
+      <div class="c-speech__cols">
+        <main>
+          <header class="c-speech__head" :style="{ '--grp': speakerColor }">
+            <span class="c-speech__av-ring">
+              <UAvatar
+                :src="speakerDeputy?.image"
+                :alt="speech.speaker"
+                :text="speakerInitials"
+                class="c-speech__av"
+              />
+            </span>
+            <div class="c-speech__identity">
+              <h1 class="c-speech__name">{{ speech.speaker }}</h1>
+              <p class="c-speech__role">
+                <span class="c-speech__role-sq" aria-hidden="true" />
+                <template v-if="speech.group">{{ speech.group }} · </template>{{ speech.role }}
+              </p>
+            </div>
+          </header>
 
-          <div class="c-speech__initiatives u-margin-bottom-4">
+          <div class="c-speech__inis">
             <div
               v-for="reference in speech.references"
               :key="reference"
-              class="c-speech__initiative"
+              class="c-speech__ini"
             >
-              <p class="c-speech__initiative-type">
+              <p class="c-speech__ini-type">
                 <template v-if="initiativesByRef[reference]?.type"
                   >{{ initiativesByRef[reference].type }} · </template
-                >{{ reference }}
+                ><span class="c-speech__ini-ref">{{ reference }}</span>
               </p>
               <NuxtLink
                 :to="`/iniciativas/${reference.replace('/', '-')}`"
-                class="c-speech__initiative-title"
+                class="c-speech__ini-title"
               >
                 {{ initiativesByRef[reference]?.title ?? `Iniciativa ${reference}` }}
               </NuxtLink>
             </div>
+            <p class="c-speech__ini-sess">
+              <NuxtLink
+                v-if="sessionCode"
+                :to="`/sesiones/${sessionCode}`"
+                class="c-speech__ini-sess-link"
+              >
+                {{ sessionLabel }}
+              </NuxtLink>
+              <template v-else>{{ sessionLabel }}</template>
+              · {{ formattedDate }}
+            </p>
           </div>
 
-          <section v-if="speech.video_link" class="c-speech__video u-margin-bottom-4">
+          <section v-if="speech.video_link" class="c-speech__video">
             <video controls preload="metadata" :src="speech.video_link" />
           </section>
           <Message v-else type="info" icon>
             El vídeo de esta intervención aún no ha sido publicado por el Congreso.
           </Message>
+          <p v-if="speech.video_link" class="c-speech__vhint">
+            Fuente: canal audiovisual del Congreso de los Diputados.
+          </p>
 
+          <div class="c-speech__t-bar">
+            <h2 class="c-speech__t-title">Transcripción</h2>
+            <button
+              v-if="speech.mentions.length"
+              type="button"
+              class="c-speech__mentions-toggle"
+              :aria-pressed="showMentions"
+              @click="showMentions = !showMentions"
+            >
+              <Icon
+                :name="showMentions ? 'mdi:eye-off-outline' : 'mdi:eye-outline'"
+                :size="16"
+              />
+              {{ showMentions ? "Ocultar menciones" : "Mostrar menciones" }}
+            </button>
+          </div>
           <SpeechTextView
             v-model:active-lang="activeLang"
             :blocks="speech.speech"
             :people="people"
             :highlight-ranges="highlightRanges"
             :current-hl-id="currentHlId"
+            :show-mentions="showMentions"
           />
 
-          <nav v-if="debate.length > 1" class="c-speech__nav u-padding-top-2">
+          <nav v-if="debate.length > 1" class="c-speech__dnav">
             <NuxtLink
               v-if="prevSpeech"
               :to="prevSpeech.url"
-              class="c-speech__nav-link c-speech__nav-link--prev"
+              class="c-speech__dnav-link"
             >
-              <Icon name="mdi:chevron-left" :size="20" />
+              <Icon name="mdi:chevron-left" :size="18" />
               {{ prevSpeech.speaker }}
             </NuxtLink>
             <span v-else />
-            <span class="c-speech__nav-position">
+            <span class="c-speech__dnav-pos">
               Intervención {{ debateIndex + 1 }} de {{ debate.length }}
             </span>
             <NuxtLink
               v-if="nextSpeech"
               :to="nextSpeech.url"
-              class="c-speech__nav-link c-speech__nav-link--next"
+              class="c-speech__dnav-link"
             >
               {{ nextSpeech.speaker }}
-              <Icon name="mdi:chevron-right" :size="20" />
+              <Icon name="mdi:chevron-right" :size="18" />
             </NuxtLink>
             <span v-else />
           </nav>
-        </div>
+        </main>
 
-        <div class="o-grid__col u-12 u-3@md">
-          <DeputyCard v-if="speakerDeputy" :deputy="speakerDeputy" layout="medium" />
-
-          <template v-if="speech.mentions.length">
-            <h4 class="u-uppercase">Personas mencionadas</h4>
-            <ul class="c-speech__people">
+        <aside>
+          <template v-if="mentionsView.length">
+            <h3 class="c-speech__side-h">Personas mencionadas</h3>
+            <ul class="c-speech__plist">
               <li
-                v-for="mention in speech.mentions"
-                :key="mention.person_id ?? mention.name"
-                class="c-speech__person"
+                v-for="mention in mentionsView"
+                :key="mention.key"
+                class="c-speech__pitem"
+                :style="{ '--grp': mention.color }"
               >
-                <NuxtLink
-                  v-if="mention.person_type === 'deputy' && mention.person_id"
-                  :to="{ name: 'deputy', params: { id: mention.person_id } }"
-                  class="c-speech__person-name c-speech__person-name--linked"
-                >
-                  {{ mention.name }}
-                </NuxtLink>
-                <span v-else class="c-speech__person-name">{{ mention.name }}</span>
-                <span v-if="mention.count > 1" class="c-speech__person-count"
-                  >×{{ mention.count }}</span
-                >
-              </li>
-            </ul>
-          </template>
-
-          <template v-if="speech.interruptions.length">
-            <h4 class="u-uppercase">Interrupciones</h4>
-            <ul class="c-speech__people">
-              <li
-                v-for="(interruption, index) in speech.interruptions"
-                :key="index"
-                class="c-speech__person c-speech__interruption"
-              >
-                <NuxtLink
-                  v-if="interruption.person_type === 'deputy' && interruption.person_id"
-                  :to="{ name: 'deputy', params: { id: interruption.person_id } }"
-                  class="c-speech__person-name c-speech__person-name--linked"
-                >
-                  {{ interruption.name }}
-                </NuxtLink>
-                <span v-else class="c-speech__person-name">{{ interruption.name }}</span>
-                <blockquote
-                  v-for="quote in interruption.quotes"
-                  :key="quote"
-                  class="c-speech__quote"
-                >
-                  «{{ quote }}»
-                </blockquote>
-                <span
-                  v-if="interruption.reactions.length"
-                  class="c-speech__reactions"
-                >
-                  {{ interruption.reactions.join(" · ") }}
+                <span class="c-speech__pav-ring">
+                  <UAvatar
+                    :src="mention.image"
+                    :alt="mention.name"
+                    :text="mention.initials"
+                    class="c-speech__pav"
+                  />
+                </span>
+                <span class="c-speech__pn">
+                  <NuxtLink
+                    v-if="mention.personType === 'deputy' && mention.personId"
+                    :to="{ name: 'deputy', params: { id: mention.personId } }"
+                  >
+                    {{ mention.name }}
+                  </NuxtLink>
+                  <template v-else>{{ mention.name }}</template>
+                </span>
+                <span v-if="mention.count > 1" class="c-speech__px">
+                  ×{{ mention.count }}
                 </span>
               </li>
             </ul>
           </template>
 
+          <template v-if="speech.interruptions.length">
+            <h3 class="c-speech__side-h">Interrupciones</h3>
+            <div
+              v-for="(interruption, index) in speech.interruptions"
+              :key="index"
+              class="c-speech__intr"
+            >
+              <NuxtLink
+                v-if="interruption.person_type === 'deputy' && interruption.person_id"
+                :to="{ name: 'deputy', params: { id: interruption.person_id } }"
+                class="c-speech__intr-name c-speech__intr-name--link"
+              >
+                {{ interruption.name }}
+              </NuxtLink>
+              <span v-else class="c-speech__intr-name">{{ interruption.name }}</span>
+              <blockquote
+                v-for="quote in interruption.quotes"
+                :key="quote"
+                class="c-speech__quote"
+              >
+                «{{ quote }}»
+              </blockquote>
+              <span v-if="interruption.reactions.length" class="c-speech__rx">
+                {{ interruption.reactions.join(" · ") }}
+              </span>
+            </div>
+          </template>
+
+          <!-- sticky, LAST in the aside so it never overlaps the lists above -->
           <ClientOnly>
             <SpeechHighlightNav
               v-if="navHighlights.length || orphanHighlights.length"
@@ -143,7 +185,7 @@
               :lang-labels="LANG_LABELS"
             />
           </ClientOnly>
-        </div>
+        </aside>
       </div>
     </div>
     <div v-else class="o-container o-section u-margin-bottom-10">
@@ -157,7 +199,6 @@ definePageMeta({ name: 'speech' });
 
 import SpeechTextView from "@/components/SpeechTextView.vue";
 import SpeechHighlightNav from "@/components/SpeechHighlightNav.vue";
-import DeputyCard from "@/components/DeputyCard.vue";
 import Message from "@/components/Message.vue";
 import Loader from "@/components/Loader.vue";
 
@@ -332,6 +373,40 @@ const navHighlights = computed(() => highlightModel.value.nav);
 const orphanHighlights = computed(() => highlightModel.value.orphans);
 
 const speakerDeputy = computed(() => getDeputyByName(speech.value.speaker));
+const speakerColor = computed(() => partyColor(speakerDeputy.value?.party_name));
+
+// "Apellido1 Apellido2, Nombre" → "NA" (given initial + first surname).
+const initialsFor = (name) => {
+  const [surnames = "", given = ""] = (name ?? "").split(",");
+  const first = given.trim()[0] ?? "";
+  const last = surnames.trim()[0] ?? "";
+  return `${first}${last}`.toUpperCase() || surnames.trim()[0]?.toUpperCase() || "?";
+};
+const speakerInitials = computed(() => initialsFor(speech.value.speaker));
+
+// Toggle for the in-transcript mention highlighting (chips + avatars + tint);
+// off by default so the transcript reads clean. The sidebar mentions list
+// (which carries the deputy's photo + party colour) is always visible.
+const showMentions = ref(false);
+const getDeputyById = useDeputyById();
+const mentionsView = computed(() =>
+  (speech.value.mentions ?? []).map((mention) => {
+    const deputy =
+      mention.person_type === "deputy" && mention.person_id
+        ? getDeputyById(mention.person_id)
+        : null;
+    return {
+      key: mention.person_id ?? mention.name,
+      name: mention.name,
+      count: mention.count,
+      personType: mention.person_type,
+      personId: mention.person_id,
+      image: deputy?.image,
+      color: partyColor(deputy?.party_name),
+      initials: initialsFor(mention.name),
+    };
+  })
+);
 
 const formattedDate = computed(() => formatDateInt(speech.value?.date));
 
@@ -339,6 +414,14 @@ const formattedDate = computed(() => formatDateInt(speech.value?.date));
 const sessionCode = computed(() => {
   const stem = speech.value?.session_link?.split("/").pop()?.replace(/\.pdf$/i, "");
   return stem || null;
+});
+
+// the code's trailing segment is the sitting number → "Pleno núm. 196"
+const sessionLabel = computed(() => {
+  const n = sessionCode.value?.split("-").pop();
+  return n && /^\d+$/.test(n)
+    ? `${speech.value.session_name} núm. ${n}`
+    : speech.value.session_name;
 });
 
 // SSR-ready meta — noindex while the feature is dev-only
@@ -367,98 +450,252 @@ defineOgImage('Speech', {
 
 <style lang="scss" scoped>
 .c-speech {
-  h2 {
-    margin-bottom: rem(math.div($spacer-unit, 2));
-  }
+  &__cols {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: rem(22px);
+    align-items: start;
 
-  &__meta {
-    @include overline;
-
-    margin: 0;
-  }
-
-  &__session {
-    @include tbody2;
-
-    color: $secondary-medium;
-    margin: 0 0 rem($spacer-unit * 2);
-
-    a {
-      color: inherit;
-
-      &:hover {
-        color: $secondary-dark;
-        text-decoration: underline;
-      }
+    @media (min-width: $md) {
+      grid-template-columns: 1fr rem(300px);
+      gap: rem(48px);
     }
   }
 
-  &__initiative {
+  // ── speaker header (no coloured top border; group reads via the ring) ──
+  &__head {
+    display: flex;
+    align-items: center;
+    gap: rem(16px);
+    margin-bottom: rem(8px);
+  }
+
+  &__av-ring {
+    flex: none;
+    line-height: 0;
+    border-radius: 50%;
+    border: 3px solid var(--grp, var(--color-brand-500));
+  }
+
+  &__av {
+    width: rem(66px) !important;
+    height: rem(66px) !important;
+    font-family: $font-headline;
+    font-size: rem(22px);
+    background-color: var(--color-brand-50);
+    color: $secondary-dark;
+  }
+
+  &__identity {
+    min-width: 0;
+  }
+
+  &__name {
+    font-family: $font-headline;
+    font-weight: 400;
+    font-size: rem(27px);
+    line-height: 1.06;
+    letter-spacing: normal;
+    text-transform: none;
+    color: $black;
+    margin: 0;
+
+    @media (min-width: $sm) {
+      font-size: rem(32px);
+    }
+  }
+
+  &__role {
+    font-size: rem(14.5px);
+    line-height: 1.3;
+    color: $secondary-medium;
+    margin: rem(8px) 0 0;
+  }
+
+  &__role-sq {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    background-color: var(--grp, var(--color-brand-500));
+    margin-right: rem(9px);
+    vertical-align: middle;
+  }
+
+  // ── initiative + session ──────────────────────────────────────────────
+  &__inis {
+    margin: rem(24px) 0 rem(28px);
+  }
+
+  &__ini {
     margin-bottom: rem($spacer-unit);
   }
 
-  &__initiative-type {
-    @include overline;
-
-    margin: 0;
+  &__ini-type {
+    font-family: $font-headline;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-size: rem(11px);
+    line-height: 1.3;
+    color: $secondary-medium;
+    margin: 0 0 rem(2px);
   }
 
-  &__initiative-title {
-    font-size: rem(20px);
-    line-height: 1.4;
-    color: $secondary-dark;
+  &__ini-ref {
+    color: var(--color-brand-800);
+  }
+
+  &__ini-title {
+    display: block;
+    font-family: $font-headline;
+    font-size: rem(18px);
+    line-height: 1.25;
+    color: $black;
+    text-decoration: none;
 
     &:hover {
       text-decoration: underline;
+      text-underline-offset: 2px;
     }
   }
 
+  &__ini-sess {
+    font-size: rem(13px);
+    line-height: 1.4;
+    color: $secondary-medium;
+    font-variant-numeric: tabular-nums;
+    margin: rem(8px) 0 0;
+  }
+
+  &__ini-sess-link {
+    color: var(--color-brand-700);
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+  }
+
+  // ── video ─────────────────────────────────────────────────────────────
   &__video video {
+    display: block;
     width: 100%;
-    max-height: rem(480px);
+    aspect-ratio: 16 / 9;
+    max-height: rem(420px);
     background-color: $black;
   }
 
-  &__nav {
+  &__vhint {
+    font-size: rem(12px);
+    color: $secondary-medium;
+    margin: rem($spacer-unit) 0 0;
+  }
+
+  // ── transcript toolbar (heading + in-text mention toggle) ─────────────
+  &__t-bar {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: rem($spacer-unit);
-    margin-top: rem($spacer-unit * 2);
-    border-top: 1px solid var(--color-brand-200);
-    padding-top: rem($spacer-unit);
+    margin: rem(28px) 0 rem(16px);
+    padding-bottom: rem(10px);
+    border-bottom: 2px solid $black;
   }
 
-  &__nav-link {
-    @include tbody2;
+  &__t-title {
+    font-family: $font-headline;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-size: rem(15px);
+    line-height: 1;
+    color: $black;
+    margin: 0;
+  }
 
+  &__mentions-toggle {
     display: inline-flex;
     align-items: center;
-    gap: rem(math.div($spacer-unit, 4));
+    gap: rem(6px);
+    flex: none;
+    font-family: $font-headline;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-size: rem(11px);
     color: $secondary-dark;
+    background-color: $white;
+    border: 1px solid $neutral;
+    padding: rem(6px) rem(10px);
+    cursor: pointer;
 
     &:hover {
-      text-decoration: underline;
+      border-color: var(--color-brand-600);
+    }
+
+    &[aria-pressed="true"] {
+      background-color: var(--color-brand-100);
+      border-color: var(--color-brand-500);
     }
   }
 
-  &__nav-position {
-    @include overline;
+  // ── prev/next debate nav ──────────────────────────────────────────────
+  &__dnav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: rem(16px);
+    margin-top: rem(30px);
+    padding-top: rem(16px);
+    border-top: 1px solid $neutral;
+  }
 
+  &__dnav-link {
+    display: inline-flex;
+    align-items: center;
+    gap: rem(6px);
+    font-family: $font-headline;
+    font-size: rem(15px);
+    color: $secondary-dark;
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+  }
+
+  &__dnav-pos {
+    font-family: $font-headline;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-size: rem(11px);
     color: $secondary-medium;
     text-align: center;
   }
 
-  &__people {
+  // ── sidebar ───────────────────────────────────────────────────────────
+  &__side-h {
+    font-family: $font-headline;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-size: rem(13px);
+    line-height: 1.2;
+    color: $secondary-dark;
+    margin: 0 0 rem(12px);
+  }
+
+  &__plist {
     list-style: none;
-    margin: 0 0 rem($spacer-unit * 2);
+    margin: 0 0 rem(26px);
     padding: 0;
   }
 
-  &__person {
+  &__pitem {
     display: flex;
-    flex-direction: column;
-    margin-bottom: rem($spacer-unit);
+    align-items: center;
+    gap: rem(10px);
+    padding: rem(7px) 0;
+    line-height: 1.3;
+    border-bottom: 1px solid $neutral;
 
     // suppress the global li::before middot from 04_base/_base__lists.scss
     &::before {
@@ -466,36 +703,84 @@ defineOgImage('Speech', {
     }
   }
 
-  &__person-name {
-    @include tbody2;
+  &__pav-ring {
+    flex: none;
+    line-height: 0;
+    border-radius: 50%;
+    border: 2px solid var(--grp, var(--color-brand-500));
+  }
 
+  &__pav {
+    width: rem(34px) !important;
+    height: rem(34px) !important;
+    font-family: $font-headline;
+    font-size: rem(12px);
+    background-color: var(--color-brand-50);
     color: $secondary-dark;
+  }
 
-    &--linked:hover {
-      text-decoration: underline;
+  &__pn {
+    flex: 1;
+    min-width: 0;
+    font-size: rem(14px);
+    color: $black;
+
+    a {
+      color: var(--color-brand-700);
+      text-decoration: none;
+
+      &:hover {
+        text-decoration: underline;
+        text-underline-offset: 2px;
+      }
     }
   }
 
-  &__person-count {
-    @include overline;
-
+  &__px {
+    margin-left: auto;
+    font-family: $font-headline;
+    font-size: rem(11px);
     color: $secondary-medium;
+    font-variant-numeric: tabular-nums;
+  }
+
+  &__intr {
+    padding: rem(10px) 0;
+    border-bottom: 1px solid $neutral;
+  }
+
+  &__intr-name {
+    display: block;
+    font-family: $font-headline;
+    font-size: rem(14px);
+    line-height: 1.2;
+    color: $black;
+    text-decoration: none;
+
+    &--link:hover {
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
   }
 
   &__quote {
-    @include tbody2;
-
     font-style: italic;
-    color: $secondary-medium;
-    margin: 0;
-    padding-left: rem($spacer-unit);
+    font-size: rem(13px);
+    line-height: 1.4;
+    color: $secondary-dark;
+    margin: rem(6px) 0 0;
+    padding-left: rem(11px);
     border-left: 2px solid var(--color-brand-300);
   }
 
-  &__reactions {
-    @include overline;
-
+  &__rx {
+    display: block;
+    font-family: $font-headline;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-size: rem(10.5px);
     color: $secondary-medium;
+    margin-top: rem(5px);
   }
 }
 </style>

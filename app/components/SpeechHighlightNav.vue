@@ -1,6 +1,28 @@
 <template>
   <aside v-if="highlights.length || orphans.length" class="c-speech-hl">
-    <h4 class="c-speech-hl__title u-uppercase">Coincidencias de tu búsqueda</h4>
+    <div class="c-speech-hl__head">
+      <span class="c-speech-hl__title">
+        {{ highlights.length || orphans.length }} coincidencias
+      </span>
+      <span v-if="highlights.length > 1" class="c-speech-hl__cnt">
+        <button
+          type="button"
+          class="c-speech-hl__step"
+          aria-label="Coincidencia anterior"
+          @click="step(-1)"
+        >
+          ‹
+        </button>
+        <button
+          type="button"
+          class="c-speech-hl__step"
+          aria-label="Coincidencia siguiente"
+          @click="step(1)"
+        >
+          ›
+        </button>
+      </span>
+    </div>
     <ol v-if="highlights.length" class="c-speech-hl__list">
       <li v-for="(hl, index) in highlights" :key="hl.hlId" class="c-speech-hl__item">
         <button
@@ -73,6 +95,15 @@ const goTo = async (hl) => {
   scrollToCurrent(hl.hlId);
 };
 
+// prev/next cycle through the matches in document order (wraps at the ends)
+const step = (delta) => {
+  if (!highlights.length) return;
+  const current = highlights.findIndex((hl) => hl.hlId === currentHlId.value);
+  const from = current === -1 ? (delta > 0 ? -1 : 0) : current;
+  const next = (from + delta + highlights.length) % highlights.length;
+  goTo(highlights[next]);
+};
+
 // Track which match is on screen (topmost visible) to sync the active item.
 const visible = new Map(); // hlId → isIntersecting
 const markEls = shallowRef([]);
@@ -107,15 +138,55 @@ watch([() => highlights, activeLang], refreshMarks);
 
 <style lang="scss" scoped>
 .c-speech-hl {
+  margin-top: rem($spacer-unit * 2);
   margin-bottom: rem($spacer-unit * 2);
+  background-color: $white;
+  border: 1px solid $neutral;
+  border-top: 3px solid var(--color-brand-700);
+  padding: rem(14px);
+  box-shadow: 0 rem(10px) rem(26px) rem(-20px) rgba(45, 66, 82, 0.55);
 
   @media (min-width: $md) {
     position: sticky;
     top: rem($spacer-unit * 4);
   }
 
-  &__title {
+  &__head {
+    display: flex;
+    align-items: center;
+    gap: rem($spacer-unit);
     margin-bottom: rem($spacer-unit);
+  }
+
+  &__title {
+    @include overline;
+
+    color: $secondary-dark;
+  }
+
+  &__cnt {
+    margin-left: auto;
+    display: flex;
+    gap: rem(4px);
+  }
+
+  &__step {
+    width: rem(24px);
+    height: rem(24px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: rem(13px);
+    line-height: 1;
+    cursor: pointer;
+    background-color: $white;
+    border: 1px solid $neutral;
+    color: $secondary-dark;
+
+    &:hover {
+      border-color: var(--color-brand-700);
+      color: var(--color-brand-700);
+    }
   }
 
   &__list {
@@ -139,20 +210,21 @@ watch([() => highlights, activeLang], refreshMarks);
     gap: rem(math.div($spacer-unit, 2));
     width: 100%;
     text-align: left;
-    background: none;
-    border: 0;
-    border-left: 3px solid var(--color-brand-200);
+    background-color: $white;
+    border: 1px solid $neutral;
+    border-left: 3px solid var(--color-brand-500);
     padding: rem(math.div($spacer-unit, 2)) rem($spacer-unit);
     cursor: pointer;
     color: $secondary-dark;
+    transition: border-color 0.15s ease;
 
     &:hover {
-      background-color: var(--color-brand-100);
+      border-left-color: var(--color-brand-700);
     }
 
     &--active {
-      border-left-color: #f6c945;
-      background-color: var(--color-brand-100);
+      border-color: #efca53;
+      border-left-color: #efca53;
     }
   }
 

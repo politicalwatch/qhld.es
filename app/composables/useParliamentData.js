@@ -89,6 +89,12 @@ export const useDeputyByName = () => {
   return (name) => deputies.value?.find((d) => d.name === name);
 };
 
+// mention.person_id (and the deputy route param) is the deputy's id slug
+export const useDeputyById = () => {
+  const { data: deputies } = useDeputies();
+  return (id) => deputies.value?.find((d) => d.id === id);
+};
+
 export const useGroupByName = () => {
   const { data: groups } = useParliamentaryGroups();
   return (name) => groups.value?.find((g) => g.name === name);

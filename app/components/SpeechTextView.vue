@@ -28,10 +28,19 @@
           :class="pieceClass(piece)"
         >
           <NuxtLink
-            v-if="piece.type === 'mention' && piece.isDeputy"
+            v-if="showMentions && piece.type === 'mention' && piece.isDeputy"
             :to="{ name: 'deputy', params: { id: piece.personId } }"
             class="c-speech-text__mention c-speech-text__mention--linked"
+            :class="{ 'c-speech-text__mention--grp': metaFor(piece) }"
+            :style="metaFor(piece) ? { '--mgrp': metaFor(piece).color } : undefined"
           >
+            <img
+              v-if="metaFor(piece)?.image"
+              :src="metaFor(piece).image"
+              class="c-speech-text__mention-av"
+              alt=""
+              aria-hidden="true"
+            />
             {{ piece.text }}
           </NuxtLink>
           <template v-else>{{ piece.text }}</template>
@@ -42,19 +51,46 @@
 </template>
 
 <script setup>
-const { blocks, people, highlightRanges, currentHlId } = defineProps({
-  // speech[] from the API: [{ lang, text, original }]
-  blocks: { type: Array, required: true },
-  // mentions + interruptions, for surface-form highlighting
-  people: { type: Array, default: () => [] },
-  // search highlights per language: { [lang]: [{ start, end, hlId }] }
-  highlightRanges: { type: Object, default: () => ({}) },
-  // the highlight the jump nav is currently tracking (for emphasis)
-  currentHlId: { type: Number, default: null },
-});
+const { blocks, people, highlightRanges, currentHlId, showMentions } =
+  defineProps({
+    // speech[] from the API: [{ lang, text, original }]
+    blocks: { type: Array, required: true },
+    // mentions + interruptions, for surface-form highlighting
+    people: { type: Array, default: () => [] },
+    // search highlights per language: { [lang]: [{ start, end, hlId }] }
+    highlightRanges: { type: Object, default: () => ({}) },
+    // the highlight the jump nav is currently tracking (for emphasis)
+    currentHlId: { type: Number, default: null },
+    // when false, mentions render as plain text (no chip / avatar / tint)
+    showMentions: { type: Boolean, default: true },
+  });
 
 // owned here by default, but the jump nav needs to switch tabs → expose as model
 const activeLang = defineModel("activeLang", { default: null });
+
+// group colour + avatar photo for each deputy mentioned (looked up once by id).
+// Deputies are SSR-populated (fetched on the page), so this renders identically
+// on server and client — no hydration drift.
+const getDeputyById = useDeputyById();
+const mentionMetaMap = computed(() => {
+  const map = new Map();
+  for (const person of people) {
+    if (person.person_type !== "deputy" || !person.person_id) continue;
+    if (map.has(person.person_id)) continue;
+    const deputy = getDeputyById(person.person_id);
+    if (deputy) {
+      map.set(person.person_id, {
+        image: deputy.image,
+        color: partyColor(deputy.party_name),
+      });
+    }
+  }
+  return map;
+});
+const metaFor = (piece) =>
+  piece.type === "mention" && piece.isDeputy
+    ? mentionMetaMap.value.get(piece.personId)
+    : null;
 
 const LANG_LABELS = {
   es: "Castellano",
@@ -80,7 +116,7 @@ const paragraphs = computed(() => {
 const pieceClass = (piece) => {
   const classes = [];
   if (piece.type === "annotation") classes.push("c-speech-text__annotation");
-  else if (piece.type === "mention" && !piece.isDeputy)
+  else if (piece.type === "mention" && !piece.isDeputy && showMentions)
     classes.push("c-speech-text__mention");
   if (piece.highlighted) classes.push("c-speech-text__hl");
   if (currentHlId != null && piece.hlIds?.includes(currentHlId))
@@ -147,27 +183,46 @@ const pieceClass = (piece) => {
         text-decoration: underline;
       }
     }
+
+    // deputy mentions carry the party colour + an inline avatar
+    &--grp {
+      background-color: color-mix(in srgb, var(--mgrp) 16%, transparent);
+      color: $secondary-dark;
+
+      &:hover {
+        background-color: color-mix(in srgb, var(--mgrp) 28%, transparent);
+      }
+    }
   }
 
-  // search-match highlight — amber, deliberately distinct from the mint mentions
+  &__mention-av {
+    display: inline-block;
+    width: 1.25em;
+    height: 1.25em;
+    border-radius: 50%;
+    object-fit: cover;
+    vertical-align: -0.28em;
+    margin-right: 0.28em;
+    border: 1.5px solid var(--mgrp, var(--color-brand-500));
+  }
+
+  // search-match highlight — green, active gets a yellow ring (matches artifact)
   &__hl {
-    $hl: #fce6a2;
-    $hl-current: #f6c945;
-
-    background-color: $hl;
-    color: inherit;
-    padding: 0 rem(1px);
-    box-shadow: 0 rem(1px) 0 rgba($black, 0.12);
+    background-color: var(--color-brand-400);
+    color: #16302b;
+    padding: rem(1px) rem(2px);
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
     scroll-margin-top: rem($spacer-unit * 6);
-    transition: background-color 0.2s ease;
+    transition: box-shadow 0.2s ease;
 
-    // a mention sitting inside a match keeps its own tint readable on amber
+    // a mention sitting inside a match keeps its own tint readable on green
     .c-speech-text__mention {
-      background-color: rgba($black, 0.06);
+      background-color: rgba($black, 0.08);
     }
 
     &--current {
-      background-color: $hl-current;
+      box-shadow: 0 0 0 2px #efca53;
     }
   }
 }
