@@ -73,7 +73,6 @@ export default defineNuxtConfig({
   },
 
   gtag: {
-    id: process.env.NUXT_PUBLIC_GA_ID,
     initCommands: [
       ["consent", "default", {
         ad_storage: "denied",
@@ -112,7 +111,7 @@ export default defineNuxtConfig({
           name: { es: "Google Analytics" },
           description: { es: "Cookies de analítica. Nos ayudan a entender cómo se usa el sitio." },
           links: { "Política de cookies": "/politica-de-cookies" },
-          targetCookieIds: ["_ga", process.env.NUXT_PUBLIC_GA_ID?.replace(/^G-/, "_ga_")].filter(Boolean),
+          targetCookieIds: ["_ga", "_gid", "_gat", "_ga_E3P8ZBBM2R"],
         },
       ],
     },
