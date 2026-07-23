@@ -103,6 +103,31 @@
     }
   }
 
+  // Sits between the input and the submit button as another white surface over
+  // the gradient ring; the mint history glyph is `currentColor` on the <Icon>.
+  &__history {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    cursor: pointer;
+    background-color: $white;
+    color: var(--color-brand-700);
+    padding: 0 rem($spacer-unit * 0.75);
+    font-size: rem(20px);
+
+    &:hover:not(:disabled) {
+      color: var(--color-brand-800);
+    }
+
+    &:disabled {
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+  }
+
   &__submit {
     @include tbody;
 
@@ -123,6 +148,105 @@
     &:disabled {
       cursor: not-allowed;
       opacity: 0.6;
+    }
+  }
+}
+
+// Recent-searches panel, rendered inside the @nuxt/ui UPopover content.
+.c-speech-history {
+  width: rem(320px);
+  max-width: 90vw;
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: rem($spacer-unit);
+    padding: rem($spacer-unit * 0.75) rem($spacer-unit);
+    border-bottom: 1px solid $secondary-light;
+  }
+
+  &__title {
+    @include overline;
+  }
+
+  &__clear {
+    @include overline;
+
+    border: 0;
+    cursor: pointer;
+    background: transparent;
+    color: var(--color-brand-700);
+
+    &:hover {
+      color: var(--color-brand-800);
+    }
+  }
+
+  &__list {
+    list-style: none;
+    margin: 0;
+    padding: rem($spacer-unit * 0.25) 0;
+    max-height: rem(320px);
+    overflow-y: auto;
+  }
+
+  &__item {
+    display: flex;
+    align-items: stretch;
+
+    // Suppress the global `ul li::before` bullet ("·") from _base__lists.scss.
+    &::before {
+      content: none;
+    }
+
+    &:hover {
+      background-color: $secondary-light;
+    }
+  }
+
+  &__recall {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: rem($spacer-unit * 0.25);
+    border: 0;
+    cursor: pointer;
+    background: transparent;
+    text-align: left;
+    padding: rem($spacer-unit * 0.5) rem($spacer-unit);
+  }
+
+  &__query {
+    @include tbody;
+
+    color: $secondary-dark;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__meta {
+    font-family: $font-primary;
+    font-size: rem(13px);
+    line-height: 1.4;
+    color: $secondary-medium;
+  }
+
+  &__remove {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    cursor: pointer;
+    background: transparent;
+    color: $secondary-medium;
+    padding: 0 rem($spacer-unit * 0.75);
+    font-size: rem(18px);
+
+    &:hover {
+      color: $secondary-dark;
     }
   }
 }

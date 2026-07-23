@@ -11,7 +11,11 @@
       <SpeechSearchForm
         v-model="q"
         :loading="loading !== 'idle'"
+        :entries="entries"
         @search="search"
+        @recall="onRecall"
+        @remove="onRemove"
+        @clear="onClear"
       />
 
       <div v-if="searched && chips.length && loading !== 'first'" class="c-speech-search__chips">
@@ -41,7 +45,7 @@
         </ul>
       </div>
 
-      <div v-if="searched && results.length > 0" id="speech-results">
+      <div v-if="searched && results.length > 0 && loading !== 'first'" id="speech-results">
         <div class="c-speech-search__results-toolbar">
           <p class="c-speech-search__results-count">
             Mostrando {{ results.length }} intervenciones
@@ -141,7 +145,7 @@ const FILTER_LABELS = {
 
 // The store is the single source of truth for results/meta, so "load more" and
 // the Back-button restore never fall out of sync (and page 2 isn't duplicated).
-const { results, queryMeta } = storeToRefs(store);
+const { results, queryMeta, entries } = storeToRefs(store);
 const q = ref("");
 const loading = ref("idle"); // 'idle' | 'first' | 'more'
 const searched = ref(false);
@@ -210,9 +214,11 @@ const search = () => {
   const query = q.value.trim();
   if (query.length < 2 || loading.value !== "idle") return;
 
-  // Repeat of the cached search → just show it again; don't re-run the (paid,
-  // slow) semantic query. The store keeps the last search across navigation.
-  if (query === store.query && store.results.length) {
+  // Already in today's history (whether or not it's the one on screen) → recall
+  // it and show it again; don't re-run the (paid, slow) semantic query. `recall`
+  // also refreshes the day scope, so a query kept from before today's extraction
+  // is dropped and falls through to a fresh fetch below.
+  if (store.recall(query)) {
     searched.value = true;
     router.push({ path: "/buscar-intervenciones", query: { q: query } }).catch((e) => e);
     nextTick().then(() => {
@@ -224,8 +230,6 @@ const search = () => {
   }
 
   loading.value = "first";
-  results.value = [];
-  queryMeta.value = {};
   router.push({ path: "/buscar-intervenciones", query: { q: query } }).catch((e) => e);
   $api
     .searchSpeeches({ q: query, per_page: PER_PAGE, highlights: HIGHLIGHTS })
@@ -281,6 +285,31 @@ const applySuggestion = (item) => {
     ? q.value.replace(pattern, suggestion)
     : suggestion;
   search();
+};
+
+// Panel actions. Recall reuses `search()`, which serves the cached entry when
+// it's still in today's history (no API call) or re-runs it if the day rolled.
+const onRecall = (query) => {
+  q.value = query;
+  search();
+};
+
+const resetToEmptyState = () => {
+  searched.value = false;
+  q.value = "";
+  router.push({ path: "/buscar-intervenciones" }).catch((e) => e);
+};
+
+const onRemove = (query) => {
+  const wasActive = store.activeQuery === query;
+  store.remove(query);
+  // If the deleted search is the one on screen, drop back to the empty state.
+  if (wasActive && searched.value) resetToEmptyState();
+};
+
+const onClear = () => {
+  store.clearHistory();
+  if (searched.value) resetToEmptyState();
 };
 
 onMounted(() => {
