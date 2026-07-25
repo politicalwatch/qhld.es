@@ -502,6 +502,13 @@ defineOgImage('Speech', {
       grid-template-columns: 1fr rem(300px);
       gap: rem(48px);
     }
+
+    // The sticky highlights panel can only travel inside its containing block,
+    // so the aside must span the full row height — `align-items: start` above
+    // would shrink it to its content and pin the panel in place.
+    > aside {
+      align-self: stretch;
+    }
   }
 
   // ── speaker header (no coloured top border; group reads via the ring) ──
