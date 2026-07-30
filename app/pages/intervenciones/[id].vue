@@ -305,27 +305,27 @@ const LANG_LABELS = { es: "Castellano", ca: "Català", eu: "Euskara", gl: "Galeg
 const mounted = useMounted();
 const activeLang = ref(null);
 const currentHlId = ref(null);
-const passageChunks = ref(null); // null = not (yet) fetched → fall back to store
-const passagesLoading = ref(false);
-
-watch(
-  mounted,
-  async (isMounted) => {
-    if (!isMounted || !speech.value || !store.query) return;
-    passagesLoading.value = true;
-    try {
-      const { passages } = await $api.getSpeechPassages(
-        route.params.id,
-        store.query
-      );
-      passageChunks.value = passages ?? [];
-    } catch {
-      passageChunks.value = null; // keep the store's 3 as a graceful fallback
-    } finally {
-      passagesLoading.value = false;
-    }
+// Cached per (speech, query) for the session, so returning to a speech already
+// visited for this search shows its highlights instantly instead of paying the
+// fetch again — the same payload-cache strategy the speech and context fetches
+// above use. Passing getCachedData is what makes it stick: Nuxt purges an
+// entry's payload when its last consumer unmounts EXCEPT when a custom one is
+// supplied, and this page unmounts on every navigation. The key carries the
+// query, so the same speech reached from a different search fetches afresh.
+// Client-only: the query lives in web storage, which the server cannot read.
+// null = not fetched (or failed) → fall back to the store's card passages;
+// an empty array is a real "no passages" answer and is kept as such.
+const { data: passageChunks, status: passagesStatus } = useAsyncData(
+  () => `speech-passages-${route.params.id}-${store.query}`,
+  async () => {
+    if (!store.query) return null; // cold visit: nothing to highlight
+    const { passages } = await $api.getSpeechPassages(
+      route.params.id,
+      store.query
+    );
+    return passages ?? [];
   },
-  { immediate: true }
+  { server: false, default: () => null, getCachedData: getCachedPayload }
 );
 
 // The card's highlights are only a preview: the grouped search reranks a small
@@ -335,7 +335,9 @@ watch(
 // flight we hold back the preview and show a loader, so the panel (and transcript
 // marks) never flash the card's passages and then jump to the full set. If it
 // fails, the model falls back to the preview.
-const passagesPending = computed(() => passagesLoading.value);
+// A cache hit resolves without ever entering "pending", so a revisit renders the
+// highlights immediately and never shows the loader.
+const passagesPending = computed(() => passagesStatus.value === "pending");
 
 const highlightModel = computed(() => {
   const blocks = speech.value?.speech ?? [];
