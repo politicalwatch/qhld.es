@@ -48,7 +48,7 @@
       <div v-if="searched && results.length > 0 && loading !== 'first'" id="speech-results">
         <div class="c-speech-search__results-toolbar">
           <p class="c-speech-search__results-count">
-            Mostrando {{ results.length }} intervenciones
+            Mostrando {{ results.length }} intervenciones, {{ orderLabel }}
           </p>
         </div>
         <section class="c-speech-search__results-grid">
@@ -174,6 +174,10 @@ const chips = computed(() => {
   });
   return list;
 });
+
+const orderLabel = computed(() =>
+  queryMeta.value.browse ? "las más recientes primero" : "por relevancia"
+);
 
 const blockingUnresolved = computed(
   () => (queryMeta.value.unresolved || []).filter((item) => item.blocking)

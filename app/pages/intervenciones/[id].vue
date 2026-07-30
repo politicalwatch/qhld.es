@@ -319,6 +319,11 @@ const { data: passageChunks, status: passagesStatus } = useAsyncData(
   () => `speech-passages-${route.params.id}-${store.query}`,
   async () => {
     if (!store.query) return null; // cold visit: nothing to highlight
+    // A filters-only query ("intervenciones de Pedro Sánchez") asked for no
+    // topic, so no passage of this speech matched anything and none may be
+    // marked. An empty array is that answer — null would fall back to the card's
+    // preview passages and mark the opening of the speech as if it had matched.
+    if (store.queryMeta.browse) return [];
     const { passages } = await $api.getSpeechPassages(
       route.params.id,
       store.query
