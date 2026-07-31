@@ -13,6 +13,7 @@
               ></component>
             </ClientOnly>
           </a>
+          <StatusBadge />
         </div>
         <div class="o-grid__col u-6@sm u-offset-3@sm">
           <div class="o-grid">
@@ -171,6 +172,10 @@ onMounted(() => {
   &__brand {
     &-link {
       display: block;
+
+      .c-footer__brand-logo {
+        padding-bottom: rem($spacer-unit);
+      }
     }
 
     &-logo {
