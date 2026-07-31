@@ -49,6 +49,10 @@ export default defineNuxtPlugin(() => {
 
     getTypes: () => backendFetch('/initiative-types/', { query: baseQuery }),
 
+    // Service status and how fresh the data is. Not `getStatus` — that one is the
+    // initiative statuses. No knowledgebase: this is about the whole deployment.
+    getDataStatus: () => backendFetch('/'),
+
     // ── Initiatives ──────────────────────────────────────────────────────────
     getInitiatives: (params = {}) =>
       backendFetch('/initiatives/', {

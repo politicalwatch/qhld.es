@@ -21,16 +21,15 @@ const LABELS = {
   down: "Servicio no disponible",
 };
 
-// Served by server/api/status.js, which caches the backend answer for a minute
-// so the footer does not ask once per page view.
-const { data } = await useFetch("/api/status", {
-  default: () => ({ ok: false, lastUpdated: null, datasets: {} }),
-});
+// The badge owns this request; the speech-search history reads the same answer.
+const { data: status } = await useDataFreshness();
 
+// A null status (no answer yet) classifies as "down", which is the honest thing to
+// show before we have heard anything.
 const state = computed(() =>
   classifyDataStatus({
-    ok: data.value?.ok,
-    lastUpdated: data.value?.lastUpdated,
+    ok: status.value?.status === "ok",
+    lastUpdated: status.value?.last_updated,
   })
 );
 
@@ -38,12 +37,12 @@ const label = computed(() => LABELS[state.value]);
 
 // Only meaningful when the backend answered; "down" has no date to show.
 const timestamp = computed(() =>
-  state.value === "down" ? "" : formatDateTime(data.value?.lastUpdated)
+  state.value === "down" ? "" : formatDateTime(status.value?.last_updated)
 );
 
 // Which dataset is behind is what you want next once the badge is not green.
 const breakdown = computed(() => {
-  const datasets = data.value?.datasets ?? {};
+  const datasets = status.value?.datasets ?? {};
   const lines = Object.entries(datasets).map(
     ([name, updatedAt]) => `${name}: ${formatDateTime(updatedAt)}`
   );

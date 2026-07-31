@@ -214,14 +214,20 @@ const handleError = (error) => {
   });
 };
 
-const search = () => {
+const search = async () => {
   const query = q.value.trim();
   if (query.length < 2 || loading.value !== "idle") return;
 
-  // Already in today's history (whether or not it's the one on screen) → recall
-  // it and show it again; don't re-run the (paid, slow) semantic query. `recall`
-  // also refreshes the day scope, so a query kept from before today's extraction
-  // is dropped and falls through to a fresh fetch below.
+  // Ask the backend how fresh its data is before trusting anything cached. Nothing
+  // else re-checks within a session — the footer badge that fetches it sits outside
+  // <NuxtPage/> and never remounts — so a tab left open across an extraction run
+  // would otherwise keep serving results from the previous corpus.
+  await refreshDataStatus();
+
+  // Already in the history (whether or not it's the one on screen) → recall it and
+  // show it again; don't re-run the (paid, slow) semantic query. `recall` checks the
+  // corpus first, so results searched against a superseded run are dropped and fall
+  // through to a fresh fetch below.
   if (store.recall(query)) {
     searched.value = true;
     router.push({ path: "/buscar-intervenciones", query: { q: query } }).catch((e) => e);
@@ -291,8 +297,8 @@ const applySuggestion = (item) => {
   search();
 };
 
-// Panel actions. Recall reuses `search()`, which serves the cached entry when
-// it's still in today's history (no API call) or re-runs it if the day rolled.
+// Panel actions. Recall reuses `search()`, which serves the cached entry when it was
+// searched against the corpus the backend still serves (no API call), or re-runs it.
 const onRecall = (query) => {
   q.value = query;
   search();
