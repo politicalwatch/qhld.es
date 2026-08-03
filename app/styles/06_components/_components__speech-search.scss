@@ -277,6 +277,30 @@
   .c-ai-search__box--loading::after {
     opacity: 0.9;
   }
+
+  // The rating panel's polish is all decorative: drop the movement, keep every state
+  // legible (the tick and the pill fill still change, they just don't travel).
+  .c-speech-search__rating-tick,
+  .c-speech-search__rating-reason-tick {
+    animation: none;
+  }
+
+  .c-speech-search__star:hover,
+  .c-speech-search__rating-reason:hover,
+  .c-speech-search__rating-submit:hover:not(:disabled) {
+    transform: none;
+  }
+
+  .rating-reveal-enter-active,
+  .rating-reveal-leave-active {
+    transition: none;
+  }
+
+  .rating-reveal-enter-from,
+  .rating-reveal-leave-to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 .c-speech-search {
@@ -392,14 +416,20 @@
     animation: ai-spin 1s linear infinite;
   }
 
+  // Same card family as the results above it: white surface, hairline border and the
+  // lifted shadow SpeechCard uses.
   &__rating {
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: rem($spacer-unit);
-    margin-top: rem($spacer-unit * 4);
-    padding-top: rem($spacer-unit * 2);
-    border-top: 1px solid $neutral;
+    width: 100%;
+    max-width: rem(620px);
+    margin: rem($spacer-unit * 4) auto 0;
+    padding: rem($spacer-unit * 2.5);
+    background-color: $white;
+    border: 1px solid $neutral;
+    box-shadow: 0 16px 32px -22px rgb(45 66 82 / 50%);
     text-align: center;
   }
 
@@ -416,17 +446,38 @@
     display: inline-flex;
     align-items: center;
     gap: rem($spacer-unit * 0.5);
-    color: var(--color-brand-700);
+    color: $secondary-dark;
     margin: 0;
+  }
+
+  // Mint disc around the check, so the confirmation reads at a glance instead of
+  // being a line of text the same weight as the question it replaced.
+  &__rating-tick {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    width: rem(24px);
+    height: rem(24px);
+    border-radius: 50%;
+    background-color: var(--color-brand-700);
+    color: $white;
+    font-size: rem(15px);
+    animation: rating-tick-pop 0.32s cubic-bezier(0.34, 1.56, 0.64, 1) both;
   }
 
   // The empty star is nuxt-ui's muted grey; the filled one is set by data-state, which
   // unlayered SCSS overrides without !important.
   &__star {
     color: $secondary-medium;
+    transition: transform 0.16s ease, color 0.16s ease;
 
     &[data-state="active"] {
       color: var(--color-brand-700);
+    }
+
+    &:hover {
+      transform: scale(1.15);
     }
   }
 
@@ -436,7 +487,6 @@
     align-items: center;
     gap: rem($spacer-unit * 0.75);
     width: 100%;
-    max-width: rem(560px);
   }
 
   &__rating-label {
@@ -460,25 +510,44 @@
     }
   }
 
+  // Pills, deliberately — the only *toggles* on this page. Everything else here is
+  // square (the site sets --ui-radius: 0), including the read-only "Entendido como"
+  // chips above the results, so the rounded shape is what says "press me" rather than
+  // "this is a label".
   &__rating-reason {
     @include overline;
 
+    display: inline-flex;
+    align-items: center;
+    gap: rem($spacer-unit * 0.25);
     cursor: pointer;
     background-color: $white;
     border: 1px solid $neutral;
+    border-radius: rem(999px);
     color: $secondary-dark;
-    padding: rem($spacer-unit * 0.25) rem($spacer-unit * 0.75);
-    transition: border-color 0.18s ease, background-color 0.18s ease;
+    padding: rem($spacer-unit * 0.375) rem($spacer-unit * 0.875);
+    transition:
+      border-color 0.18s ease,
+      background-color 0.18s ease,
+      color 0.18s ease,
+      transform 0.16s ease;
 
     &:hover {
       border-color: var(--color-brand-600);
+      transform: translateY(-1px);
     }
 
     &--on {
       background-color: var(--color-brand-100);
-      border-color: var(--color-brand-500);
+      border-color: var(--color-brand-600);
       color: $black;
     }
+  }
+
+  &__rating-reason-tick {
+    // Grows out of nothing as the pill fills, so selecting one feels like a switch
+    // rather than a text change.
+    animation: rating-tick-pop 0.22s ease-out both;
   }
 
   &__rating-comment {
@@ -490,9 +559,11 @@
     border: 1px solid $neutral;
     color: $secondary-dark;
     padding: rem($spacer-unit * 0.75);
+    transition: border-color 0.18s ease, box-shadow 0.18s ease;
 
     &:focus {
       border-color: var(--color-brand-600);
+      box-shadow: 0 0 0 3px var(--color-brand-100);
       outline: none;
     }
   }
@@ -507,15 +578,23 @@
   &__rating-submit {
     @include overline;
 
+    display: inline-flex;
+    align-items: center;
+    gap: rem($spacer-unit * 0.375);
     cursor: pointer;
-    background-color: var(--color-brand-700);
+    background-color: $black;
     border: 0;
     color: $white;
-    padding: rem($spacer-unit * 0.5) rem($spacer-unit * 1.5);
-    transition: background-color 0.18s ease;
+    padding: rem($spacer-unit * 0.625) rem($spacer-unit * 1.75);
+    transition:
+      background-color 0.18s ease,
+      transform 0.16s ease,
+      box-shadow 0.16s ease;
 
     &:hover:not(:disabled) {
-      background-color: var(--color-brand-800);
+      background-color: $secondary-dark;
+      transform: translateY(-1px);
+      box-shadow: 0 10px 20px -14px rgb(45 66 82 / 90%);
     }
 
     &:disabled {
@@ -523,6 +602,31 @@
       background-color: $secondary-medium;
     }
   }
+}
+
+@keyframes rating-tick-pop {
+  from {
+    transform: scale(0.4);
+    opacity: 0;
+  }
+
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+// Vue <Transition> on the reason block and the submit button: both appear in response
+// to a click, so they fade up from just below instead of snapping into the layout.
+.rating-reveal-enter-active,
+.rating-reveal-leave-active {
+  transition: opacity 0.22s ease, transform 0.22s ease;
+}
+
+.rating-reveal-enter-from,
+.rating-reveal-leave-to {
+  opacity: 0;
+  transform: translateY(rem(-6px));
 }
 
 @keyframes ai-spin {

@@ -2,12 +2,15 @@
   <section class="c-speech-search__rating" aria-labelledby="speech-rating-title">
     <template v-if="submitted">
       <p id="speech-rating-title" class="c-speech-search__rating-thanks">
-        <Icon name="mdi:check" aria-hidden="true" />
+        <span class="c-speech-search__rating-tick" aria-hidden="true">
+          <Icon name="mdi:check" />
+        </span>
         Gracias, tu valoración nos ayuda a mejorar el buscador
       </p>
       <UInputRating
         :model-value="submitted"
         readonly
+        size="xl"
         icon="mdi:star"
         empty-icon="mdi:star-outline"
         :ui="{ item: 'c-speech-search__star' }"
@@ -22,6 +25,7 @@
 
       <UInputRating
         v-model="rating"
+        size="xl"
         icon="mdi:star"
         empty-icon="mdi:star-outline"
         :ui="{ item: 'c-speech-search__star' }"
@@ -29,46 +33,63 @@
       />
 
       <!-- Only asked on a low score: a happy user shouldn't be handed a form, and an
-           unhappy one telling us *what* broke is the whole point of collecting this. -->
-      <div v-if="low" class="c-speech-search__rating-detail">
-        <p class="c-speech-search__rating-label">¿Qué ha fallado?</p>
-        <ul class="c-speech-search__rating-reasons">
-          <li v-for="reason in RATING_REASONS" :key="reason.slug">
-            <button
-              type="button"
-              class="c-speech-search__rating-reason"
-              :class="{
-                'c-speech-search__rating-reason--on': reasons.includes(reason.slug),
-              }"
-              :aria-pressed="reasons.includes(reason.slug)"
-              @click="toggle(reason.slug)"
-            >
-              {{ reason.label }}
-            </button>
-          </li>
-        </ul>
+           unhappy one telling us *what* broke is the whole point of collecting this.
+           Revealed rather than swapped in, so the panel doesn't jump under the cursor. -->
+      <Transition name="rating-reveal">
+        <div v-if="low" class="c-speech-search__rating-detail">
+          <p class="c-speech-search__rating-label">¿Qué ha fallado?</p>
+          <ul class="c-speech-search__rating-reasons">
+            <li v-for="reason in RATING_REASONS" :key="reason.slug">
+              <button
+                type="button"
+                class="c-speech-search__rating-reason"
+                :class="{
+                  'c-speech-search__rating-reason--on': reasons.includes(reason.slug),
+                }"
+                :aria-pressed="reasons.includes(reason.slug)"
+                @click="toggle(reason.slug)"
+              >
+                <Icon
+                  v-if="reasons.includes(reason.slug)"
+                  name="mdi:check"
+                  class="c-speech-search__rating-reason-tick"
+                  aria-hidden="true"
+                />
+                {{ reason.label }}
+              </button>
+            </li>
+          </ul>
 
-        <textarea
-          v-model="comment"
-          class="c-speech-search__rating-comment"
-          rows="3"
-          :maxlength="COMMENT_MAX_LENGTH"
-          placeholder="Cuéntanos algo más (opcional)"
-        />
-        <p class="c-speech-search__rating-hint">
-          Máx. {{ COMMENT_MAX_LENGTH }} caracteres · No incluyas datos personales
-        </p>
-      </div>
+          <textarea
+            v-model="comment"
+            class="c-speech-search__rating-comment"
+            rows="3"
+            :maxlength="COMMENT_MAX_LENGTH"
+            placeholder="Cuéntanos algo más (opcional)"
+          />
+          <p class="c-speech-search__rating-hint">
+            Máx. {{ COMMENT_MAX_LENGTH }} caracteres · No incluyas datos personales
+          </p>
+        </div>
+      </Transition>
 
-      <button
-        v-if="rating"
-        type="button"
-        class="c-speech-search__rating-submit"
-        :disabled="sending"
-        @click="submit"
-      >
-        {{ sending ? "Enviando…" : "Enviar valoración" }}
-      </button>
+      <Transition name="rating-reveal">
+        <button
+          v-if="rating"
+          type="button"
+          class="c-speech-search__rating-submit"
+          :disabled="sending"
+          @click="submit"
+        >
+          <Icon
+            v-if="sending"
+            name="mdi:loading"
+            class="c-speech-search__spin"
+            aria-hidden="true"
+          />
+          {{ sending ? "Enviando…" : "Enviar valoración" }}
+        </button>
+      </Transition>
     </template>
   </section>
 </template>
