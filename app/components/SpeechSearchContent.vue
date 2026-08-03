@@ -219,6 +219,11 @@ const errorDescription = (status) => {
       // The query wasn't a speech search (a command, a question to the
       // assistant, an injection) — tell the user how to phrase a real search.
       return "Esto no parece una búsqueda de intervenciones parlamentarias. Prueba a describir un tema, orador, grupo o fecha.";
+    case 429:
+      // Rate limited. The backend sends no Retry-After (slowapi's headers are off),
+      // so say to wait without promising when — the caps are per minute, hour and day,
+      // and we can't tell from here which one was hit.
+      return "Has hecho muchas búsquedas en poco tiempo. Espera un rato antes de volver a buscar.";
     case 503:
       return "El buscador inteligente no está disponible en este momento";
     default:
