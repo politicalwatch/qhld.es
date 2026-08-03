@@ -100,6 +100,13 @@ export default defineNuxtPlugin(() => {
     getSpeechPassages: (id, q) =>
       backendFetch(`/speeches/${id}/passages`, { query: { q } }),
 
+    // ── Search ratings ───────────────────────────────────────────────────────
+    // The one call here that does NOT go to the backend. Submitting a rating needs a
+    // shared secret the browser must not hold, so it goes through our own nitro route
+    // (server/api/search-rating.post.js), which attaches the token server-side.
+    rateSearch: (payload) =>
+      $fetch('/api/search-rating', { method: 'POST', body: payload }),
+
     // ── Alerts ───────────────────────────────────────────────────────────────
     saveAlert: (search) =>
       backendFetch('/alerts', {

@@ -60,6 +60,12 @@ export default defineNuxtConfig({
   },
 
   runtimeConfig: {
+    // Server-only. Sent as X-QHLD-Token when forwarding a search rating, so the secret
+    // never reaches the browser — see server/api/search-rating.post.js. Runtime, not
+    // build-time: it has to be present in the container's environment, and a value baked
+    // at build time would ship inside the image.
+    searchRatingToken: process.env.NUXT_SEARCH_RATING_TOKEN || "",
+
     public: {
       backendUrl:
         process.env.NUXT_PUBLIC_BACKEND_URL || "http://localhost:5000",

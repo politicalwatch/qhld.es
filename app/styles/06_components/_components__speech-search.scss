@@ -391,6 +391,138 @@
   &__spin {
     animation: ai-spin 1s linear infinite;
   }
+
+  &__rating {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: rem($spacer-unit);
+    margin-top: rem($spacer-unit * 4);
+    padding-top: rem($spacer-unit * 2);
+    border-top: 1px solid $neutral;
+    text-align: center;
+  }
+
+  &__rating-question {
+    font-family: $font-headline;
+    text-transform: uppercase;
+    color: $black;
+    margin: 0;
+  }
+
+  &__rating-thanks {
+    @include tbody;
+
+    display: inline-flex;
+    align-items: center;
+    gap: rem($spacer-unit * 0.5);
+    color: var(--color-brand-700);
+    margin: 0;
+  }
+
+  // The empty star is nuxt-ui's muted grey; the filled one is set by data-state, which
+  // unlayered SCSS overrides without !important.
+  &__star {
+    color: $secondary-medium;
+
+    &[data-state="active"] {
+      color: var(--color-brand-700);
+    }
+  }
+
+  &__rating-detail {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: rem($spacer-unit * 0.75);
+    width: 100%;
+    max-width: rem(560px);
+  }
+
+  &__rating-label {
+    @include overline;
+
+    margin: 0;
+  }
+
+  &__rating-reasons {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: rem($spacer-unit * 0.5);
+
+    // suppress the global li::before middot from 04_base/_base__lists.scss
+    li::before {
+      content: none;
+    }
+  }
+
+  &__rating-reason {
+    @include overline;
+
+    cursor: pointer;
+    background-color: $white;
+    border: 1px solid $neutral;
+    color: $secondary-dark;
+    padding: rem($spacer-unit * 0.25) rem($spacer-unit * 0.75);
+    transition: border-color 0.18s ease, background-color 0.18s ease;
+
+    &:hover {
+      border-color: var(--color-brand-600);
+    }
+
+    &--on {
+      background-color: var(--color-brand-100);
+      border-color: var(--color-brand-500);
+      color: $black;
+    }
+  }
+
+  &__rating-comment {
+    @include tbody;
+
+    width: 100%;
+    resize: vertical;
+    background-color: $white;
+    border: 1px solid $neutral;
+    color: $secondary-dark;
+    padding: rem($spacer-unit * 0.75);
+
+    &:focus {
+      border-color: var(--color-brand-600);
+      outline: none;
+    }
+  }
+
+  &__rating-hint {
+    @include overline;
+
+    color: $secondary-medium;
+    margin: 0;
+  }
+
+  &__rating-submit {
+    @include overline;
+
+    cursor: pointer;
+    background-color: var(--color-brand-700);
+    border: 0;
+    color: $white;
+    padding: rem($spacer-unit * 0.5) rem($spacer-unit * 1.5);
+    transition: background-color 0.18s ease;
+
+    &:hover:not(:disabled) {
+      background-color: var(--color-brand-800);
+    }
+
+    &:disabled {
+      cursor: default;
+      background-color: $secondary-medium;
+    }
+  }
 }
 
 @keyframes ai-spin {

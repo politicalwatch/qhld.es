@@ -68,6 +68,20 @@
             {{ loading === 'more' ? 'Cargando…' : 'Cargar más intervenciones' }}
           </a>
         </div>
+
+        <!-- Any previous answer comes from client-only web storage, so render after
+             mount to avoid a hydration mismatch (as the history popover does). -->
+        <ClientOnly>
+          <SpeechSearchRating
+            :query="store.query"
+            :query-meta="queryMeta"
+            :results="results"
+            :corpus="corpus"
+            :rated="store.ratingFor(store.query)"
+            :sending="sendingRating"
+            @submit="submitRating"
+          />
+        </ClientOnly>
       </div>
 
       <div
@@ -108,6 +122,7 @@ import SpeechSearchForm from "@/components/SpeechSearchForm.vue";
 import SpeechCard from "@/components/SpeechCard.vue";
 import PageHeader from "@/components/PageHeader.vue";
 import SpeechSearchLoader from "@/components/SpeechSearchLoader.vue";
+import SpeechSearchRating from "@/components/SpeechSearchRating.vue";
 import NotFound from "@/components/NotFound.vue";
 import config from "@/config";
 
@@ -149,6 +164,7 @@ const { results, queryMeta, entries } = storeToRefs(store);
 const q = ref("");
 const loading = ref("idle"); // 'idle' | 'first' | 'more'
 const searched = ref(false);
+const sendingRating = ref(false);
 
 // Warm the deputies cache so the result cards can borrow the speaker's photo +
 // party colour (SpeechCard reads it via useDeputyByName; the fetch is dedup'd).
@@ -178,6 +194,11 @@ const chips = computed(() => {
 const orderLabel = computed(() =>
   queryMeta.value.browse ? "las más recientes primero" : "por relevancia"
 );
+
+// Which extraction run the rated results came from, so a stored rating is never read
+// against a corpus that has since been replaced.
+const dataStatus = useDataStatus();
+const corpus = computed(() => dataStatus.value?.last_updated ?? null);
 
 const blockingUnresolved = computed(
   () => (queryMeta.value.unresolved || []).filter((item) => item.blocking)
@@ -259,6 +280,39 @@ const search = async () => {
 const applyExample = (query) => {
   q.value = query;
   search();
+};
+
+const submitRating = (payload) => {
+  if (sendingRating.value) return;
+  sendingRating.value = true;
+  $api
+    .rateSearch(payload)
+    .then(() => {
+      // Recorded in the history entry, so recalling this search shows the answer back
+      // rather than asking again.
+      store.setRating(payload.query, payload.rating);
+      toast.add({
+        title: "Gracias por tu valoración",
+        description: "Nos ayuda a mejorar el buscador",
+        color: "success",
+        icon: "i-lucide-check",
+      });
+    })
+    .catch((error) => {
+      const status = error?.status ?? error?.statusCode;
+      const limited = status === 429;
+      toast.add({
+        title: limited
+          ? "Demasiadas valoraciones"
+          : "No se ha podido enviar la valoración",
+        description: limited
+          ? "Has enviado varias seguidas; inténtalo más tarde"
+          : "Inténtalo de nuevo más tarde",
+        color: "error",
+        icon: "i-lucide-alert-circle",
+      });
+    })
+    .finally(() => (sendingRating.value = false));
 };
 
 const loadMore = () => {

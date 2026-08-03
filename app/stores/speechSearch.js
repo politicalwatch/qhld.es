@@ -103,6 +103,10 @@ export const useSpeechSearchStore = defineStore("speechSearch", () => {
       results: response.results ?? [],
       meta: response.query_meta ?? {},
       ts: Date.now(),
+      // The score this visitor gave, once they give one. Null means "not asked yet",
+      // and `ensureFresh` wipes it with the rest when the corpus moves on — a rating
+      // only ever applies to the results it was looking at.
+      rating: null,
     };
     // Upsert + promote to front, then cap (LRU eviction of the oldest).
     const rest = history.value.entries.filter((item) => item.query !== q);
@@ -116,6 +120,17 @@ export const useSpeechSearchStore = defineStore("speechSearch", () => {
     entry.results = [...entry.results, ...(response.results ?? [])];
     entry.meta = response.query_meta ?? entry.meta;
   };
+
+  // Remember that this search was rated, so recalling it shows the answer back instead
+  // of asking again. Mutating the entry in place persists through `useLocalStorage`,
+  // the same way `appendResults` does.
+  const setRating = (q, rating) => {
+    const entry = history.value.entries.find((item) => item.query === q);
+    if (entry) entry.rating = rating;
+  };
+
+  const ratingFor = (q) =>
+    history.value.entries.find((item) => item.query === q)?.rating ?? null;
 
   // Bring an existing (cached) search back on screen. Returns true if found.
   const recall = (q) => {
@@ -166,6 +181,8 @@ export const useSpeechSearchStore = defineStore("speechSearch", () => {
     excludeIds,
     setSearch,
     appendResults,
+    setRating,
+    ratingFor,
     recall,
     remove,
     clearHistory,
