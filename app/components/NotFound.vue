@@ -27,4 +27,11 @@ h5 {
   font-size: 16px;
   margin-top: 32px;
 }
+
+// The illustration is a block box at its natural 352px, so the wrapper's `u-text-center`
+// (which every caller relies on) never moved it — it needs its own auto margins.
+svg {
+  display: block;
+  margin-inline: auto;
+}
 </style>

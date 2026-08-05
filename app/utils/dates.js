@@ -10,6 +10,19 @@ export const formatDateInt = (value) => {
   }).format(date);
 };
 
+// The same yyyymmdd input in digits (05/08/2024) — for the search chips, where a long
+// date would wrap the chip onto a second line and a range needs two of them.
+export const formatDateIntNumeric = (value) => {
+  const raw = String(value ?? "");
+  if (raw.length !== 8) return raw;
+  const date = new Date(`${raw.slice(0, 4)}-${raw.slice(4, 6)}-${raw.slice(6, 8)}`);
+  return new Intl.DateTimeFormat("es-ES", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  }).format(date);
+};
+
 // Formats an ISO timestamp (e.g. 2026-07-31T08:12:21Z) as a date and time in
 // Spanish parliamentary time. The zone is pinned rather than left to the browser
 // so the moment shown is the one the Congress works in, wherever it is read.

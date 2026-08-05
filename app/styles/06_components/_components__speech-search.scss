@@ -287,6 +287,8 @@
 
   .c-speech-search__star:hover,
   .c-speech-search__rating-reason:hover,
+  .c-speech-search__shared-option:hover,
+  .c-speech-search__unresolved-suggestion:hover,
   .c-speech-search__rating-submit:hover:not(:disabled) {
     transform: none;
   }
@@ -300,6 +302,32 @@
   .rating-reveal-leave-to {
     opacity: 1;
     transform: none;
+  }
+}
+
+// Pills, deliberately — the only *press me* affordances on this page. Everything else here
+// is square (the site sets --ui-radius: 0), including the read-only "Entendido como" chips,
+// so the rounded shape is what separates an action from a label. Shared by the rating
+// reasons, the shared-surname options and the did-you-mean, so the three stay one family.
+@mixin search-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: rem($spacer-unit * 0.25);
+  cursor: pointer;
+  background-color: $white;
+  border: 1px solid $neutral;
+  border-radius: rem(999px);
+  color: $secondary-dark;
+  padding: rem($spacer-unit * 0.375) rem($spacer-unit * 0.875);
+  transition:
+    border-color 0.18s ease,
+    background-color 0.18s ease,
+    color 0.18s ease,
+    transform 0.16s ease;
+
+  &:hover {
+    border-color: var(--color-brand-600);
+    transform: translateY(-1px);
   }
 }
 
@@ -404,28 +432,56 @@
     margin-top: rem($spacer-unit * 4);
   }
 
+  // Above the illustration, not below it: the did-you-mean is the only thing on an
+  // unresolved page the user can act on.
   &__unresolved {
-    margin-top: rem($spacer-unit * 2);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: rem($spacer-unit);
+    margin-bottom: rem($spacer-unit * 3);
+  }
 
-    p {
-      margin-bottom: rem($spacer-unit);
-    }
+  &__unresolved-text {
+    @include tbody;
+
+    color: $secondary-dark;
+    margin: 0;
   }
 
   // Sits under the "Entendido como" chips, so it keeps their bottom margin and reads as a
   // note about the interpretation rather than a warning.
   &__shared {
     margin-bottom: rem($spacer-unit * 2);
+  }
 
-    p {
-      margin-bottom: 0;
-    }
+  &__shared-intro {
+    @include tbody;
+
+    color: $secondary-dark;
+    margin: 0 0 rem($spacer-unit * 0.75);
   }
 
   &__shared-options {
-    display: inline-flex;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
     flex-wrap: wrap;
-    gap: rem($spacer-unit * 0.75);
+    gap: rem($spacer-unit * 0.5);
+
+    // suppress the global li::before middot from 04_base/_base__lists.scss
+    li::before {
+      content: none;
+    }
+  }
+
+  // Names, so sentence case at reading size rather than the uppercase `overline` the
+  // rating reasons use — a person's name set in caps is markedly harder to read.
+  &__shared-option,
+  &__unresolved-suggestion {
+    @include tbody;
+    @include search-pill;
   }
 
   &__spin {
@@ -526,32 +582,10 @@
     }
   }
 
-  // Pills, deliberately — the only *toggles* on this page. Everything else here is
-  // square (the site sets --ui-radius: 0), including the read-only "Entendido como"
-  // chips above the results, so the rounded shape is what says "press me" rather than
-  // "this is a label".
+  // The only pill here that is a *toggle*, hence the selected state below.
   &__rating-reason {
     @include overline;
-
-    display: inline-flex;
-    align-items: center;
-    gap: rem($spacer-unit * 0.25);
-    cursor: pointer;
-    background-color: $white;
-    border: 1px solid $neutral;
-    border-radius: rem(999px);
-    color: $secondary-dark;
-    padding: rem($spacer-unit * 0.375) rem($spacer-unit * 0.875);
-    transition:
-      border-color 0.18s ease,
-      background-color 0.18s ease,
-      color 0.18s ease,
-      transform 0.16s ease;
-
-    &:hover {
-      border-color: var(--color-brand-600);
-      transform: translateY(-1px);
-    }
+    @include search-pill;
 
     &--on {
       background-color: var(--color-brand-100);

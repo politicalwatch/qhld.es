@@ -33,20 +33,23 @@
         v-if="searched && sharedNames.length && loading !== 'first'"
         class="c-speech-search__shared"
       >
-        <p v-for="item in sharedNames" :key="item.field + item.value">
-          «{{ item.value }}» puede referirse a varias personas. Estás viendo las
-          intervenciones de todas ellas:
-          <span class="c-speech-search__shared-options">
-            <a
-              v-for="name in item.kept"
-              :key="name"
-              href="#"
-              class="u-border-link"
-              @click.prevent="narrowTo(item, name)"
-              >{{ name }}</a
-            >
-          </span>
-        </p>
+        <div v-for="item in sharedNames" :key="item.field + item.value">
+          <p class="c-speech-search__shared-intro">
+            «{{ item.value }}» puede referirse a varias personas. Estás viendo las
+            intervenciones de todas ellas — filtra por una:
+          </p>
+          <ul class="c-speech-search__shared-options">
+            <li v-for="name in item.kept" :key="name">
+              <button
+                type="button"
+                class="c-speech-search__shared-option"
+                @click="narrowTo(item, name)"
+              >
+                {{ name }}
+              </button>
+            </li>
+          </ul>
+        </div>
       </div>
 
       <SpeechSearchLoader v-if="loading === 'first'" />
@@ -112,26 +115,28 @@
         v-if="searched && results.length === 0 && loading === 'idle'"
         class="u-padding-top-6 u-text-center"
       >
+        <!-- Reason and suggestion first, illustration after: the did-you-mean is the only
+             thing here the user can act on, and below the artwork it was off-screen. -->
         <template v-if="blockingUnresolved.length > 0">
-          <NotFound message="No hemos podido entender parte de tu búsqueda." />
           <div
             v-for="item in blockingUnresolved"
             :key="item.field + item.value"
             class="c-speech-search__unresolved"
           >
-            <p>
+            <p class="c-speech-search__unresolved-text">
               No hemos podido identificar {{ fieldLabel(item.field) }}
               «{{ item.value }}».
             </p>
-            <a
+            <button
               v-if="item.suggestion"
-              href="#"
-              class="u-border-link"
-              @click.prevent="applySuggestion(item)"
+              type="button"
+              class="c-speech-search__unresolved-suggestion"
+              @click="applySuggestion(item)"
             >
               ¿Quisiste decir «{{ cleanSuggestion(item.suggestion) }}»?
-            </a>
+            </button>
           </div>
+          <NotFound message="No se han encontrado intervenciones para tu búsqueda." />
         </template>
         <NotFound
           v-else
@@ -150,6 +155,7 @@ import SpeechSearchRating from "@/components/SpeechSearchRating.vue";
 import NotFound from "@/components/NotFound.vue";
 import config from "@/config";
 import { sharedNameOptions } from "@/utils/sharedNames";
+import { searchChips } from "@/utils/searchChips";
 
 const { $api } = useNuxtApp();
 const route = useRoute();
@@ -160,27 +166,18 @@ const store = useSpeechSearchStore();
 const PER_PAGE = 12;
 const HIGHLIGHTS = 3;
 
+// How an unresolved filter is named in "No hemos podido identificar …". One entry per
+// field the resolver can report as unresolved.
 const FIELD_LABELS = {
   speaker: "a la persona",
-  deputy: "a la persona",
+  mentions: "a la persona mencionada",
+  entities: "el término",
   group: "al grupo",
+  constituency: "la circunscripción",
   date: "la fecha",
-  date_from: "la fecha",
-  date_to: "la fecha",
   legislature: "la legislatura",
-  session: "la sesión",
   role: "el rol",
-};
-
-const FILTER_LABELS = {
-  speaker: "Diputado/a",
-  deputy: "Diputado/a",
-  group: "Grupo",
-  date_from: "Desde",
-  date_to: "Hasta",
-  legislature: "Legislatura",
-  session: "Sesión",
-  role: "Rol",
+  lang: "el idioma",
 };
 
 // The store is the single source of truth for results/meta, so "load more" and
@@ -203,18 +200,7 @@ const showSuggestions = computed(
   () => !searched.value && loading.value === "idle"
 );
 
-const chips = computed(() => {
-  const meta = queryMeta.value;
-  if (!meta.semantic_query && !meta.filters) return [];
-  const list = [];
-  if (meta.semantic_query) {
-    list.push({ label: "Tema", value: meta.semantic_query });
-  }
-  Object.entries(meta.filters || {}).forEach(([field, value]) => {
-    list.push({ label: FILTER_LABELS[field] || field, value: formatFilterValue(value) });
-  });
-  return list;
-});
+const chips = computed(() => searchChips(queryMeta.value));
 
 const orderLabel = computed(() =>
   queryMeta.value.browse ? "las más recientes primero" : "por relevancia"
@@ -232,13 +218,6 @@ const blockingUnresolved = computed(
 // Names that matched several people and were all kept — see `sharedNameOptions` for why
 // only those are the user's problem.
 const sharedNames = computed(() => sharedNameOptions(queryMeta.value));
-
-const formatFilterValue = (value) => {
-  if (Array.isArray(value)) return value.map(formatFilterValue).join(", ");
-  if (value && typeof value === "object")
-    return Object.values(value).map(formatFilterValue).join(" – ");
-  return String(value);
-};
 
 const fieldLabel = (field) => FIELD_LABELS[field] || `el criterio «${field}»`;
 
