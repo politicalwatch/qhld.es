@@ -123,10 +123,7 @@
             :key="item.field + item.value"
             class="c-speech-search__unresolved"
           >
-            <p class="c-speech-search__unresolved-text">
-              No hemos podido identificar {{ fieldLabel(item.field) }}
-              «{{ item.value }}».
-            </p>
+            <p class="c-speech-search__unresolved-text">{{ unresolvedText(item) }}</p>
             <button
               v-if="item.suggestion"
               type="button"
@@ -220,6 +217,14 @@ const blockingUnresolved = computed(
 const sharedNames = computed(() => sharedNameOptions(queryMeta.value));
 
 const fieldLabel = (field) => FIELD_LABELS[field] || `el criterio «${field}»`;
+
+// Two different failures, and saying the first about the second would be false: the backend
+// reports `filtered_out` when it DID recognise the name and the rest of the search rules
+// everyone carrying it out — "Montero de Sumar", where no Montero speaks for Sumar.
+const unresolvedText = (item) =>
+  item.reason === "filtered_out"
+    ? `«${item.value}» no coincide con nadie que cumpla el resto de tu búsqueda.`
+    : `No hemos podido identificar ${fieldLabel(item.field)} «${item.value}».`;
 
 // Rate limited. The backend caps searches per minute, per hour and per day, and its
 // Retry-After reports the window that actually filled up — so the wait can be named
