@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { searchChips } from '../../app/utils/searchChips.js';
+import { groupChipLabels, searchChips } from '../../app/utils/searchChips.js';
 
 // "que ha dicho sánchez" — the surname named seven people and the search kept them all.
 const AMBIGUOUS = {
@@ -152,9 +152,62 @@ describe('searchChips', () => {
     ]);
   });
 
+  it('says which group a code means', () => {
+    const groups = [{ shortname: 'GS', name: 'Grupo Parlamentario Socialista' }];
+    const chips = searchChips({ filters: { group: 'GS' } }, { group: groupChipLabels(groups) });
+    expect(chips).toEqual([{ label: 'Grupo', value: 'Socialista' }]);
+  });
+
+  it('keeps the code when the groups have not loaded yet', () => {
+    // The records arrive with the rest of the reference data; until then, the truth is
+    // the code the search actually filters on.
+    expect(searchChips({ filters: { group: 'GS' } }, { group: {} })).toEqual([
+      { label: 'Grupo', value: 'GS' },
+    ]);
+  });
+
+  it('lets the backend name a value the client also knows', () => {
+    // The backend resolved the filter, so its reading wins over anything looked up here.
+    const chips = searchChips(
+      { filters: { group: 'GS' }, labels: { group: { GS: 'Socialistas' } } },
+      { group: { GS: 'Socialista' } }
+    );
+    expect(chips).toEqual([{ label: 'Grupo', value: 'Socialistas' }]);
+  });
+
   it('has nothing to show for an empty, absent or malformed meta', () => {
     expect(searchChips({ semantic_query: '', filters: {} })).toEqual([]);
     expect(searchChips({})).toEqual([]);
     expect(searchChips(null)).toEqual([]);
+  });
+});
+
+describe('groupChipLabels', () => {
+  it('drops the prefix the chip label already says', () => {
+    // "GRUPO · GRUPO PARLAMENTARIO SOCIALISTA" reads as a stutter.
+    expect(
+      groupChipLabels([
+        { shortname: 'GS', name: 'Grupo Parlamentario Socialista' },
+        { shortname: 'GSUMAR', name: 'Grupo Parlamentario Plurinacional SUMAR' },
+        { shortname: 'GV (EAJ-PNV)', name: 'Grupo Parlamentario Vasco (EAJ-PNV)' },
+      ])
+    ).toEqual({
+      GS: 'Socialista',
+      GSUMAR: 'Plurinacional SUMAR',
+      'GV (EAJ-PNV)': 'Vasco (EAJ-PNV)',
+    });
+  });
+
+  it('leaves a name that does not carry the prefix alone', () => {
+    expect(groupChipLabels([{ shortname: 'GX', name: 'Agrupación Independiente' }])).toEqual({
+      GX: 'Agrupación Independiente',
+    });
+  });
+
+  it('ignores rows it cannot use, and no rows at all', () => {
+    expect(
+      groupChipLabels([{ shortname: 'GS' }, { name: 'Grupo Parlamentario Mixto' }, null])
+    ).toEqual({});
+    expect(groupChipLabels(undefined)).toEqual({});
   });
 });

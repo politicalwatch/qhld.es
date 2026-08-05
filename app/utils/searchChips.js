@@ -59,9 +59,29 @@ const dateChip = (bounds) => {
   return null;
 };
 
-export const searchChips = (queryMeta) => {
+// The group filter holds the code the corpus is stamped with ("GS"), so the chip has to be
+// told what it means. The name drops its "Grupo Parlamentario" prefix because the chip's own
+// label already says Grupo: "GRUPO · SOCIALISTA", not "GRUPO · GRUPO PARLAMENTARIO SOCIALISTA".
+export const groupChipLabels = (groups) =>
+  Object.fromEntries(
+    (groups || [])
+      .filter((group) => group?.shortname && group?.name)
+      .map((group) => [
+        group.shortname,
+        group.name.replace(/^grupo parlamentario\s+/i, ""),
+      ])
+  );
+
+// `extraLabels` is the same `{field: {value: label}}` shape as `queryMeta.labels`, for names
+// the client can look up itself. Merged UNDER the backend's: when the backend labels a value
+// it resolved, that is the authoritative reading.
+export const searchChips = (queryMeta, extraLabels) => {
   const meta = queryMeta || {};
   if (!meta.semantic_query && !meta.filters) return [];
+  const labels = { ...extraLabels };
+  Object.entries(meta.labels || {}).forEach(([field, values]) => {
+    labels[field] = { ...labels[field], ...values };
+  });
 
   // Fields whose value list is long only because a name matched several people. The
   // names are already offered below as pills to narrow with, so the chip counts them
@@ -90,11 +110,11 @@ export const searchChips = (queryMeta) => {
     // the same comma that splits "Apellidos, Nombre".
     if (values) {
       values.forEach((item) =>
-        chips.push({ label, value: formatValue(field, item, meta.labels) })
+        chips.push({ label, value: formatValue(field, item, labels) })
       );
       return;
     }
-    chips.push({ label, value: formatValue(field, value, meta.labels) });
+    chips.push({ label, value: formatValue(field, value, labels) });
   });
 
   return chips;

@@ -152,7 +152,7 @@ import SpeechSearchRating from "@/components/SpeechSearchRating.vue";
 import NotFound from "@/components/NotFound.vue";
 import config from "@/config";
 import { sharedNameOptions } from "@/utils/sharedNames";
-import { searchChips } from "@/utils/searchChips";
+import { searchChips, groupChipLabels } from "@/utils/searchChips";
 
 const { $api } = useNuxtApp();
 const route = useRoute();
@@ -189,6 +189,10 @@ const sendingRating = ref(false);
 // party colour (SpeechCard reads it via useDeputyByName; the fetch is dedup'd).
 useDeputies();
 
+// The search filters on a group's CODE ("GS"); the chip should say which group that is,
+// and the cached records are the only place that knows.
+const { data: parliamentaryGroups } = useParliamentaryGroups();
+
 // Empty-state example queries (from app/config). Shown whenever no search is
 // being displayed — `searched` gates the results, NOT the store, so a cached
 // search can survive in the background while the empty state is shown.
@@ -197,7 +201,9 @@ const showSuggestions = computed(
   () => !searched.value && loading.value === "idle"
 );
 
-const chips = computed(() => searchChips(queryMeta.value));
+const chips = computed(() =>
+  searchChips(queryMeta.value, { group: groupChipLabels(parliamentaryGroups.value) })
+);
 
 const orderLabel = computed(() =>
   queryMeta.value.browse ? "las más recientes primero" : "por relevancia"
