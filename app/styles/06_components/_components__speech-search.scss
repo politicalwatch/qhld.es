@@ -412,6 +412,22 @@
     }
   }
 
+  // Sits under the "Entendido como" chips, so it keeps their bottom margin and reads as a
+  // note about the interpretation rather than a warning.
+  &__shared {
+    margin-bottom: rem($spacer-unit * 2);
+
+    p {
+      margin-bottom: 0;
+    }
+  }
+
+  &__shared-options {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: rem($spacer-unit * 0.75);
+  }
+
   &__spin {
     animation: ai-spin 1s linear infinite;
   }

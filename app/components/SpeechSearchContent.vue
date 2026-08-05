@@ -25,6 +25,30 @@
         </span>
       </div>
 
+      <!-- A surname several people share resolves to ALL of them rather than guessing one,
+           so these results are everybody's. Sits with the "Entendido como" chips because it
+           is part of how the query was read, not an error — and unlike the unresolved notice
+           further down, it has to show ALONGSIDE results, which an ambiguous search has. -->
+      <div
+        v-if="searched && sharedNames.length && loading !== 'first'"
+        class="c-speech-search__shared"
+      >
+        <p v-for="item in sharedNames" :key="item.field + item.value">
+          «{{ item.value }}» puede referirse a varias personas. Estás viendo las
+          intervenciones de todas ellas:
+          <span class="c-speech-search__shared-options">
+            <a
+              v-for="name in item.kept"
+              :key="name"
+              href="#"
+              class="u-border-link"
+              @click.prevent="narrowTo(item, name)"
+              >{{ name }}</a
+            >
+          </span>
+        </p>
+      </div>
+
       <SpeechSearchLoader v-if="loading === 'first'" />
 
       <div v-if="showSuggestions" class="c-speech-search__suggestions">
@@ -125,6 +149,7 @@ import SpeechSearchLoader from "@/components/SpeechSearchLoader.vue";
 import SpeechSearchRating from "@/components/SpeechSearchRating.vue";
 import NotFound from "@/components/NotFound.vue";
 import config from "@/config";
+import { sharedNameOptions } from "@/utils/sharedNames";
 
 const { $api } = useNuxtApp();
 const route = useRoute();
@@ -203,6 +228,10 @@ const corpus = computed(() => dataStatus.value?.last_updated ?? null);
 const blockingUnresolved = computed(
   () => (queryMeta.value.unresolved || []).filter((item) => item.blocking)
 );
+
+// Names that matched several people and were all kept — see `sharedNameOptions` for why
+// only those are the user's problem.
+const sharedNames = computed(() => sharedNameOptions(queryMeta.value));
 
 const formatFilterValue = (value) => {
   if (Array.isArray(value)) return value.map(formatFilterValue).join(", ");
@@ -374,6 +403,11 @@ const applySuggestion = (item) => {
     : suggestion;
   search();
 };
+
+// Narrowing a shared surname is the same operation as accepting a suggestion — swap the
+// ambiguous value for a full name and search again — so it reuses it rather than growing a
+// second path. `kept` carries bare names, which `cleanSuggestion` passes through untouched.
+const narrowTo = (item, name) => applySuggestion({ ...item, suggestion: name });
 
 // Panel actions. Recall reuses `search()`, which serves the cached entry when it was
 // searched against the corpus the backend still serves (no API call), or re-runs it.
