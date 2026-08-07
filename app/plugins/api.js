@@ -107,6 +107,14 @@ export default defineNuxtPlugin(() => {
     rateSearch: (payload) =>
       $fetch('/api/search-rating', { method: 'POST', body: payload }),
 
+    // ── Subtitles ────────────────────────────────────────────────────────────
+    // Not a method here, and not for want of one: a speech's subtitle track is
+    // requested by the browser itself from the `<track>` element, so no JavaScript
+    // ever fetches it. It is served from our own origin (server/api/subtitles/[id].get.js)
+    // because a track is fetched under the video's CORS setting — a cross-origin one
+    // needs `crossorigin` on the `<video>`, which would put the video request into CORS
+    // mode too, and the Congress CDN sends no allow-origin header.
+
     // ── Alerts ───────────────────────────────────────────────────────────────
     saveAlert: (search) =>
       backendFetch('/alerts', {

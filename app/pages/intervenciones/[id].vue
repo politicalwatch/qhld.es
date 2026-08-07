@@ -52,14 +52,28 @@
             </p>
           </div>
 
+          <!-- No `crossorigin` here: it would put the video request itself into CORS
+               mode, and the Congress CDN sends no allow-origin header. That is also
+               why the track is served from our own origin. -->
           <section v-if="speech.video_link" class="c-speech__video">
-            <video controls preload="metadata" :src="speech.video_link" />
+            <video controls preload="metadata" :src="speech.video_link">
+              <track
+                v-if="subtitles"
+                default
+                kind="subtitles"
+                :src="subtitles.src"
+                :srclang="subtitles.lang"
+                :label="subtitles.label"
+              />
+            </video>
           </section>
           <Message v-else type="info" icon>
             El vídeo de esta intervención aún no ha sido publicado por el Congreso.
           </Message>
           <p v-if="speech.video_link" class="c-speech__vhint">
-            Fuente: canal audiovisual del Congreso de los Diputados.
+            Fuente: canal audiovisual del Congreso de los Diputados.<template v-if="subtitles">
+              Los subtítulos reproducen el Diario de Sesiones, sincronizado
+              automáticamente con el vídeo.</template>
           </p>
 
           <div class="c-speech__t-bar">
@@ -420,6 +434,23 @@ watch(
   },
   { immediate: true }
 );
+
+// ── Subtitles ─────────────────────────────────────────────────────────────
+// The track exists only for interventions whose transcript has been timed against
+// their video, so the speech itself says whether to ask for one — a `<track>` on a
+// speech without cues would just 404. It is served by our own nitro route rather
+// than by the backend: see server/api/subtitles/[id].get.js for why.
+// Only the as-delivered block is timed, so a co-official speech is subtitled in the
+// language it was given in, whichever transcript tab the reader is on.
+const subtitles = computed(() => {
+  const lang = speech.value?.subtitles?.lang;
+  if (!lang) return null;
+  return {
+    lang,
+    label: LANG_LABELS[lang] ?? lang,
+    src: `/api/subtitles/${speech.value.video_id ?? speech.value.id}`,
+  };
+});
 
 const speakerDeputy = computed(() => getDeputyByName(speech.value.speaker));
 const speakerColor = computed(() => partyColor(speakerDeputy.value?.party_name));
