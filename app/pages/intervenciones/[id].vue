@@ -56,14 +56,15 @@
                mode, and the Congress CDN sends no allow-origin header. That is also
                why the track is served from our own origin. -->
           <section v-if="speech.video_link" class="c-speech__video">
-            <video controls preload="metadata" :src="speech.video_link">
+            <video ref="videoEl" controls preload="metadata" :src="speech.video_link">
               <track
-                v-if="subtitles"
-                default
+                v-for="track in subtitles"
+                :key="track.lang"
+                :default="track.lang === captionLang"
                 kind="subtitles"
-                :src="subtitles.src"
-                :srclang="subtitles.lang"
-                :label="subtitles.label"
+                :src="track.src"
+                :srclang="track.lang"
+                :label="track.label"
               />
             </video>
           </section>
@@ -71,9 +72,11 @@
             El vídeo de esta intervención aún no ha sido publicado por el Congreso.
           </Message>
           <p v-if="speech.video_link" class="c-speech__vhint">
-            Fuente: canal audiovisual del Congreso de los Diputados.<template v-if="subtitles">
+            Fuente: canal audiovisual del Congreso de los Diputados.<template v-if="subtitles.length">
               Los subtítulos reproducen el Diario de Sesiones, sincronizado
-              automáticamente con el vídeo.</template>
+              automáticamente con el vídeo.</template><template v-if="hasTranslatedTrack">
+              La versión en castellano de una intervención en otra lengua es la
+              traducción del Diario, sincronizada con el audio original.</template>
           </p>
 
           <div class="c-speech__t-bar">
@@ -436,20 +439,57 @@ watch(
 );
 
 // ── Subtitles ─────────────────────────────────────────────────────────────
-// The track exists only for interventions whose transcript has been timed against
-// their video, so the speech itself says whether to ask for one — a `<track>` on a
-// speech without cues would just 404. It is served by our own nitro route rather
-// than by the backend: see server/api/subtitles/[id].get.js for why.
-// Only the as-delivered block is timed, so a co-official speech is subtitled in the
-// language it was given in, whichever transcript tab the reader is on.
+// A track exists only for interventions whose transcript has been timed against their
+// video, so the speech itself says which ones to ask for — a `<track>` on a speech
+// without cues would just 404. They are served by our own nitro route rather than by
+// the backend: see server/api/subtitles/[id].get.js for why.
+// A co-official-language intervention carries two, the language it was delivered in
+// and its Spanish translation, so a reader who only reads Spanish is not left with
+// subtitles they cannot follow.
 const subtitles = computed(() => {
-  const lang = speech.value?.subtitles?.lang;
-  if (!lang) return null;
-  return {
-    lang,
-    label: LANG_LABELS[lang] ?? lang,
-    src: `/api/subtitles/${speech.value.video_id ?? speech.value.id}`,
-  };
+  const id = speech.value?.video_id ?? speech.value?.id;
+  return (speech.value?.subtitles ?? []).map((track) => ({
+    lang: track.lang,
+    original: track.original !== false,
+    // The translation is named as one: its timings are measured, but its words are the
+    // Diario's Spanish reading rather than what was said aloud.
+    label: track.original === false
+      ? `${LANG_LABELS[track.lang] ?? track.lang} (traducción)`
+      : LANG_LABELS[track.lang] ?? track.lang,
+    src: `/api/subtitles/${id}?lang=${encodeURIComponent(track.lang)}`,
+  }));
+});
+
+const hasTranslatedTrack = computed(() =>
+  subtitles.value.some((track) => !track.original)
+);
+
+// Which track is showing. The transcript tab decides it, but not on its own: during
+// server render `activeLang` is still null (SpeechTextView picks the tab on mount), and
+// a speech can have a track in one language and not the other while a backfill is only
+// half done. Falling back to the as-delivered track keeps captions on by default in
+// both cases — the browser's own caption menu remains the way to change it.
+const captionLang = computed(() => {
+  const available = subtitles.value;
+  if (!available.length) return null;
+  if (available.some((track) => track.lang === activeLang.value)) {
+    return activeLang.value;
+  }
+  return (available.find((track) => track.original) ?? available[0]).lang;
+});
+
+// `default` decides which track the browser shows on first render, but it is inert
+// afterwards: switching tabs has to set `mode` on the live TextTrack list. Guarded on
+// the element because the video is absent for an intervention whose clip the Congress
+// has not published yet.
+const videoEl = useTemplateRef("videoEl");
+
+watch([captionLang, subtitles], () => {
+  const tracks = videoEl.value?.textTracks;
+  if (!tracks?.length) return;
+  for (const track of tracks) {
+    track.mode = track.language === captionLang.value ? "showing" : "disabled";
+  }
 });
 
 const speakerDeputy = computed(() => getDeputyByName(speech.value.speaker));
