@@ -11,7 +11,7 @@
         ]"
         @click="activeLang = block.lang"
       >
-        {{ langLabel(block.lang) }}
+        {{ blockLabel(block) }}
         <span v-if="block.original" class="c-speech-text__lang-original">original</span>
       </button>
     </div>
@@ -99,6 +99,13 @@ const LANG_LABELS = {
   gl: "Galego",
 };
 const langLabel = (lang) => LANG_LABELS[lang] ?? lang;
+
+// A block holds what was said, whatever languages that mixes — a Basque passage inside a
+// Spanish speech, a Catalan paragraph carrying Spanish borrowings. Naming only the main
+// one would hide that the others were spoken at all, so name them all. `langs` opens with
+// `lang`, and is empty on speeches extracted before the field existed.
+const blockLabel = (block) =>
+  (block.langs?.length ? block.langs : [block.lang]).map(langLabel).join(" · ");
 
 // default to the as-delivered language when the parent hasn't set one
 if (activeLang.value == null) {
