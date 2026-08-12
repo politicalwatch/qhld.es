@@ -220,6 +220,10 @@ const { src, tracks, markers, activeMarkerId, activeRange } = defineProps({
   activeRange: { type: Object, default: null },
 });
 
+// Where the playhead is, so the page can say which match is being said. Emitted rather
+// than read off the element: the page has no business reaching into the player's DOM.
+const emit = defineEmits(["playhead"]);
+
 // null = captions off. The page keeps this in step with the transcript's language tab.
 const captionLang = defineModel("captionLang", { type: String, default: null });
 
@@ -272,6 +276,7 @@ const onTimeUpdate = () => {
   // While dragging, the bar shows where the pointer is, not where playback is.
   if (dragging.value) return;
   currentTime.value = videoEl.value?.currentTime ?? 0;
+  emit("playhead", currentTime.value);
 };
 
 const readBuffered = () => {
@@ -301,6 +306,9 @@ const seek = (time, { play = false } = {}) => {
   }
   video.currentTime = Math.min(Math.max(time, 0), duration.value);
   currentTime.value = video.currentTime;
+  // Announced here as well as on `timeupdate`, so a seek is reflected at once rather
+  // than at the element's next tick — which on a paused video may never come.
+  emit("playhead", currentTime.value);
   if (play) video.play().catch(() => {});
 };
 

@@ -61,6 +61,7 @@
               :markers="videoMarkers"
               :active-marker-id="activeMarkerId"
               :active-range="activeRange"
+              @playhead="playheadTime = $event"
             />
           </section>
           <Message v-else type="info" icon>
@@ -200,6 +201,7 @@
               :orphans="orphanHighlights"
               :lang-labels="LANG_LABELS"
               :loading="passagesPending"
+              :playing-hl-id="playingHlId"
               @seek="seekToHighlight"
               @preview="previewHighlight"
               @preview-end="clearHighlightPreview"
@@ -570,9 +572,33 @@ const videoMarkers = computed(() => {
   return [...byTime.values()];
 });
 
-// The tick to light up: the match the panel is on, or the one it shares its cue with.
+// ── Which match is being said ─────────────────────────────────────────────
+// Reading and playback are different positions and must not share a variable. The
+// scroll observer in the panel owns `currentHlId` — what the reader is looking at —
+// and the video's own clock owns this one. Writing both from a ▶ click is what made
+// the panel jump to the wrong match: the click set it, then scrolling the video into
+// view moved the transcript under the observer, which immediately overwrote it.
+const playheadTime = ref(null);
+
+const playingHlId = computed(() => {
+  const at = playheadTime.value;
+  if (at == null) return null;
+  // Matched passages can overlap, and the one that opened most recently is the one
+  // whose words are being spoken now.
+  let current = null;
+  for (const hl of navHighlights.value) {
+    if (hl.time == null || hl.endTime == null) continue;
+    if (at >= hl.time && at < hl.endTime && (!current || hl.time > current.time)) {
+      current = hl;
+    }
+  }
+  return current?.hlId ?? null;
+});
+
+// The tick to light up: the match being said, or the one it shares its cue with. The
+// bar answers for the video, so it follows the playhead and not the scroll position.
 const activeMarkerId = computed(() => {
-  const time = navHighlights.value.find((hl) => hl.hlId === currentHlId.value)?.time;
+  const time = navHighlights.value.find((hl) => hl.hlId === playingHlId.value)?.time;
   if (time == null) return null;
   return videoMarkers.value.find((marker) => marker.time === time)?.id ?? null;
 });
@@ -600,7 +626,7 @@ const clearHighlightPreview = () => {
 onBeforeUnmount(() => clearTimeout(clearPreviewTimer));
 
 const activeRange = computed(() => {
-  const hlId = previewHlId.value ?? currentHlId.value;
+  const hlId = previewHlId.value ?? playingHlId.value;
   const hl = navHighlights.value.find((match) => match.hlId === hlId);
   if (!hl || hl.time == null || hl.endTime == null) return null;
   return { start: hl.time, end: hl.endTime };
@@ -618,7 +644,8 @@ const seekToHighlight = (target) => {
       ? navHighlights.value.find((hl) => hl.hlId === hlId)?.time
       : cueForOffset(cues.value, offset)?.start;
   if (time == null) return;
-  currentHlId.value = hlId;
+  // Deliberately does NOT touch `currentHlId`: playing a match does not move the
+  // reader's place in the transcript, and the video's clock will say what is playing.
   playerEl.value?.seek(time, { play: true });
   // The mark clicked can be a long way below the video; bring back what is now playing.
   videoSectionEl.value?.scrollIntoView({ behavior: "smooth", block: "nearest" });

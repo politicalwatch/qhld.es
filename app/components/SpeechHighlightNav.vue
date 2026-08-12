@@ -62,11 +62,18 @@
         <button
           v-if="hl.time != null"
           type="button"
-          class="c-speech-hl__play"
+          :class="[
+            'c-speech-hl__play',
+            { 'c-speech-hl__play--now': hl.hlId === playingHlId },
+          ]"
           :aria-label="`Reproducir desde ${formatClock(hl.time)}`"
+          :aria-current="hl.hlId === playingHlId ? 'true' : undefined"
           @click="emit('seek', hl.hlId)"
         >
-          <Icon name="mdi:play" :size="13" />
+          <Icon
+            :name="hl.hlId === playingHlId ? 'mdi:volume-high' : 'mdi:play'"
+            :size="13"
+          />
           {{ formatClock(hl.time) }}
         </button>
       </li>
@@ -99,6 +106,9 @@ const { highlights, orphans, langLabels } = defineProps({
   langLabels: { type: Object, default: () => ({}) },
   // the full passage set is still being fetched — show a loader, not the partial set
   loading: { type: Boolean, default: false },
+  // the match the video is inside right now — a different thing from `currentHlId`,
+  // which is where the reader has scrolled to
+  playingHlId: { type: Number, default: null },
 });
 
 // Playing a match, and showing its extent on the bar, are the page's business: it owns
@@ -281,6 +291,19 @@ watch([() => highlights, activeLang], refreshMarks);
       background-color: var(--color-brand-100);
       border-color: var(--color-brand-700);
       color: var(--color-brand-800);
+    }
+
+    // being said right now. Distinct from the reading position (the yellow ring on the
+    // preview button), because they are answers to two different questions.
+    &--now {
+      background-color: var(--color-brand-700);
+      border-color: var(--color-brand-700);
+      color: $white;
+
+      &:hover {
+        background-color: var(--color-brand-800);
+        color: $white;
+      }
     }
   }
 
