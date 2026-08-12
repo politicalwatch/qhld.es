@@ -70,6 +70,14 @@
         <div class="c-vplayer__rail">
           <div class="c-vplayer__buffered" :style="{ width: pct(buffered) }" />
           <div class="c-vplayer__played" :style="{ width: pct(displayTime) }" />
+          <!-- How far the match being pointed at reaches. One at a time, on purpose:
+               see the page for why every extent at once says less, not more. -->
+          <span
+            v-if="rangeBand"
+            class="c-vplayer__band"
+            :style="rangeBand"
+            aria-hidden="true"
+          />
           <!-- Decorative: the accessible way to reach a match is the highlights panel,
                which lists every one of them as a button. A tick inside a slider would
                be a control nested in a control. Pointer clicks still snap to it. -->
@@ -200,7 +208,7 @@
 //   setting `mode`, so the reader's own caption settings (size, colour) and captions in
 //   fullscreen keep working, exactly as they did with the native controls.
 
-const { src, tracks, markers, activeMarkerId } = defineProps({
+const { src, tracks, markers, activeMarkerId, activeRange } = defineProps({
   src: { type: String, required: true },
   // [{ lang, label, src }] — one per timed language block
   tracks: { type: Array, default: () => [] },
@@ -208,6 +216,8 @@ const { src, tracks, markers, activeMarkerId } = defineProps({
   markers: { type: Array, default: () => [] },
   // the match the highlights panel is currently on, lit up on the bar
   activeMarkerId: { type: Number, default: null },
+  // how far that match reaches: { start, end } in seconds, or null
+  activeRange: { type: Object, default: null },
 });
 
 // null = captions off. The page keeps this in step with the transcript's language tab.
@@ -307,6 +317,17 @@ const pct = (seconds) =>
 const visibleMarkers = computed(() =>
   ready.value ? markers.filter((marker) => marker.time <= duration.value) : []
 );
+
+const rangeBand = computed(() => {
+  if (!ready.value || !activeRange) return null;
+  const from = Math.min(Math.max(activeRange.start, 0), duration.value);
+  const to = Math.min(Math.max(activeRange.end, from), duration.value);
+  return {
+    left: `${(from / duration.value) * 100}%`,
+    // A band thinner than the tick that opens it would read as a rendering fault.
+    width: `max(${(to - from) / duration.value * 100}%, 3px)`,
+  };
+});
 
 // How near a tick a click has to land to mean it. A match's cue start is the useful
 // place to arrive, and hitting a 3px tick exactly is not something a pointer does.
@@ -572,6 +593,18 @@ onMounted(() => {
 
   &__played {
     background-color: var(--color-brand-500);
+  }
+
+  // How far one match reaches. Translucent so the played fill still reads through it,
+  // and behind the ticks so the seek points stay the sharpest thing on the bar.
+  &__band {
+    position: absolute;
+    top: rem(-2px);
+    height: rem(9px);
+    background-color: rgba(#efca53, 0.4);
+    border-left: 1px solid rgba(#efca53, 0.9);
+    border-right: 1px solid rgba(#efca53, 0.9);
+    pointer-events: none;
   }
 
   // A match, at the second it was said. Yellow is what the transcript uses to ring the

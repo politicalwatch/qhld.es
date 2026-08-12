@@ -28,6 +28,8 @@
           :class="pieceClass(piece)"
           :title="seekTitle(piece)"
           @click="onPieceClick(piece, $event)"
+          @mouseenter="onPieceEnter(piece)"
+          @mouseleave="onPieceLeave(piece)"
         >
           <NuxtLink
             v-if="showMentions && piece.type === 'mention' && piece.isDeputy"
@@ -69,8 +71,9 @@ const { blocks, people, highlightRanges, currentHlId, showMentions, seekable } =
     seekable: { type: Set, default: () => new Set() },
   });
 
-// Playing a match belongs to the page, which owns the player.
-const emit = defineEmits(["seek"]);
+// Playing a match, and showing its extent on the scrub bar, belong to the page: it owns
+// the player.
+const emit = defineEmits(["seek", "preview", "preview-end"]);
 
 // owned here by default, but the jump nav needs to switch tabs → expose as model
 const activeLang = defineModel("activeLang", { default: null });
@@ -145,6 +148,18 @@ const onPieceClick = (piece, event) => {
   // The piece's own offset, not the match's: a matched passage can run for a minute,
   // and "play from here" has to mean the words under the pointer.
   if (hlId != null) emit("seek", { hlId, offset: piece.charStart });
+};
+
+// Pointing at a match in the transcript shows how far it reaches on the scrub bar. A
+// match is usually several pieces (it breaks at every mention), and they all report the
+// same one, so moving along a passage keeps pointing at it.
+const onPieceEnter = (piece) => {
+  const hlId = seekableId(piece);
+  if (hlId != null) emit("preview", hlId);
+};
+
+const onPieceLeave = (piece) => {
+  if (seekableId(piece) != null) emit("preview-end");
 };
 
 const pieceClass = (piece) => {

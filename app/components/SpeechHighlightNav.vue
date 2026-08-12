@@ -32,7 +32,17 @@
     </div>
 
     <ol v-else-if="highlights.length" class="c-speech-hl__list">
-      <li v-for="(hl, index) in highlights" :key="hl.hlId" class="c-speech-hl__item">
+      <!-- Pointing at a match shows how far it reaches on the video's scrub bar. Focus
+           counts as pointing, so the keyboard gets the same answer as the mouse. -->
+      <li
+        v-for="(hl, index) in highlights"
+        :key="hl.hlId"
+        class="c-speech-hl__item"
+        @mouseenter="hl.time != null && emit('preview', hl.hlId)"
+        @mouseleave="emit('preview-end')"
+        @focusin="hl.time != null && emit('preview', hl.hlId)"
+        @focusout="emit('preview-end')"
+      >
         <button
           type="button"
           :class="[
@@ -91,8 +101,9 @@ const { highlights, orphans, langLabels } = defineProps({
   loading: { type: Boolean, default: false },
 });
 
-// Playing a match is the page's business: it owns the player.
-const emit = defineEmits(["seek"]);
+// Playing a match, and showing its extent on the bar, are the page's business: it owns
+// the player.
+const emit = defineEmits(["seek", "preview", "preview-end"]);
 
 const activeLang = defineModel("activeLang", { default: null });
 const currentHlId = defineModel("currentHlId", { default: null });

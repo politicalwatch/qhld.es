@@ -60,6 +60,7 @@
               :tracks="subtitles"
               :markers="videoMarkers"
               :active-marker-id="activeMarkerId"
+              :active-range="activeRange"
             />
           </section>
           <Message v-else type="info" icon>
@@ -98,6 +99,8 @@
             :show-mentions="showMentions"
             :seekable="seekableHighlights"
             @seek="seekToHighlight"
+            @preview="previewHighlight"
+            @preview-end="clearHighlightPreview"
           />
 
           <nav v-if="debate.length > 1" class="c-speech__dnav">
@@ -198,6 +201,8 @@
               :lang-labels="LANG_LABELS"
               :loading="passagesPending"
               @seek="seekToHighlight"
+              @preview="previewHighlight"
+              @preview-end="clearHighlightPreview"
             />
           </ClientOnly>
         </aside>
@@ -522,20 +527,29 @@ const cues = computed(() => {
   return block ? locateCues(block.text, trackCues.value ?? []) : [];
 });
 
-// Where each match starts in the block — the coordinate the cues are also in.
-const offsetByHlId = computed(() => {
-  const offsets = new Map();
+// Where each match begins and ends in the block — the coordinate the cues are also in.
+const spanByHlId = computed(() => {
+  const spans = new Map();
   for (const range of highlightRanges.value[activeLang.value] ?? []) {
-    offsets.set(range.hlId, range.start);
+    spans.set(range.hlId, range);
   }
-  return offsets;
+  return spans;
 });
 
 const navHighlights = computed(() =>
   navMatches.value.map((hl) => {
-    const offset = offsetByHlId.value.get(hl.hlId);
-    const cue = offset == null ? null : cueForOffset(cues.value, offset);
-    return { ...hl, time: cue?.start ?? null };
+    const span = spanByHlId.value.get(hl.hlId);
+    const cue = span == null ? null : cueForOffset(cues.value, span.start);
+    // The last cue that starts before the match ends: a matched passage runs for a
+    // minute and a half on average, so it closes several cues after the one it opens.
+    let last = null;
+    if (span) {
+      for (const candidate of cues.value) {
+        if (candidate.charStart >= span.end) break;
+        last = candidate;
+      }
+    }
+    return { ...hl, time: cue?.start ?? null, endTime: last?.end ?? cue?.end ?? null };
   })
 );
 
@@ -561,6 +575,35 @@ const activeMarkerId = computed(() => {
   const time = navHighlights.value.find((hl) => hl.hlId === currentHlId.value)?.time;
   if (time == null) return null;
   return videoMarkers.value.find((marker) => marker.time === time)?.id ?? null;
+});
+
+// ── How far a match reaches ───────────────────────────────────────────────
+// A tick says when a match starts, which is what you seek to, but a matched passage is
+// not an instant: measured on this corpus each one runs 70-95 s, a median 9.2 % of the
+// bar. Drawing every extent would be worse than saying nothing — the seven matches of a
+// topical search merge into four bands over 61 % of the bar, losing both the count and
+// the meaning of "here". So the extent is drawn for ONE match: the one being pointed at
+// (in the panel or in the transcript) or, failing that, the one the panel is on.
+const previewHlId = ref(null);
+
+// Moving between two pieces of the same match fires leave-then-enter, so clearing on
+// leave immediately would blink the band off and on again.
+let clearPreviewTimer = null;
+const previewHighlight = (hlId) => {
+  clearTimeout(clearPreviewTimer);
+  previewHlId.value = hlId;
+};
+const clearHighlightPreview = () => {
+  clearTimeout(clearPreviewTimer);
+  clearPreviewTimer = setTimeout(() => (previewHlId.value = null), 60);
+};
+onBeforeUnmount(() => clearTimeout(clearPreviewTimer));
+
+const activeRange = computed(() => {
+  const hlId = previewHlId.value ?? currentHlId.value;
+  const hl = navHighlights.value.find((match) => match.hlId === hlId);
+  if (!hl || hl.time == null || hl.endTime == null) return null;
+  return { start: hl.time, end: hl.endTime };
 });
 
 // The panel's button plays a match from its start, which is what its timestamp names.
