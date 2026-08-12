@@ -125,7 +125,7 @@ export default defineNuxtConfig({
     },
   },
 
-  modules: ["@nuxt/ui", "@nuxt/image", "@nuxt/fonts", "@nuxt/icon", "@nuxtjs/seo", '@vueuse/nuxt', 'nuxt-gtag', '@dargmuesli/nuxt-cookie-control', "@pinia/nuxt"],
+  modules: ["@nuxt/ui", "@nuxt/image", "@nuxt/fonts", "@nuxt/icon", "@nuxtjs/seo", '@vueuse/nuxt', 'nuxt-gtag', '@dargmuesli/nuxt-cookie-control', "@pinia/nuxt", "@nuxt/eslint"],
 
   colorMode: {
     preference: 'light',
