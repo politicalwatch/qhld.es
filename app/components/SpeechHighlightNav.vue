@@ -47,6 +47,18 @@
             langLabel(hl.lang)
           }}</span>
         </button>
+        <!-- Only for a match whose cue is known: an intervention has timings once its
+             transcript has been aligned against its video, and not every one has. -->
+        <button
+          v-if="hl.time != null"
+          type="button"
+          class="c-speech-hl__play"
+          :aria-label="`Reproducir desde ${formatClock(hl.time)}`"
+          @click="emit('seek', hl.hlId)"
+        >
+          <Icon name="mdi:play" :size="13" />
+          {{ formatClock(hl.time) }}
+        </button>
       </li>
     </ol>
 
@@ -69,7 +81,8 @@
 
 <script setup>
 const { highlights, orphans, langLabels } = defineProps({
-  // document-ordered, located in the transcript: [{ hlId, lang, preview }]
+  // document-ordered, located in the transcript: [{ hlId, lang, preview, time }]
+  // `time` is the second of the video the passage was said at, null when unknown
   highlights: { type: Array, default: () => [] },
   // matched passages that couldn't be located in the transcript (shown as text)
   orphans: { type: Array, default: () => [] },
@@ -77,6 +90,9 @@ const { highlights, orphans, langLabels } = defineProps({
   // the full passage set is still being fetched — show a loader, not the partial set
   loading: { type: Boolean, default: false },
 });
+
+// Playing a match is the page's business: it owns the player.
+const emit = defineEmits(["seek"]);
 
 const activeLang = defineModel("activeLang", { default: null });
 const currentHlId = defineModel("currentHlId", { default: null });
@@ -220,6 +236,8 @@ watch([() => highlights, activeLang], refreshMarks);
   }
 
   &__item {
+    display: flex;
+    align-items: stretch;
     margin-bottom: rem(math.div($spacer-unit, 2));
 
     // suppress the global li::before decoration from 04_base/_base__lists.scss
@@ -228,8 +246,37 @@ watch([() => highlights, activeLang], refreshMarks);
     }
   }
 
+  // Play from here. Sits flush against the preview button, sharing its border, so the
+  // pair reads as one item with two things to do: read it, or watch it said.
+  &__play {
+    display: flex;
+    flex: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: rem(1px);
+    width: rem(50px);
+    background-color: $white;
+    border: 1px solid $neutral;
+    border-left: none;
+    color: $secondary-dark;
+    font-family: $font-headline;
+    font-size: rem(10.5px);
+    letter-spacing: 0.03em;
+    font-variant-numeric: tabular-nums;
+    cursor: pointer;
+
+    &:hover {
+      background-color: var(--color-brand-100);
+      border-color: var(--color-brand-700);
+      color: var(--color-brand-800);
+    }
+  }
+
   &__button {
     display: flex;
+    flex: 1;
+    min-width: 0;
     gap: rem(math.div($spacer-unit, 2));
     width: 100%;
     text-align: left;

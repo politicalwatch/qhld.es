@@ -26,6 +26,8 @@
           :is="piece.highlighted ? 'mark' : 'span'"
           :id="piece.anchorId != null ? `speech-hl-${piece.anchorId}` : undefined"
           :class="pieceClass(piece)"
+          :title="seekTitle(piece)"
+          @click="onPieceClick(piece, $event)"
         >
           <NuxtLink
             v-if="showMentions && piece.type === 'mention' && piece.isDeputy"
@@ -40,7 +42,7 @@
               class="c-speech-text__mention-av"
               alt=""
               aria-hidden="true"
-            />
+            >
             {{ piece.text }}
           </NuxtLink>
           <template v-else>{{ piece.text }}</template>
@@ -51,7 +53,7 @@
 </template>
 
 <script setup>
-const { blocks, people, highlightRanges, currentHlId, showMentions } =
+const { blocks, people, highlightRanges, currentHlId, showMentions, seekable } =
   defineProps({
     // speech[] from the API: [{ lang, text, original }]
     blocks: { type: Array, required: true },
@@ -63,7 +65,12 @@ const { blocks, people, highlightRanges, currentHlId, showMentions } =
     currentHlId: { type: Number, default: null },
     // when false, mentions render as plain text (no chip / avatar / tint)
     showMentions: { type: Boolean, default: true },
+    // hlIds whose moment in the video is known — those marks play when clicked
+    seekable: { type: Set, default: () => new Set() },
   });
+
+// Playing a match belongs to the page, which owns the player.
+const emit = defineEmits(["seek"]);
 
 // owned here by default, but the jump nav needs to switch tabs → expose as model
 const activeLang = defineModel("activeLang", { default: null });
@@ -120,6 +127,26 @@ const paragraphs = computed(() => {
   return buildSpeechParagraphs(block?.text ?? "", people, ranges);
 });
 
+// The match a click on this piece would play: the first highlight covering it whose
+// moment in the video is known (pieces can sit under overlapping matches).
+const seekableId = (piece) =>
+  piece.highlighted ? piece.hlIds?.find((hlId) => seekable.has(hlId)) ?? null : null;
+
+const seekTitle = (piece) =>
+  seekableId(piece) != null ? "Reproducir el vídeo desde aquí" : undefined;
+
+// A pointer enhancement, deliberately: the mark is inline text, and a button around it
+// would break the line it sits in. The highlights panel carries the same action as a
+// real button, which is the keyboard and screen-reader route to it.
+const onPieceClick = (piece, event) => {
+  // A deputy mention inside a match is a link to their page — let it navigate.
+  if (event.target?.closest?.("a")) return;
+  const hlId = seekableId(piece);
+  // The piece's own offset, not the match's: a matched passage can run for a minute,
+  // and "play from here" has to mean the words under the pointer.
+  if (hlId != null) emit("seek", { hlId, offset: piece.charStart });
+};
+
 const pieceClass = (piece) => {
   const classes = [];
   if (piece.type === "annotation") classes.push("c-speech-text__annotation");
@@ -128,6 +155,7 @@ const pieceClass = (piece) => {
   if (piece.highlighted) classes.push("c-speech-text__hl");
   if (currentHlId != null && piece.hlIds?.includes(currentHlId))
     classes.push("c-speech-text__hl--current");
+  if (seekableId(piece) != null) classes.push("c-speech-text__hl--seek");
   return classes;
 };
 </script>
@@ -230,6 +258,11 @@ const pieceClass = (piece) => {
 
     &--current {
       box-shadow: 0 0 0 2px #efca53;
+    }
+
+    // clickable only where the video has been timed against the transcript
+    &--seek {
+      cursor: pointer;
     }
   }
 }

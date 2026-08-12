@@ -87,7 +87,7 @@ export const parseSpeechText = (text, people = []) => {
 // target for the jump nav).
 //
 // buildSpeechParagraphs(blockText, people, ranges) → [
-//   [ { type, text, personId, isDeputy, highlighted, hlIds, anchorId }, ... ],
+//   [ { type, text, charStart, personId, isDeputy, highlighted, hlIds, anchorId }, ... ],
 //   ...
 // ]
 // `hlIds` lists every range covering the piece (a piece can sit under overlapping
@@ -143,6 +143,10 @@ export const buildSpeechParagraphs = (blockText, people = [], ranges = []) => {
         pieces.push({
           type: segment.type,
           text: text.slice(a, b),
+          // where this piece starts in the block — the coordinate subtitle cues use,
+          // so a click on it can play the video from these words rather than from
+          // the start of the passage they belong to
+          charStart: a,
           personId: segment.personId ?? null,
           isDeputy: segment.isDeputy ?? false,
           highlighted: hlIds.length > 0,

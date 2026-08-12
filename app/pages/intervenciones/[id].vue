@@ -52,21 +52,15 @@
             </p>
           </div>
 
-          <!-- No `crossorigin` here: it would put the video request itself into CORS
-               mode, and the Congress CDN sends no allow-origin header. That is also
-               why the track is served from our own origin. -->
-          <section v-if="speech.video_link" class="c-speech__video">
-            <video ref="videoEl" controls preload="metadata" :src="speech.video_link">
-              <track
-                v-for="track in subtitles"
-                :key="track.lang"
-                :default="track.lang === captionLang"
-                kind="subtitles"
-                :src="track.src"
-                :srclang="track.lang"
-                :label="track.label"
-              />
-            </video>
+          <section v-if="speech.video_link" ref="videoSectionEl" class="c-speech__video">
+            <SpeechVideo
+              ref="playerEl"
+              v-model:caption-lang="captionLang"
+              :src="speech.video_link"
+              :tracks="subtitles"
+              :markers="videoMarkers"
+              :active-marker-id="activeMarkerId"
+            />
           </section>
           <Message v-else type="info" icon>
             El vídeo de esta intervención aún no ha sido publicado por el Congreso.
@@ -102,6 +96,8 @@
             :highlight-ranges="highlightRanges"
             :current-hl-id="currentHlId"
             :show-mentions="showMentions"
+            :seekable="seekableHighlights"
+            @seek="seekToHighlight"
           />
 
           <nav v-if="debate.length > 1" class="c-speech__dnav">
@@ -201,6 +197,7 @@
               :orphans="orphanHighlights"
               :lang-labels="LANG_LABELS"
               :loading="passagesPending"
+              @seek="seekToHighlight"
             />
           </ClientOnly>
         </aside>
@@ -213,12 +210,13 @@
 </template>
 
 <script setup>
-definePageMeta({ name: 'speech' });
-
 import SpeechTextView from "@/components/SpeechTextView.vue";
 import SpeechHighlightNav from "@/components/SpeechHighlightNav.vue";
+import SpeechVideo from "@/components/SpeechVideo.vue";
 import Message from "@/components/Message.vue";
 import Loader from "@/components/Loader.vue";
+
+definePageMeta({ name: 'speech' });
 
 const route = useRoute();
 const { $api } = useNuxtApp();
@@ -416,8 +414,9 @@ const highlightModel = computed(() => {
 const highlightRanges = computed(() => highlightModel.value.ranges);
 // The transcript shows one language block at a time, so the jump nav lists only
 // the active language's matches (a passage's other-language twin lives in another
-// block and appears when that tab is selected).
-const navHighlights = computed(() =>
+// block and appears when that tab is selected). Each gains the second of the video
+// it was said at further down, once the cue timings are in.
+const navMatches = computed(() =>
   highlightModel.value.nav.filter((hl) => hl.lang === activeLang.value)
 );
 const orphanHighlights = computed(() => highlightModel.value.orphans);
@@ -468,29 +467,119 @@ const hasTranslatedTrack = computed(() =>
 // server render `activeLang` is still null (SpeechTextView picks the tab on mount), and
 // a speech can have a track in one language and not the other while a backfill is only
 // half done. Falling back to the as-delivered track keeps captions on by default in
-// both cases — the browser's own caption menu remains the way to change it.
-const captionLang = computed(() => {
-  const available = subtitles.value;
-  if (!available.length) return null;
-  if (available.some((track) => track.lang === activeLang.value)) {
-    return activeLang.value;
+// both cases. Held as state rather than derived, because the player's caption menu
+// writes to it too — that choice then stands until the reader changes language tab.
+const captionLang = ref(null);
+
+watch(
+  [activeLang, subtitles],
+  () => {
+    const available = subtitles.value;
+    if (!available.length) {
+      captionLang.value = null;
+      return;
+    }
+    captionLang.value = available.some((track) => track.lang === activeLang.value)
+      ? activeLang.value
+      : (available.find((track) => track.original) ?? available[0]).lang;
+  },
+  { immediate: true }
+);
+
+// ── Cue timings ───────────────────────────────────────────────────────────
+// Which second of the video each passage of the transcript was said at, so a search
+// match can be played rather than only read. The track carries times and text but not
+// the character offsets it was rendered from, so they are recovered by locating each
+// cue back in the block — see app/utils/subtitleCues.js.
+//
+// Only the language on screen is fetched: the panel lists that block's matches alone.
+// It is the same URL the <track> element loads, so the browser's HTTP cache normally
+// answers it without a second request. Client-only, like the passages above.
+const playerEl = useTemplateRef("playerEl");
+const videoSectionEl = useTemplateRef("videoSectionEl");
+
+const { data: trackCues } = useAsyncData(
+  () => `speech-cues-${route.params.id}-${activeLang.value ?? ""}`,
+  async () => {
+    const track = subtitles.value.find((t) => t.lang === activeLang.value);
+    if (!track) return [];
+    // A track can 404 despite being advertised, when the transcript was re-cleaned
+    // after alignment: the backend refuses cues that would caption the wrong words.
+    // No timings is the right outcome there, not a broken page.
+    const vtt = await $fetch(track.src).catch(() => null);
+    return vtt ? parseVtt(vtt) : [];
+  },
+  {
+    server: false,
+    default: () => [],
+    watch: [activeLang],
+    getCachedData: getCachedPayload,
   }
-  return (available.find((track) => track.original) ?? available[0]).lang;
+);
+
+const cues = computed(() => {
+  const block = speech.value?.speech?.find((b) => b.lang === activeLang.value);
+  return block ? locateCues(block.text, trackCues.value ?? []) : [];
 });
 
-// `default` decides which track the browser shows on first render, but it is inert
-// afterwards: switching tabs has to set `mode` on the live TextTrack list. Guarded on
-// the element because the video is absent for an intervention whose clip the Congress
-// has not published yet.
-const videoEl = useTemplateRef("videoEl");
-
-watch([captionLang, subtitles], () => {
-  const tracks = videoEl.value?.textTracks;
-  if (!tracks?.length) return;
-  for (const track of tracks) {
-    track.mode = track.language === captionLang.value ? "showing" : "disabled";
+// Where each match starts in the block — the coordinate the cues are also in.
+const offsetByHlId = computed(() => {
+  const offsets = new Map();
+  for (const range of highlightRanges.value[activeLang.value] ?? []) {
+    offsets.set(range.hlId, range.start);
   }
+  return offsets;
 });
+
+const navHighlights = computed(() =>
+  navMatches.value.map((hl) => {
+    const offset = offsetByHlId.value.get(hl.hlId);
+    const cue = offset == null ? null : cueForOffset(cues.value, offset);
+    return { ...hl, time: cue?.start ?? null };
+  })
+);
+
+// The matches that can be played: what puts a ▶ on a panel item and makes a mark in
+// the transcript clickable.
+const seekableHighlights = computed(
+  () => new Set(navHighlights.value.filter((hl) => hl.time != null).map((hl) => hl.hlId))
+);
+
+// One tick per moment: two matches inside a single cue were said at the same second,
+// and two ticks in the same place would only be two ways to click the same seek.
+const videoMarkers = computed(() => {
+  const byTime = new Map();
+  for (const hl of navHighlights.value) {
+    if (hl.time == null || byTime.has(hl.time)) continue;
+    byTime.set(hl.time, { id: hl.hlId, time: hl.time, label: hl.preview });
+  }
+  return [...byTime.values()];
+});
+
+// The tick to light up: the match the panel is on, or the one it shares its cue with.
+const activeMarkerId = computed(() => {
+  const time = navHighlights.value.find((hl) => hl.hlId === currentHlId.value)?.time;
+  if (time == null) return null;
+  return videoMarkers.value.find((marker) => marker.time === time)?.id ?? null;
+});
+
+// The panel's button plays a match from its start, which is what its timestamp names.
+// A click in the transcript carries the offset of the words clicked instead: a matched
+// passage can be a thousand characters long, and playing it from the top would rewind
+// the reader a minute away from the sentence they pointed at.
+const seekToHighlight = (target) => {
+  const hlId = typeof target === "number" ? target : target.hlId;
+  const offset = typeof target === "number" ? null : target.offset;
+  const time =
+    offset == null
+      ? navHighlights.value.find((hl) => hl.hlId === hlId)?.time
+      : cueForOffset(cues.value, offset)?.start;
+  if (time == null) return;
+  currentHlId.value = hlId;
+  playerEl.value?.seek(time, { play: true });
+  // The mark clicked can be a long way below the video; bring back what is now playing.
+  videoSectionEl.value?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+};
 
 const speakerDeputy = computed(() => getDeputyByName(speech.value.speaker));
 const speakerColor = computed(() => partyColor(speakerDeputy.value?.party_name));
@@ -704,12 +793,10 @@ defineOgImage('Speech', {
   }
 
   // ── video ─────────────────────────────────────────────────────────────
-  &__video video {
-    display: block;
-    width: 100%;
-    aspect-ratio: 16 / 9;
-    max-height: rem(420px);
-    background-color: $black;
+  // The player brings its own dimensions; this is only the scroll target the
+  // highlights seek back to.
+  &__video {
+    scroll-margin-top: rem($spacer-unit * 2);
   }
 
   &__vhint {
