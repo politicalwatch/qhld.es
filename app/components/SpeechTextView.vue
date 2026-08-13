@@ -3,13 +3,13 @@
     <div v-if="blocks.length > 1" class="c-speech-text__langs">
       <button
         v-for="block in blocks"
-        :key="block.lang"
+        :key="blockKey(block)"
         type="button"
         :class="[
           'c-speech-text__lang',
-          { 'c-speech-text__lang--active': block.lang === activeLang },
+          { 'c-speech-text__lang--active': blockKey(block) === activeBlock },
         ]"
-        @click="activeLang = block.lang"
+        @click="activeBlock = blockKey(block)"
       >
         {{ blockLabel(block) }}
         <span v-if="block.original" class="c-speech-text__lang-original">original</span>
@@ -18,7 +18,7 @@
 
     <p
       v-for="(pieces, paragraphIndex) in paragraphs"
-      :key="`${activeLang}-${paragraphIndex}`"
+      :key="`${activeBlock}-${paragraphIndex}`"
       class="c-speech-text__body"
     >
       <template v-for="(piece, index) in pieces" :key="index">
@@ -61,7 +61,7 @@ const { blocks, people, highlightRanges, currentHlId, showMentions, seekable } =
     blocks: { type: Array, required: true },
     // mentions + interruptions, for surface-form highlighting
     people: { type: Array, default: () => [] },
-    // search highlights per language: { [lang]: [{ start, end, hlId }] }
+    // search highlights per block: { [blockKey]: [{ start, end, hlId }] }
     highlightRanges: { type: Object, default: () => ({}) },
     // the highlight the jump nav is currently tracking (for emphasis)
     currentHlId: { type: Number, default: null },
@@ -75,8 +75,9 @@ const { blocks, people, highlightRanges, currentHlId, showMentions, seekable } =
 // the player.
 const emit = defineEmits(["seek", "preview", "preview-end"]);
 
-// owned here by default, but the jump nav needs to switch tabs → expose as model
-const activeLang = defineModel("activeLang", { default: null });
+// owned here by default, but the jump nav needs to switch tabs → expose as model.
+// A block rather than a language: two blocks of one speech can share a language.
+const activeBlock = defineModel("activeBlock", { default: null });
 
 // group colour + avatar photo for each deputy mentioned (looked up once by id).
 // Deputies are SSR-populated (fetched on the page), so this renders identically
@@ -117,16 +118,16 @@ const langLabel = (lang) => LANG_LABELS[lang] ?? lang;
 const blockLabel = (block) =>
   (block.langs?.length ? block.langs : [block.lang]).map(langLabel).join(" · ");
 
-// default to the as-delivered language when the parent hasn't set one
-if (activeLang.value == null) {
-  activeLang.value = (blocks.find((b) => b.original) ?? blocks[0])?.lang ?? null;
+// default to the as-delivered block when the parent hasn't set one
+if (activeBlock.value == null) {
+  activeBlock.value = blockKey(blocks.find((b) => b.original) ?? blocks[0]);
 }
 
 // the text carries the Diario's paragraph structure as blank-line breaks;
 // search highlights (if any) are layered on top per active language block
 const paragraphs = computed(() => {
-  const block = blocks.find((b) => b.lang === activeLang.value) ?? blocks[0];
-  const ranges = highlightRanges[activeLang.value] ?? [];
+  const block = blocks.find((b) => blockKey(b) === activeBlock.value) ?? blocks[0];
+  const ranges = highlightRanges[activeBlock.value] ?? [];
   return buildSpeechParagraphs(block?.text ?? "", people, ranges);
 });
 

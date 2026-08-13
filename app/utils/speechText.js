@@ -18,6 +18,19 @@ const escapeRegex = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 const ANNOTATION_RE = /\([^)]+\)/g;
 
+// Which block of a speech something belongs to — a transcript tab, a subtitle track, a
+// set of search highlights.
+//
+// The language alone will not do it. A speech given mostly in Spanish, one passage of
+// which the Diario also printed in Spanish, has two blocks that are both `es`: what was
+// said, and the Diario's rendering of that passage. Keyed by language the two collapse
+// into one, and the page captions a speech with its own translation.
+//
+// One helper for blocks and for subtitle tracks alike, since both carry the two fields
+// the key is made of and both have to answer to the same identity.
+export const blockKey = (block) =>
+  block?.lang == null ? null : `${block.lang}|${block.original === false ? "t" : "o"}`;
+
 export const parseSpeechText = (text, people = []) => {
   if (!text) return [];
 

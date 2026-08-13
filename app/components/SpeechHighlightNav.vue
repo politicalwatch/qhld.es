@@ -53,8 +53,8 @@
         >
           <span class="c-speech-hl__index">{{ index + 1 }}</span>
           <span class="c-speech-hl__preview">{{ hl.preview }}</span>
-          <span v-if="isMultiLang" class="c-speech-hl__lang">{{
-            langLabel(hl.lang)
+          <span v-if="isMultiBlock" class="c-speech-hl__lang">{{
+            blockLabel(hl)
           }}</span>
         </button>
         <!-- Only for a match whose cue is known: an intervention has timings once its
@@ -115,14 +115,21 @@ const { highlights, orphans, langLabels } = defineProps({
 // the player.
 const emit = defineEmits(["seek", "preview", "preview-end"]);
 
-const activeLang = defineModel("activeLang", { default: null });
+const activeBlock = defineModel("activeBlock", { default: null });
 const currentHlId = defineModel("currentHlId", { default: null });
 
 const langLabel = (lang) => langLabels[lang] ?? lang;
 
-const isMultiLang = computed(
-  () => new Set(highlights.map((hl) => hl.lang)).size > 1
+// By block, not by language: a speech given mostly in Spanish whose co-official passage
+// the Diario also printed in Spanish has two blocks that are both `es`, and a match in
+// each of them still needs telling apart.
+const isMultiBlock = computed(
+  () => new Set(highlights.map((hl) => hl.key)).size > 1
 );
+
+// The language, and — where that does not distinguish the two — what the block is.
+const blockLabel = (hl) =>
+  hl.original === false ? `${langLabel(hl.lang)} (traducción)` : langLabel(hl.lang);
 
 const anchorId = (hlId) => `speech-hl-${hlId}`;
 
@@ -134,9 +141,9 @@ const scrollToCurrent = (hlId) => {
 
 const goTo = async (hl) => {
   currentHlId.value = hl.hlId;
-  if (hl.lang !== activeLang.value) {
-    // switch language tab first, then scroll once the block has re-rendered
-    activeLang.value = hl.lang;
+  if (hl.key !== activeBlock.value) {
+    // switch to that block's tab first, then scroll once it has re-rendered
+    activeBlock.value = hl.key;
     await nextTick();
   }
   scrollToCurrent(hl.hlId);
@@ -180,7 +187,7 @@ useIntersectionObserver(
 // re-collect anchor marks whenever the set or the active language changes
 // (marks only exist in the DOM for the active language block)
 onMounted(refreshMarks);
-watch([() => highlights, activeLang], refreshMarks);
+watch([() => highlights, activeBlock], refreshMarks);
 </script>
 
 <style lang="scss" scoped>

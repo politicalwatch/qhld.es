@@ -7,7 +7,7 @@ import {
 } from 'h3';
 
 /**
- * The subtitle track of one intervention, in one language, served from our own origin.
+ * The subtitle track of one block of an intervention, served from our own origin.
  *
  * This is the one call that cannot go direct to the backend (`app/plugins/api.js` sends
  * every other one straight there), and the reason is CORS rather than secrecy. A
@@ -25,9 +25,14 @@ import {
 // is not an id we could have issued, and this way none of it reaches the backend URL.
 const SPEECH_ID = /^[a-z0-9]{1,64}$/i;
 
-// A co-official intervention has a track per language, so which one is asked for is part
-// of the request. Guarded like the id: only a short language code reaches the backend.
+// A co-official intervention has a track per block, so which one is asked for is part of
+// the request. Guarded like the id: only a short language code reaches the backend.
 const LANG = /^[a-z-]{2,8}$/i;
+
+// And the language does not always separate them: a speech given mostly in Spanish whose
+// co-official passage the Diario also printed in Spanish has two `es` blocks, told apart
+// by whether they hold what was said or the rendering of it.
+const ORIGINAL = /^(true|false)$/i;
 
 // Matches the backend's own cache header: cues change only when a speech is re-aligned.
 const CACHE_CONTROL = 'public, max-age=3600';
@@ -35,7 +40,7 @@ const CACHE_CONTROL = 'public, max-age=3600';
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig(event);
   const id = getRouterParam(event, 'id');
-  const { lang } = getQuery(event);
+  const { lang, original } = getQuery(event);
 
   if (!id || !SPEECH_ID.test(id)) {
     throw createError({ statusCode: 400, statusMessage: 'Intervención no válida' });
@@ -43,14 +48,24 @@ export default defineEventHandler(async (event) => {
   if (lang !== undefined && (typeof lang !== 'string' || !LANG.test(lang))) {
     throw createError({ statusCode: 400, statusMessage: 'Idioma no válido' });
   }
+  if (
+    original !== undefined &&
+    (typeof original !== 'string' || !ORIGINAL.test(original))
+  ) {
+    throw createError({ statusCode: 400, statusMessage: 'Bloque no válido' });
+  }
 
   let track;
   try {
     track = await $fetch(`/speeches/${id}/subtitles.vtt`, {
       baseURL: config.public.backendUrl || 'http://localhost:5000',
       // Omitted rather than sent empty: no language means the as-delivered track, which
-      // is the only one a speech given in Spanish has.
-      query: lang ? { lang } : undefined,
+      // is the only one a speech given in Spanish has, and no block means whichever
+      // block that language names.
+      query: {
+        ...(lang ? { lang } : {}),
+        ...(original !== undefined ? { original } : {}),
+      },
     });
   } catch (err) {
     // A speech with no subtitles is the ordinary case, not a fault: only aligned

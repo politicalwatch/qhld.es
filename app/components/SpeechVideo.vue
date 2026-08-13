@@ -27,8 +27,8 @@
       >
         <track
           v-for="track in tracks"
-          :key="track.lang"
-          :default="track.lang === captionLang"
+          :key="track.key"
+          :default="track.key === captionKey"
           kind="subtitles"
           :src="track.src"
           :srclang="track.lang"
@@ -140,7 +140,7 @@
           <button
             type="button"
             class="c-vplayer__btn"
-            :class="{ 'c-vplayer__btn--on': captionLang }"
+            :class="{ 'c-vplayer__btn--on': captionKey }"
             aria-label="Subtítulos"
             aria-haspopup="true"
             :aria-expanded="ccOpen"
@@ -149,19 +149,19 @@
             <Icon name="mdi:closed-caption-outline" :size="20" />
           </button>
           <ul v-if="ccOpen" class="c-vplayer__menu">
-            <li v-for="option in ccOptions" :key="option.lang ?? 'off'">
+            <li v-for="option in ccOptions" :key="option.key ?? 'off'">
               <button
                 type="button"
                 class="c-vplayer__opt"
-                :class="{ 'c-vplayer__opt--on': option.lang === captionLang }"
-                @click="chooseCaptions(option.lang)"
+                :class="{ 'c-vplayer__opt--on': option.key === captionKey }"
+                @click="chooseCaptions(option.key)"
               >
                 <Icon
                   name="mdi:check"
                   :size="14"
                   :class="[
                     'c-vplayer__opt-tick',
-                    { 'c-vplayer__opt-tick--off': option.lang !== captionLang },
+                    { 'c-vplayer__opt-tick--off': option.key !== captionKey },
                   ]"
                 />
                 {{ option.label }}
@@ -225,7 +225,10 @@ const { src, tracks, markers, activeMarkerId, activeRange } = defineProps({
 const emit = defineEmits(["playhead"]);
 
 // null = captions off. The page keeps this in step with the transcript's language tab.
-const captionLang = defineModel("captionLang", { type: String, default: null });
+// Which TRACK is showing, by block key rather than language: a speech given mostly in
+// Spanish whose co-official passage the Diario also printed in Spanish has two `es`
+// tracks, and `srclang` cannot tell them apart.
+const captionKey = defineModel("captionKey", { type: String, default: null });
 
 const wrapEl = useTemplateRef("wrapEl");
 const videoEl = useTemplateRef("videoEl");
@@ -426,12 +429,12 @@ const setVolume = (value) => {
 
 // ── captions ──────────────────────────────────────────────────────────────
 const ccOptions = computed(() => [
-  { lang: null, label: "Desactivados" },
-  ...tracks.map((track) => ({ lang: track.lang, label: track.label })),
+  { key: null, label: "Desactivados" },
+  ...tracks.map((track) => ({ key: track.key, label: track.label })),
 ]);
 
-const chooseCaptions = (lang) => {
-  captionLang.value = lang;
+const chooseCaptions = (key) => {
+  captionKey.value = key;
   ccOpen.value = false;
 };
 
@@ -443,14 +446,18 @@ onClickOutside(ccEl, () => {
 // live TextTrack list is what has to be set — on a language change, and on mount, when
 // the tracks may not have existed yet during SSR.
 watch(
-  [captionLang, () => tracks.map((track) => track.lang).join(",")],
+  [captionKey, () => tracks.map((track) => track.key).join(",")],
   async () => {
     await nextTick();
     const textTracks = videoEl.value?.textTracks;
     if (!textTracks?.length) return;
-    for (const textTrack of textTracks) {
-      textTrack.mode =
-        textTrack.language === captionLang.value ? "showing" : "disabled";
+    // BY POSITION, not by `textTrack.language`: two tracks of one speech can share a
+    // language, and the browser exposes nothing else of ours on a TextTrack. The
+    // `<track>` elements are rendered from `tracks` in order, so the live list is in
+    // that order too.
+    for (let index = 0; index < textTracks.length; index += 1) {
+      textTracks[index].mode =
+        tracks[index]?.key === captionKey.value ? "showing" : "disabled";
     }
   },
   { immediate: true }

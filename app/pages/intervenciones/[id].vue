@@ -55,7 +55,7 @@
           <section v-if="speech.video_link" ref="videoSectionEl" class="c-speech__video">
             <SpeechVideo
               ref="playerEl"
-              v-model:caption-lang="captionLang"
+              v-model:caption-key="captionKey"
               :src="speech.video_link"
               :tracks="subtitles"
               :markers="videoMarkers"
@@ -92,7 +92,7 @@
             </button>
           </div>
           <SpeechTextView
-            v-model:active-lang="activeLang"
+            v-model:active-block="activeBlock"
             :blocks="speech.speech"
             :people="people"
             :highlight-ranges="highlightRanges"
@@ -195,7 +195,7 @@
           <ClientOnly>
             <SpeechHighlightNav
               v-if="navHighlights.length || orphanHighlights.length || passagesPending"
-              v-model:active-lang="activeLang"
+              v-model:active-block="activeBlock"
               v-model:current-hl-id="currentHlId"
               :highlights="navHighlights"
               :orphans="orphanHighlights"
@@ -325,7 +325,9 @@ const people = computed(() => [
 // call fails). A cold visit (no query) shows a plain transcript, no nav.
 const LANG_LABELS = { es: "Castellano", ca: "Català", eu: "Euskara", gl: "Galego" };
 const mounted = useMounted();
-const activeLang = ref(null);
+// Which BLOCK the transcript is showing, not which language: two blocks of one
+// speech can share a language, and everything on this page keys on it.
+const activeBlock = ref(null);
 const currentHlId = ref(null);
 // Cached per (speech, query) for the session, so returning to a speech already
 // visited for this search shows its highlights instantly instead of paying the
@@ -373,28 +375,36 @@ const highlightModel = computed(() => {
       ? passageChunks.value ?? store.highlightsFor(speech.value.id)
       : [];
   if (!chunks.length || !blocks.length)
-    return { ranges: {}, nav: [], orphans: [], matchedLang: null };
+    return { ranges: {}, nav: [], orphans: [], matchedBlock: null };
 
   // locate per block, then order by document position (block, then offset)
   const located = [];
   blocks.forEach((block, blockIndex) => {
     for (const range of locateHighlights(block.text, chunks)) {
-      located.push({ ...range, blockIndex, lang: block.lang });
+      located.push({
+        ...range,
+        blockIndex,
+        lang: block.lang,
+        original: block.original !== false,
+        key: blockKey(block),
+      });
     }
   });
   located.sort((a, b) => a.blockIndex - b.blockIndex || a.start - b.start);
 
-  const ranges = {}; // lang → [{ start, end, hlId }]
-  const nav = []; // doc-ordered [{ hlId, lang, preview }]
+  const ranges = {}; // blockKey → [{ start, end, hlId }]
+  const nav = []; // doc-ordered [{ hlId, key, lang, original, preview }]
   located.forEach((range, hlId) => {
-    (ranges[range.lang] ??= []).push({
+    (ranges[range.key] ??= []).push({
       start: range.start,
       end: range.end,
       hlId,
     });
     nav.push({
       hlId,
+      key: range.key,
       lang: range.lang,
+      original: range.original,
       preview: chunks[range.chunkIndex].replace(/\s+/g, " ").trim().slice(0, 120),
     });
   });
@@ -408,14 +418,14 @@ const highlightModel = computed(() => {
     .filter((chunk) => !locatedIdx.has(chunk.index))
     .map((chunk) => chunk.text.replace(/\s+/g, " ").trim());
 
-  // The matched language = the block of the top-ranked passage (chunks arrive in
+  // The matched block = the one holding the top-ranked passage (chunks arrive in
   // reranked order, so the lowest located chunkIndex is the best match). The page
   // opens on this tab so the highlights panel isn't empty when the best match is
   // in a translation rather than the original block.
-  const matchedLang =
-    [...located].sort((a, b) => a.chunkIndex - b.chunkIndex)[0]?.lang ?? null;
+  const matchedBlock =
+    [...located].sort((a, b) => a.chunkIndex - b.chunkIndex)[0]?.key ?? null;
 
-  return { ranges, nav, orphans, matchedLang };
+  return { ranges, nav, orphans, matchedBlock };
 });
 
 const highlightRanges = computed(() => highlightModel.value.ranges);
@@ -424,21 +434,21 @@ const highlightRanges = computed(() => highlightModel.value.ranges);
 // block and appears when that tab is selected). Each gains the second of the video
 // it was said at further down, once the cue timings are in.
 const navMatches = computed(() =>
-  highlightModel.value.nav.filter((hl) => hl.lang === activeLang.value)
+  highlightModel.value.nav.filter((hl) => hl.key === activeBlock.value)
 );
 const orphanHighlights = computed(() => highlightModel.value.orphans);
 
-// Open on the best-matching language's tab (once) instead of the as-delivered
+// Open on the best-matching block's tab (once) instead of the as-delivered
 // default SpeechTextView picks — otherwise a match found only in a translation
 // would leave the panel empty until the user switched tabs. A manual tab change
 // afterwards is respected (the one-shot has already fired).
-let didAutoSelectLang = false;
+let didAutoSelectBlock = false;
 watch(
-  () => highlightModel.value.matchedLang,
-  (lang) => {
-    if (lang && !didAutoSelectLang) {
-      activeLang.value = lang;
-      didAutoSelectLang = true;
+  () => highlightModel.value.matchedBlock,
+  (key) => {
+    if (key && !didAutoSelectBlock) {
+      activeBlock.value = key;
+      didAutoSelectBlock = true;
     }
   },
   { immediate: true }
@@ -457,12 +467,17 @@ const subtitles = computed(() => {
   return (speech.value?.subtitles ?? []).map((track) => ({
     lang: track.lang,
     original: track.original !== false,
+    // What identifies the track everywhere on this page, because the language does not:
+    // a speech given mostly in Spanish whose co-official passage the Diario also printed
+    // in Spanish has two `es` tracks.
+    key: blockKey(track),
     // The translation is named as one: its timings are measured, but its words are the
     // Diario's Spanish reading rather than what was said aloud.
     label: track.original === false
       ? `${LANG_LABELS[track.lang] ?? track.lang} (traducción)`
       : LANG_LABELS[track.lang] ?? track.lang,
-    src: `/api/subtitles/${id}?lang=${encodeURIComponent(track.lang)}`,
+    src: `/api/subtitles/${id}?lang=${encodeURIComponent(track.lang)}`
+      + `&original=${track.original === false ? "false" : "true"}`,
   }));
 });
 
@@ -471,24 +486,24 @@ const hasTranslatedTrack = computed(() =>
 );
 
 // Which track is showing. The transcript tab decides it, but not on its own: during
-// server render `activeLang` is still null (SpeechTextView picks the tab on mount), and
-// a speech can have a track in one language and not the other while a backfill is only
+// server render `activeBlock` is still null (SpeechTextView picks the tab on mount), and
+// a speech can have a track for one block and not the other while a backfill is only
 // half done. Falling back to the as-delivered track keeps captions on by default in
 // both cases. Held as state rather than derived, because the player's caption menu
-// writes to it too — that choice then stands until the reader changes language tab.
-const captionLang = ref(null);
+// writes to it too — that choice then stands until the reader changes tab.
+const captionKey = ref(null);
 
 watch(
-  [activeLang, subtitles],
+  [activeBlock, subtitles],
   () => {
     const available = subtitles.value;
     if (!available.length) {
-      captionLang.value = null;
+      captionKey.value = null;
       return;
     }
-    captionLang.value = available.some((track) => track.lang === activeLang.value)
-      ? activeLang.value
-      : (available.find((track) => track.original) ?? available[0]).lang;
+    captionKey.value = available.some((track) => track.key === activeBlock.value)
+      ? activeBlock.value
+      : (available.find((track) => track.original) ?? available[0]).key;
   },
   { immediate: true }
 );
@@ -506,9 +521,9 @@ const playerEl = useTemplateRef("playerEl");
 const videoSectionEl = useTemplateRef("videoSectionEl");
 
 const { data: trackCues } = useAsyncData(
-  () => `speech-cues-${route.params.id}-${activeLang.value ?? ""}`,
+  () => `speech-cues-${route.params.id}-${activeBlock.value ?? ""}`,
   async () => {
-    const track = subtitles.value.find((t) => t.lang === activeLang.value);
+    const track = subtitles.value.find((t) => t.key === activeBlock.value);
     if (!track) return [];
     // A track can 404 despite being advertised, when the transcript was re-cleaned
     // after alignment: the backend refuses cues that would caption the wrong words.
@@ -519,20 +534,20 @@ const { data: trackCues } = useAsyncData(
   {
     server: false,
     default: () => [],
-    watch: [activeLang],
+    watch: [activeBlock],
     getCachedData: getCachedPayload,
   }
 );
 
 const cues = computed(() => {
-  const block = speech.value?.speech?.find((b) => b.lang === activeLang.value);
+  const block = speech.value?.speech?.find((b) => blockKey(b) === activeBlock.value);
   return block ? locateCues(block.text, trackCues.value ?? []) : [];
 });
 
 // Where each match begins and ends in the block — the coordinate the cues are also in.
 const spanByHlId = computed(() => {
   const spans = new Map();
-  for (const range of highlightRanges.value[activeLang.value] ?? []) {
+  for (const range of highlightRanges.value[activeBlock.value] ?? []) {
     spans.set(range.hlId, range);
   }
   return spans;
