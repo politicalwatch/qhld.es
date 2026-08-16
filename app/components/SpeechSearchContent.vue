@@ -153,6 +153,7 @@ import NotFound from "@/components/NotFound.vue";
 import config from "@/config";
 import { sharedNameOptions } from "@/utils/sharedNames";
 import { searchChips, groupChipLabels } from "@/utils/searchChips";
+import { errorDescription } from "@/utils/searchError";
 
 const { $api } = useNuxtApp();
 const route = useRoute();
@@ -232,47 +233,20 @@ const unresolvedText = (item) =>
     ? `«${item.value}» no coincide con nadie que cumpla el resto de tu búsqueda.`
     : `No hemos podido identificar ${fieldLabel(item.field)} «${item.value}».`;
 
-// Rate limited. The backend caps searches per minute, per hour and per day, and its
-// Retry-After reports the window that actually filled up — so the wait can be named
-// instead of hinted at. A missing value (an intermediary stripping the header, or CORS
-// not exposing it) falls back to the vague wording rather than inventing a number.
-const rateLimitDescription = (retryAfter) => {
-  if (!Number.isFinite(retryAfter) || retryAfter <= 0)
-    return "Has hecho muchas búsquedas en poco tiempo. Espera un rato antes de volver a buscar.";
-  if (retryAfter > 3600)
-    // Only the daily cap reaches this far. Not "mañana": the windows are counted from the
-    // first search, not from midnight, so the wait can end well before tomorrow.
-    return "Has alcanzado el límite de búsquedas por hoy. Vuelve a intentarlo más tarde.";
-  const minutes = Math.ceil(retryAfter / 60);
-  return `Has hecho muchas búsquedas en poco tiempo. Vuelve a intentarlo en ${minutes} ${
-    minutes === 1 ? "minuto" : "minutos"
-  }.`;
-};
-
-const errorDescription = (status, retryAfter) => {
-  switch (status) {
-    case 422:
-      // The query wasn't a speech search (a command, a question to the
-      // assistant, an injection) — tell the user how to phrase a real search.
-      return "Esto no parece una búsqueda de intervenciones parlamentarias. Prueba a describir un tema, orador, grupo o fecha.";
-    case 429:
-      return rateLimitDescription(retryAfter);
-    case 503:
-      return "El buscador inteligente no está disponible en este momento";
-    default:
-      return "Inténtalo de nuevo más tarde";
-  }
-};
-
 const handleError = (error) => {
-  // ofetch's FetchError carries the whole Response, which is where Retry-After lives.
+  // ofetch's FetchError carries the whole Response, which is where Retry-After lives,
+  // and the parsed body on `data` — which is where a 422 says WHICH refusal it was.
   const retryAfter = Number.parseInt(
     error?.response?.headers?.get?.("retry-after") ?? "",
     10
   );
   toast.add({
     title: "Error en la búsqueda",
-    description: errorDescription(error?.status ?? error?.statusCode, retryAfter),
+    description: errorDescription(
+      error?.status ?? error?.statusCode,
+      retryAfter,
+      error?.data?.reason
+    ),
     color: "error",
     icon: "i-lucide-alert-circle",
   });
