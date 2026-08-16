@@ -141,6 +141,10 @@ const scrollToCurrent = (hlId) => {
 
 const goTo = async (hl) => {
   currentHlId.value = hl.hlId;
+  // Chosen deliberately, so it outranks the scroll spy until the reader leaves
+  // it — see `activeHighlight`.
+  spy.pinned = hl.hlId;
+  spy.pinnedSeen = false;
   if (hl.key !== activeBlock.value) {
     // switch to that block's tab first, then scroll once it has re-rendered
     activeBlock.value = hl.key;
@@ -158,12 +162,21 @@ const step = (delta) => {
   goTo(highlights[next]);
 };
 
-// Track which match is on screen (topmost visible) to sync the active item.
+// Track which match is on screen to sync the active item. `spy` carries the rest
+// of that decision — the reader's own choice and whether it has come into view
+// yet; `activeHighlight` holds the rule.
 const visible = new Map(); // hlId → isIntersecting
+const spy = { pinned: null, pinnedSeen: false };
 const markEls = shallowRef([]);
 
 const refreshMarks = async () => {
   await nextTick();
+  // Anchors exist only for the active block, so what we saw of the block we just
+  // left has to be forgotten: nothing ever reports an element off screen once it
+  // leaves the DOM, so those entries would stay `true` for ever and could still
+  // be picked as topmost — marking a match the reader cannot see, in a transcript
+  // they are no longer reading.
+  visible.clear();
   markEls.value = Array.from(
     document.querySelectorAll('[id^="speech-hl-"]')
   );
@@ -179,7 +192,10 @@ useIntersectionObserver(
     const onScreen = [...visible.entries()]
       .filter(([, seen]) => seen)
       .map(([hlId]) => hlId);
-    if (onScreen.length) currentHlId.value = Math.min(...onScreen);
+    const next = activeHighlight({ ...spy, current: currentHlId.value }, onScreen);
+    spy.pinned = next.pinned;
+    spy.pinnedSeen = next.pinnedSeen;
+    currentHlId.value = next.current;
   },
   { rootMargin: "-20% 0px -60% 0px" }
 );

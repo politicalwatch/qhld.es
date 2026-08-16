@@ -59,3 +59,31 @@ export const locateHighlights = (blockText, chunks = []) => {
   });
   return found;
 };
+
+// Which match the panel marks as active as the reader scrolls.
+//
+// `hlId`s run in document order, so the topmost anchor on screen normally wins.
+// A match the reader CHOSE outranks that until they scroll away from it, for two
+// reasons that compound: jumping to a match scrolls smoothly, travelling past
+// every match in between, and the chunks located above overlap (each carries
+// whole sentences of the one before it), so two anchors routinely share the
+// viewport. Left to the plain topmost rule, clicking the fifth match lights up
+// the fourth — either mid-flight or on arrival.
+//
+// `pinned` is that choice and `pinnedSeen` records whether it has actually come
+// into view yet: until it has, the matches scrolled past are ignored rather than
+// allowed to steal the highlight; once it has been seen and left again, the pin
+// is dropped and the spy resumes.
+//
+// Pure so the rule can be tested without a viewport: takes the spy state and the
+// anchors on screen, returns the next state.
+export const activeHighlight = (state, onScreen = []) => {
+  const seen = new Set(onScreen);
+  const { current = null, pinned = null, pinnedSeen = false } = state ?? {};
+  if (pinned !== null) {
+    if (seen.has(pinned)) return { current: pinned, pinned, pinnedSeen: true };
+    if (!pinnedSeen) return { current, pinned, pinnedSeen };
+  }
+  if (!seen.size) return { current, pinned: null, pinnedSeen: false };
+  return { current: Math.min(...onScreen), pinned: null, pinnedSeen: false };
+};
