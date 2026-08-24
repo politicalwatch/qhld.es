@@ -212,7 +212,7 @@
             El último paso antes de obtener el puntaje final del índice es
             verificar el tiempo de inactividad de cada uno de los diputados y
             diputadas en cada una de las temáticas. Se entiende por inactividad
-            el periodo en el cual no se ha presentado ningún tipo de iniciativa.
+            el periodo en el cual no se ha presentado ningún tipo de iniciativa puntuable.
           </p>
           <p>
             En función de la cantidad de meses que lleve inactivo el diputado o
