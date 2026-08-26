@@ -84,7 +84,6 @@ const createInitialFormData = () => ({
   place: "",
   reference: "",
   page: 1,
-  tags: [],
   subtopics: [],
   text: "",
 });
@@ -119,14 +118,14 @@ const getResults = (event) => {
   cleanedForm.value = false;
   csvItems.value = [];
   const isNewSearch = event?.type === "submit";
-  const queryParams = route.query;
+  // `tags` is dropped: the form filters by subtopic now, so a tag left over in
+  // an old shared link or alert would silently narrow results with no visible
+  // control to clear it.
+  const { tags: _legacyTags, ...queryParams } = route.query;
   const params = !isNewSearch && Object.keys(queryParams).length
     ? {
         ...queryParams,
         page: queryParams.page ? Number(queryParams.page) : 1,
-        tags: queryParams.tags
-          ? [].concat(queryParams.tags)
-          : [],
         subtopics: queryParams.subtopics
           ? [].concat(queryParams.subtopics)
           : [],
@@ -227,7 +226,6 @@ watch(() => formData.value.startdate, resetPage);
 watch(() => formData.value.enddate, resetPage);
 watch(() => formData.value.place, resetPage);
 watch(() => formData.value.reference, resetPage);
-watch(() => formData.value.tags, resetPage, { deep: true });
 watch(() => formData.value.subtopics, resetPage, { deep: true });
 watch(() => formData.value.text, resetPage);
 

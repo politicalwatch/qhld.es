@@ -108,16 +108,11 @@ const submitAlert = async () => {
     search_params["knowledgebase"] = "politicas";
 
   // Ensure array params are arrays
-  if (search_params.hasOwnProperty("subtopic"))
+  if (search_params.hasOwnProperty("subtopics"))
     search_params.subtopics =
       search_params.subtopics.constructor !== Array
         ? [search_params.subtopics]
         : search_params.subtopics;
-  if (search_params.hasOwnProperty("tags"))
-    search_params.tags =
-      search_params.tags.constructor !== Array
-        ? [search_params.tags]
-        : search_params.tags;
 
   const params = {
     email: alertState.email,

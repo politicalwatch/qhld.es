@@ -55,29 +55,6 @@
             >
               {{ subtopic }}
             </router-link>
-
-            <ul v-if="getTagsBySubtopic(subtopic)" class="c-topics__list-tags">
-              <li
-                v-for="tag in getTagsBySubtopic(subtopic)"
-                :key="tag + ' - ' + topic"
-                class="c-topics__tag"
-              >
-                <a
-                  v-if="activeKb == 'ods'"
-                  :href="getP2030SearchLink(paramsData(topic, subtopic, tag))"
-                  target="_blank"
-                  class="c-topics__link"
-                  >{{ tag }}</a
-                >
-                <router-link
-                  v-if="activeKb != 'ods'"
-                  class="c-topics__link"
-                  :to="{ path: '/buscar', query: paramsData(topic, subtopic, tag) }"
-                >
-                  {{ tag }}
-                </router-link>
-              </li>
-            </ul>
           </li>
         </ul>
       </li>
@@ -162,15 +139,9 @@ const getSubtopics = (topic) => {
   ];
 };
 
-const getTagsBySubtopic = (subtopic) => {
-  const tags = getTags(activeKb.value);
-  return tags.filter((tag) => tag.subtopic === subtopic).map((tag) => tag.tag);
-};
-
-const paramsData = (currentTopic, currentSubtopic, currentTag) => {
+const paramsData = (currentTopic, currentSubtopic) => {
   const obj = { topic: currentTopic };
   if (currentSubtopic) obj.subtopics = currentSubtopic;
-  if (currentTag) obj.tags = currentTag;
   return obj;
 };
 
@@ -236,14 +207,12 @@ const getP2030SearchLink = (params) => {
         padding: 32px;
 
         &-subtopic {
-          margin-top: rem($spacer-unit);
-        }
-
-        &-tags {
           display: flex;
           flex-wrap: wrap;
+          gap: rem($spacer-unit * 0.5);
+          margin-top: rem($spacer-unit);
 
-          .c-topics__tag {
+          .c-topics__subtopic {
             &:hover {
               text-decoration: underline;
             }
@@ -256,31 +225,10 @@ const getP2030SearchLink = (params) => {
       }
 
       &__subtopic {
-        font-size: rem(14px);
-        line-height: rem(24px);
-        font-family: $font-headline;
-
-        text-decoration: none;
-        font-weight: 500;
-
-        > .c-topics__link {
-          display: block;
-          margin: rem($spacer-unit) 0;
-          color: $secondary-dark;
-          text-decoration: none;
-
-          &:hover {
-            text-decoration: underline;
-          }
-        }
-      }
-
-      &__tag {
         @include overline;
         @include th6;
 
         padding: 8px;
-        margin: 0 1px 0 0;
         background-color: $white;
         display: inline-block;
         text-transform: none;

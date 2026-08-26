@@ -20,23 +20,30 @@
       <div class="o-grid__col u-12 u-6@sm u-padding-bottom-4">
         <div
           class="c-select-label u-block"
-          :class="{ 'c-select-label--disabled': !filteredTags.length }"
+          :class="{ 'c-select-label--disabled': !subtopics.length }"
         >
-          <label for="tags">Etiquetas</label>
+          <label for="subtopics">Subtemática</label>
           <USelectMenu
-            v-model="formData.tags"
+            v-model="formData.subtopics"
             multiple
-            :items="filteredTags"
-            :disabled="!tagsInputEnabled"
+            :items="subtopics"
+            :disabled="!subtopicsInputEnabled"
           >
             <template #default>
-              <span v-if="!formData.tags || !formData.tags.length" class="qhld-select__placeholder">
-                {{ tagsInputEnabled ? 'Todas' : 'Selecciona previamente una temática' }}
+              <span
+                v-if="!formData.subtopics || !formData.subtopics.length"
+                class="qhld-select__placeholder"
+              >
+                {{ subtopicsInputEnabled ? 'Todas' : 'Selecciona previamente una temática' }}
               </span>
               <span v-else class="qhld-select__chips">
-                <span v-for="tag in formData.tags" :key="tag" class="qhld-select__chip">
-                  {{ tag }}
-                  <button type="button" aria-label="Quitar" @click.stop="removeTag(tag)">
+                <span
+                  v-for="subtopic in formData.subtopics"
+                  :key="subtopic"
+                  class="qhld-select__chip"
+                >
+                  {{ subtopic }}
+                  <button type="button" aria-label="Quitar" @click.stop="removeSubtopic(subtopic)">
                     <Icon name="mdi:close" />
                   </button>
                 </span>
@@ -232,20 +239,17 @@ const textInputOptions = {
 };
 
 const subtopics = ref([]);
-const tags = ref([]);
 const errors = ref(null);
-const selectedSubtopics = ref([]);
-const filteredTags = ref([]);
 
-const tagsInputEnabled = computed(() => {
-  return formData.value.topic && filteredTags.value.length;
+const subtopicsInputEnabled = computed(() => {
+  return formData.value.topic && subtopics.value.length;
 });
 
 onMounted(() => {
   nextTick(() => {
     // Populates topic dependant fields on redirection (from topic graphs)
     if (formData.value.topic) {
-      fillSubtopicsAndTags(formData.value.topic);
+      fillSubtopics(formData.value.topic);
     }
   });
 });
@@ -274,7 +278,7 @@ const formattedEndDate = computed(() => {
 });
 
 const cleanForm = () => {
-  clearSubtopicsAndTags();
+  clearSubtopics();
 };
 
 const getTypes = () => allTypes.value?.map((t) => t.name) ?? [];
@@ -290,32 +294,34 @@ const getDeputies = () => {
   return allDeputies.value?.map((d) => d.name) ?? [];
 };
 
-const fillSubtopicsAndTags = (selectedTopic, clearValues) => {
+const fillSubtopics = (selectedTopic, clearValues) => {
   if (clearValues) {
     formData.value.subtopics = [];
-    formData.value.tags = [];
   }
   if (!selectedTopic) return;
   const currentTopic = allTopics.value.find(
     (topic) => topic.name === selectedTopic
   );
   if (!currentTopic) return;
-  getSubtopicsAndTags(currentTopic.id);
+  getSubtopics(currentTopic.id);
 };
 
 // Replaces @select / @remove from vue-multiselect: single handler covers
 // both select (truthy value) and clear (null/undefined value).
 const handleTopicChange = (newTopic) => {
   if (newTopic) {
-    fillSubtopicsAndTags(newTopic);
+    formData.value.subtopics = [];
+    fillSubtopics(newTopic);
   } else {
-    clearSubtopicsAndTags();
+    clearSubtopics();
   }
 };
 
 // Remove a single chip from multi-value fields (called by the chip × button)
-const removeTag = (tag) => {
-  formData.value.tags = (formData.value.tags || []).filter((t) => t !== tag);
+const removeSubtopic = (subtopic) => {
+  formData.value.subtopics = (formData.value.subtopics || []).filter(
+    (s) => s !== subtopic
+  );
 };
 
 const removeType = (type) => {
@@ -331,13 +337,9 @@ const clearInitiatives = (event) => {
   emit("clearInitiatives", event);
 };
 
-const clearSubtopicsAndTags = () => {
+const clearSubtopics = () => {
   subtopics.value = [];
-  selectedSubtopics.value = [];
-  tags.value = [];
-  filteredTags.value = [];
   formData.value.subtopics = [];
-  formData.value.tags = [];
 };
 
 const clearStartDate = () => {
@@ -358,48 +360,21 @@ const selectEndDate = (date) => {
 
 const prepareForm = () => {
   if (formData.value.topic) {
-    fillSubtopicsAndTags(formData.value.topic, false);
+    fillSubtopics(formData.value.topic, false);
   }
 };
 
-const getSubtopicsAndTags = (topicID) => {
+// The topic endpoint returns [{ subtopic, tag }]; the form only needs the
+// distinct subtopics of the selected topic.
+const getSubtopics = (topicID) => {
   $api
     .getTags(topicID)
     .then((tempTags) => {
       subtopics.value = [...new Set(tempTags.map((tag) => tag.subtopic))].sort(
         Utils.naturalSort
       );
-      tags.value = tempTags;
-      filteredTags.value = tags.value
-        .map((tag) => tag.tag)
-        .sort(Utils.naturalSort);
     })
     .catch((error) => (errors.value = error));
-};
-
-const filterTags = () => {
-  let filtered = selectedSubtopics.value.length
-    ? (tag) => selectedSubtopics.value.indexOf(tag.subtopic) !== -1
-    : () => true;
-  filteredTags.value = tags.value
-    .filter(filtered)
-    .map((tag) => tag.tag)
-    .sort(Utils.naturalSort);
-};
-
-const addSubtopicToTagsFilter = (selectedSubtopic) => {
-  formData.value.tags = [];
-  selectedSubtopics.value.push(selectedSubtopic);
-  filterTags();
-};
-
-const removeSubtopicToTagsFilter = (removedSubtopic) => {
-  formData.value.tags = [];
-  selectedSubtopics.value.splice(
-    selectedSubtopics.value.indexOf(removedSubtopic),
-    1
-  );
-  filterTags();
 };
 
 const formatDatepickerDate = (date) => {
