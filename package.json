@@ -31,7 +31,7 @@
     "nuxt": "^4.5.0",
     "nuxt-gtag": "^4.1.0",
     "pluralize": "^8.0.0",
-    "qs": "^6.11.2",
+    "qs": "^6.16.0",
     "save-svg-as-png": "^1.4.17",
     "slugify": "^1.6.6",
     "tailwindcss": "^4.3.1",
