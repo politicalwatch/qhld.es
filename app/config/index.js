@@ -21,11 +21,7 @@ export default {
       condition: true,
     },
   ],
-  DISCLAIMER: {
-    'name': 'Hemos desactivado las alertas unos días por tareas de mantenimiento',
-    'route': '#',
-    'external': true
-  },
+  DISCLAIMER: {},
   LOGO: "/img/logo.svg",
 
   STYLES: {
