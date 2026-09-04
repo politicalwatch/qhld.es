@@ -1,5 +1,6 @@
 <template>
   <div v-if="isTagged()" class="c-topics c-topics--extended" id="tagged">
+    <h3 class="c-topics__title u-uppercase">Temáticas destacadas</h3>
     <ul class="c-topics__list">
       <li
         v-for="(topic, i) in getTopics()"
@@ -97,6 +98,7 @@ const paramsData = (currentTopic, currentSubtopic) => {
 .c-topics {
   display: flex;
   flex-wrap: wrap;
+  background-color: #fff;
 
   &__topic {
     @include overline;
@@ -118,13 +120,16 @@ const paramsData = (currentTopic, currentSubtopic) => {
     }
   }
 
+  &__title {
+    margin-bottom: 0;
+    padding: 0 0 rem($spacer-unit * 2);
+  }
+
   &--extended {
     display: block;
 
     .c-topics {
       &__list {
-        background-color: $lightgrey;
-        padding: 32px;
 
         &-subtopic {
           display: flex;
