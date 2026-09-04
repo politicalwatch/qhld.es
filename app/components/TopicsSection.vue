@@ -1,32 +1,13 @@
 <template>
   <div v-if="isTagged()" class="c-topics c-topics--extended" id="tagged">
-    <h3
-      v-for="kb in getKnowledgebases()"
-      :key="kb"
-      :class="{ 'c-topics__label--active': kb == activeKb }"
-      class="c-topics__label u-uppercase"
-    >
-      <a @click="activateKb(kb)" href="#tagged"
-        ><ODSIcon icon="ods" v-if="kb == 'ods'" />{{ titles[kb] }}</a
-      >
-    </h3>
+    <h3 class="c-topics__title u-uppercase">Temáticas destacadas</h3>
     <ul class="c-topics__list">
       <li
-        v-for="(topic, i) in getTopics(activeKb)"
+        v-for="(topic, i) in getTopics()"
         :key="topic"
         class="c-topics__list-topic"
       >
-        <a
-          v-if="activeKb == 'ods'"
-          :href="getP2030SearchLink(paramsData(topic))"
-          :style="`background-color:${topicsStyles[topic].color}`"
-          target="_blank"
-          class="c-topics__topic"
-          style="color: white"
-          >{{ topic }}</a
-        >
         <router-link
-          v-if="activeKb != 'ods'"
           :id="`topic-${i}`"
           class="c-topics__topic"
           :style="`background-color:${topicsStyles[topic].color}`"
@@ -41,61 +22,23 @@
             :key="subtopic + ' - ' + topic"
             class="c-topics__subtopic"
           >
-            <a
-              v-if="activeKb == 'ods'"
-              :href="getP2030SearchLink(paramsData(topic, subtopic))"
-              target="_blank"
-              class="c-topics__link"
-              >{{ subtopic }}</a
-            >
             <router-link
-              v-if="activeKb != 'ods'"
               class="c-topics__link"
               :to="{ path: '/buscar', query: paramsData(topic, subtopic) }"
             >
               {{ subtopic }}
             </router-link>
-
-            <ul v-if="getTagsBySubtopic(subtopic)" class="c-topics__list-tags">
-              <li
-                v-for="tag in getTagsBySubtopic(subtopic)"
-                :key="tag + ' - ' + topic"
-                class="c-topics__tag"
-              >
-                <a
-                  v-if="activeKb == 'ods'"
-                  :href="getP2030SearchLink(paramsData(topic, subtopic, tag))"
-                  target="_blank"
-                  class="c-topics__link"
-                  >{{ tag }}</a
-                >
-                <router-link
-                  v-if="activeKb != 'ods'"
-                  class="c-topics__link"
-                  :to="{ path: '/buscar', query: paramsData(topic, subtopic, tag) }"
-                >
-                  {{ tag }}
-                </router-link>
-              </li>
-            </ul>
           </li>
         </ul>
       </li>
-      <a
-        target="_blank"
-        :href="'https://www.parlamento2030.es/initiatives/' + initiative.oldid"
-        v-if="activeKb == 'ods'"
-        >Ver más en Parlamento2030.es</a
-      >
     </ul>
   </div>
 </template>
 
 <script setup>
-import qs from "qs";
-
-import ODSIcon from "@/assets/svg/icon-ods.svg";
 import * as Utils from "@/utils";
+
+const KNOWLEDGEBASE = "politicas";
 
 const { initiative, topicsStyles } = defineProps({
   initiative: {
@@ -107,54 +50,36 @@ const { initiative, topicsStyles } = defineProps({
   },
 });
 
-const titles = {
-  politicas: "Temáticas",
-  ods: "Agenda 2030",
-};
-const activeKb = ref("politicas");
-
-const activateKb = (kb) => {
-  activeKb.value = kb;
+const getTaggedItems = () => {
+  return initiative["tagged"].filter(
+    (tagged) => tagged["knowledgebase"] == KNOWLEDGEBASE
+  );
 };
 
 const isTagged = () => {
-  return initiative.tagged.some(
+  return getTaggedItems().some(
     (item) => item.topics.length > 0 || item.tags.length > 0
   );
 };
 
-const getKnowledgebases = () => {
-  const kbs = [];
-  for (const tagged of initiative["tagged"]) {
-    if (tagged["topics"].length > 0) {
-      kbs.push(tagged["knowledgebase"]);
-    }
-  }
-  return kbs.sort().reverse();
-};
-
-const getTopics = (kb) => {
+const getTopics = () => {
   let topics = [];
-  for (const tagged of initiative["tagged"]) {
-    if (tagged["knowledgebase"] == kb) {
-      topics = topics.concat(tagged["topics"]);
-    }
+  for (const tagged of getTaggedItems()) {
+    topics = topics.concat(tagged["topics"]);
   }
   return topics.slice().sort(Utils.naturalSort);
 };
 
-const getTags = (kb) => {
+const getTags = () => {
   let tags = [];
-  for (const tagged of initiative["tagged"]) {
-    if (tagged["knowledgebase"] == kb) {
-      tags = tags.concat(tagged["tags"]);
-    }
+  for (const tagged of getTaggedItems()) {
+    tags = tags.concat(tagged["tags"]);
   }
   return tags;
 };
 
 const getSubtopics = (topic) => {
-  const tags = getTags(activeKb.value);
+  const tags = getTags();
   return [
     ...new Set(
       tags.filter((tag) => tag.topic === topic).map((tag) => tag.subtopic)
@@ -162,21 +87,10 @@ const getSubtopics = (topic) => {
   ];
 };
 
-const getTagsBySubtopic = (subtopic) => {
-  const tags = getTags(activeKb.value);
-  return tags.filter((tag) => tag.subtopic === subtopic).map((tag) => tag.tag);
-};
-
-const paramsData = (currentTopic, currentSubtopic, currentTag) => {
+const paramsData = (currentTopic, currentSubtopic) => {
   const obj = { topic: currentTopic };
   if (currentSubtopic) obj.subtopics = currentSubtopic;
-  if (currentTag) obj.tags = currentTag;
   return obj;
-};
-
-const getP2030SearchLink = (params) => {
-  const baseUrl = "https://www.parlamento2030.es/resultados/";
-  return baseUrl + qs.stringify(params);
 };
 </script>
 
@@ -184,6 +98,7 @@ const getP2030SearchLink = (params) => {
 .c-topics {
   display: flex;
   flex-wrap: wrap;
+  background-color: #fff;
 
   &__topic {
     @include overline;
@@ -205,26 +120,9 @@ const getP2030SearchLink = (params) => {
     }
   }
 
-  &__label {
-    padding: 16px 32px;
-    display: inline-block;
+  &__title {
     margin-bottom: 0;
-
-    &--active {
-      background-color: $lightgrey;
-    }
-
-    a {
-      text-decoration: none;
-
-      &:hover {
-        text-decoration: underline;
-      }
-    }
-
-    .c-icon {
-      margin-right: 14px;
-    }
+    padding: 0 0 rem($spacer-unit * 2);
   }
 
   &--extended {
@@ -232,18 +130,14 @@ const getP2030SearchLink = (params) => {
 
     .c-topics {
       &__list {
-        background-color: $lightgrey;
-        padding: 32px;
 
         &-subtopic {
-          margin-top: rem($spacer-unit);
-        }
-
-        &-tags {
           display: flex;
           flex-wrap: wrap;
+          gap: rem($spacer-unit * 0.5);
+          margin-top: rem($spacer-unit);
 
-          .c-topics__tag {
+          .c-topics__subtopic {
             &:hover {
               text-decoration: underline;
             }
@@ -256,31 +150,10 @@ const getP2030SearchLink = (params) => {
       }
 
       &__subtopic {
-        font-size: rem(14px);
-        line-height: rem(24px);
-        font-family: $font-headline;
-
-        text-decoration: none;
-        font-weight: 500;
-
-        > .c-topics__link {
-          display: block;
-          margin: rem($spacer-unit) 0;
-          color: $secondary-dark;
-          text-decoration: none;
-
-          &:hover {
-            text-decoration: underline;
-          }
-        }
-      }
-
-      &__tag {
         @include overline;
         @include th6;
 
         padding: 8px;
-        margin: 0 1px 0 0;
         background-color: $white;
         display: inline-block;
         text-transform: none;
