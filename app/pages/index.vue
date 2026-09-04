@@ -155,7 +155,7 @@ const { data: homeBlock } = useAsyncData(
     }
 
     const relatedInitiatives = await Promise.all(
-      homeObj.RelatedInitiativesIds.map((id) => $api.getInitiative(id, false))
+      homeObj.RelatedInitiativesIds.map((id) => $api.getInitiative(id))
     );
     return { home: homeObj, relatedInitiatives };
   },

@@ -56,11 +56,8 @@ export default defineNuxtPlugin(() => {
         query: { ...cleanParams(params), knowledgebase: kb },
       }),
 
-    getInitiative: (id, allkbs = true) =>
-      backendFetch(`/initiatives/${id}`, {
-        // Per-call kb string; never mutates shared state (fixes the old api bug)
-        query: { knowledgebase: allkbs ? `${kb},ods` : kb },
-      }),
+    getInitiative: (id) =>
+      backendFetch(`/initiatives/${id}`, { query: baseQuery }),
 
     // ── Alerts ───────────────────────────────────────────────────────────────
     saveAlert: (search) =>

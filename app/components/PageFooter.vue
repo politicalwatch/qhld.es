@@ -32,9 +32,6 @@
                   class="c-footer__menu-link"
                   >Índice parlamentario</router-link
                 >
-                <a href="https://www.parlamento2030.es/" target="_blank"
-                  >Agenda 2030</a
-                >
                 <a
                   href="https://politicalwatch.es/investigaciones/congreso-de-los-diputados"
                   target="_blank"
@@ -43,7 +40,7 @@
               </div>
             </div>
             <div class="o-grid__col u-4@sm c-footer__section">
-              <h5 class="c-footer__section-title">Colabora</h5>
+              <h5 class="c-footer__section-title">Participa</h5>
               <div class="c-footer__section-links">
                 <a href="https://api.quehacenlosdiputados.es/" target="_blank"
                   >API Docs</a
@@ -57,11 +54,8 @@
                 <router-link :to="{ name: 'collaborate', hash: '#dona' }"
                   >Haz una donación</router-link
                 >
-                <router-link :to="{ name: 'contact' }">Contacta</router-link>
-                <a
-                  href="mailto:qhld@politicalwatch.es?subject=Contacto+a+través+de+qhld.es"
-                  target="_blank"
-                  >Escríbenos</a
+                <router-link :to="{ name: 'contact' }"
+                  >Contacta</router-link
                 >
               </div>
             </div>
