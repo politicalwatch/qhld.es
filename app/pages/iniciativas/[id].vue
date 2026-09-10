@@ -22,7 +22,9 @@
                 :id="initiative.id"
                 :isAnswer="isAnswer()"
               ></ConversationLink>
-              <CongressLink :url="initiative.url"></CongressLink>
+              <span class="u-hide u-inline-block@sm">
+                <CongressLink :url="initiative.url"></CongressLink>
+              </span>
             </div>
           </div>
 
@@ -87,6 +89,10 @@
             :topicsStyles="styles.topics"
             :initiative="initiative"
           />
+        </div>
+
+        <div class="o-grid__col u-12 u-text-left u-margin-top-2 u-hide@sm">
+          <CongressLink :url="initiative.url"></CongressLink>
         </div>
       </div>
     </div>
