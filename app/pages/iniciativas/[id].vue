@@ -84,7 +84,7 @@
           </div>
         </div>
 
-        <div class="u-hide@md">
+        <div class="o-grid__col u-12 u-hide@md">
           <TopicsSection
             :topicsStyles="styles.topics"
             :initiative="initiative"
