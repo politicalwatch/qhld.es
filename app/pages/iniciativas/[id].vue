@@ -198,8 +198,13 @@ const isAnswer = () => {
   }
 
   &__status {
-    height: 56px;
     padding-top: 16px;
+    margin-bottom: 16px;
+
+    @media (min-width: $sm) {
+      height: 56px;
+      margin-bottom: 0;
+    }
   }
 }
 </style>
