@@ -254,16 +254,25 @@ onMounted(() => {
   });
 });
 
-const advanced = ref(
-  formData.value &&
-    (formData.value.startdate ||
-      formData.value.enddate ||
-      formData.value.status ||
-      formData.value.place ||
-      formData.value.type?.length ||
-      formData.value.reference ||
-      formData.value.text)
+// Only the fields actually rendered inside the advanced section count here.
+const hasAdvancedValues = computed(() =>
+  Boolean(
+    formData.value &&
+      (formData.value.deputy ||
+        formData.value.author ||
+        formData.value.type?.length ||
+        formData.value.place)
+  )
 );
+
+const advanced = ref(hasAdvancedValues.value);
+
+// The parent hydrates formData from the URL after this component is set up, so
+// the section has to react to values arriving later. It only ever opens: once
+// open, clearing a field leaves it visible so the controls stay reachable.
+watch(hasAdvancedValues, (hasValues) => {
+  if (hasValues) advanced.value = true;
+});
 
 const formattedStartDate = computed(() => {
   return formData.value.startdate
