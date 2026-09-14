@@ -260,7 +260,7 @@ const advanced = ref(
       formData.value.enddate ||
       formData.value.status ||
       formData.value.place ||
-      formData.value.type ||
+      formData.value.type?.length ||
       formData.value.reference ||
       formData.value.text)
 );

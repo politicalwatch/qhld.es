@@ -75,6 +75,10 @@ const toast = useToast();
 const errors = ref(null);
 const initiatives = ref([]);
 const query_meta = ref({});
+// Fields the form handles as multi-value: a single value in the URL arrives as
+// a plain string, so it has to be wrapped back into an array or the chips
+// would iterate over its characters.
+const MULTI_VALUE_FIELDS = ["subtopics", "type"];
 const createInitialFormData = () => ({
   topic: "",
   author: "",
@@ -85,6 +89,7 @@ const createInitialFormData = () => ({
   reference: "",
   page: 1,
   subtopics: [],
+  type: [],
   text: "",
 });
 const formData = ref(createInitialFormData());
@@ -126,9 +131,12 @@ const getResults = (event) => {
     ? {
         ...queryParams,
         page: queryParams.page ? Number(queryParams.page) : 1,
-        subtopics: queryParams.subtopics
-          ? [].concat(queryParams.subtopics)
-          : [],
+        ...Object.fromEntries(
+          MULTI_VALUE_FIELDS.map((key) => [
+            key,
+            queryParams[key] ? [].concat(queryParams[key]) : [],
+          ])
+        ),
       }
     : formData.value;
   formData.value = Object.assign(formData.value, params);
@@ -227,6 +235,7 @@ watch(() => formData.value.enddate, resetPage);
 watch(() => formData.value.place, resetPage);
 watch(() => formData.value.reference, resetPage);
 watch(() => formData.value.subtopics, resetPage, { deep: true });
+watch(() => formData.value.type, resetPage, { deep: true });
 watch(() => formData.value.text, resetPage);
 
 onMounted(() => {
