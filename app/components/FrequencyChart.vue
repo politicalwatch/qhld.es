@@ -221,7 +221,6 @@
 </template>
 
 <script setup>
-// test at http://localhost:5173/ods/ods-2
 
 /* component functionality
 Displays one barchart for the evolution of the topic
@@ -253,6 +252,7 @@ import vTr3nsition from "@/components/vTr3nsition.js";
 import UiSwitch from "@/components/UiSwitch.vue";
 
 const router = useRouter();
+const { knowledgebase: defaultKnowledgebase } = useRuntimeConfig().public;
 
 const { defaultHeight, topicsStyles, topic, dataset, aggreagatedDataset } =
   defineProps({
@@ -267,15 +267,7 @@ const { defaultHeight, topicsStyles, topic, dataset, aggreagatedDataset } =
     },
     topic: {
       type: Object,
-      default: () => ({
-        knowledgebase: "ods",
-        name: "ODS 2 Hambre cero",
-        shortname: "ODS 2",
-        id: "ods-2",
-        description: [
-          "Poner fin al hambre, lograr la seguridad alimentaria y la mejora de la nutrición y promover la agricultura sostenible",
-        ],
-      }),
+      required: true,
     },
     /*
   dataset is an array of objects with the format {week: '2021-01', initiatives: 10}
@@ -537,10 +529,10 @@ const searchWeekInitiatives = (bar) => {
   router.push({
     path: "/buscar",
     query: {
-      topic: bar.topic?.name ?? bar.topic,
+      topic: topic.name,
       startdate: weekRange.monday,
       enddate: weekRange.sunday,
-      knowledgebase: "politicas",
+      knowledgebase: topic.knowledgebase ?? defaultKnowledgebase,
     },
   });
 };
