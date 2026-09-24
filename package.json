@@ -4,11 +4,11 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "dev": "nuxi dev",
-    "build": "nuxi build",
-    "serve": "nuxi preview",
-    "generate": "nuxi generate",
-    "test:unit": "vitest --environment jsdom",
+    "dev": "nuxt dev",
+    "build": "nuxt build",
+    "serve": "nuxt preview",
+    "generate": "nuxt generate",
+    "test:unit": "vitest",
     "lint": "eslint . --fix",
     "lint:css": "stylelint '**/*.{css,scss,vue}' --fix"
   },
@@ -51,7 +51,6 @@
     "eslint-config-prettier": "^10.0.0",
     "eslint-plugin-vue": "^10.0.0",
     "happy-dom": "^20.9.0",
-    "jsdom": "^30.0.1",
     "postcss-html": "^2.0.0",
     "prettier": "^3.0.3",
     "sass-embedded": "^1.79.4",
@@ -59,7 +58,7 @@
     "stylelint-config-standard": "^40.0.0",
     "stylelint-config-standard-scss": "^17.0.0",
     "typescript": "^7.0.2",
-    "vitest": "^4.1.5",
+    "vitest": "^5.0.0",
     "vue-tsc": "^3.2.6"
   },
   "overrides": {
