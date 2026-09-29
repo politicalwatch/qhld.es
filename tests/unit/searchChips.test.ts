@@ -125,6 +125,17 @@ describe('searchChips', () => {
     ]);
   });
 
+  it('counts a shared surname inside an all-of instead of listing everyone it matched', () => {
+    // "que mencionen a Feijóo y a Sánchez": Feijóo and any one of the Sánchezes.
+    const labels = { mentions: { 'nunez-feijoo-alberto': 'Núñez Feijóo, Alberto' } };
+    const filters = {
+      mentions: { all: ['nunez-feijoo-alberto', ['sanchez-a', 'sanchez-b', 'sanchez-c']] },
+    };
+    expect(searchChips({ filters, labels })).toEqual([
+      { label: 'Menciona a', value: 'Núñez Feijóo, Alberto, 3 personas' },
+    ]);
+  });
+
   it('falls back to the raw value when the backend sent no name for it', () => {
     // An older backend (or a value that needs no translation) — the chip still renders.
     expect(searchChips({ filters: { mentions: 'isabel-diaz-ayuso' } })).toEqual([

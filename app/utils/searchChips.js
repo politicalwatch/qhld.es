@@ -37,10 +37,14 @@ const formatValue = (field, value, labels) => {
   if (named) return named;
   if (Array.isArray(value))
     return value.map((item) => formatValue(field, item, labels)).join(", ");
-  // `{all: [...]}` — every one of these people must be mentioned.
+  // `{all: [...]}` — every one of these people must be mentioned. A member that is itself
+  // a list is a surname several people share, offered below as pills, so it is counted.
   if (value && typeof value === "object")
     return Object.values(value)
-      .map((item) => formatValue(field, item, labels))
+      .flat()
+      .map((item) =>
+        Array.isArray(item) ? `${item.length} personas` : formatValue(field, item, labels)
+      )
       .join(", ");
   if (field === "lang") return LANGUAGES[value] || String(value);
   return String(value);
