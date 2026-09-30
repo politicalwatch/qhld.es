@@ -16,6 +16,7 @@
         @recall="onRecall"
         @remove="onRemove"
         @clear="onClear"
+        @dismiss="onDismiss"
       />
 
       <div v-if="searched && chips.length && loading !== 'first'" class="c-speech-search__chips">
@@ -398,6 +399,12 @@ const onClear = () => {
   if (searched.value) resetToEmptyState();
 };
 
+// The box's clear button: back to the suggestions and the clean URL. The search stays
+// in the history, so bringing it back costs nothing.
+const onDismiss = () => {
+  if (searched.value && loading.value === "idle") resetToEmptyState();
+};
+
 onMounted(() => {
   const urlQuery = route.query.q ? String(route.query.q) : "";
   if (urlQuery) {
@@ -421,14 +428,26 @@ onMounted(() => {
 });
 
 // The page instance is kept alive across `?q=` changes (see the page's `key`),
-// so navigating to the clean /buscar-intervenciones URL won't remount it — return
-// to the empty state when the query is cleared, but keep the cached search.
+// so neither direction remounts it. Navigating to the clean /buscar-intervenciones
+// URL returns to the empty state but keeps the cached search; navigating back onto
+// a results URL (Back after the box's clear button) shows that search again —
+// served from the history when it is there, so going back costs no new query.
+// A search in flight pushes its own `?q`, which the loading guard ignores.
 watch(
   () => route.query.q,
   (value) => {
-    if (!value && searched.value && loading.value === "idle") {
-      searched.value = false;
-      q.value = "";
+    if (loading.value !== "idle") return;
+    if (!value) {
+      if (searched.value) {
+        searched.value = false;
+        q.value = "";
+      }
+      return;
+    }
+    const query = String(value);
+    if (!searched.value || query !== store.query) {
+      q.value = query;
+      search();
     }
   }
 );

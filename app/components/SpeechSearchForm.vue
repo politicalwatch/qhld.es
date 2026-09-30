@@ -18,6 +18,7 @@
         placeholder="P. ej. «¿Qué ha dicho Pedro Sánchez sobre el alquiler?»"
         autocomplete="off"
         :disabled="loading"
+        @search="onNativeSearch"
       />
 
       <!-- History lives in client-only web storage, so render it only after mount
@@ -98,7 +99,7 @@ const { loading, entries } = defineProps({
   entries: { type: Array, default: () => [] },
 });
 
-const emit = defineEmits(["search", "recall", "remove", "clear"]);
+const emit = defineEmits(["search", "recall", "remove", "clear", "dismiss"]);
 
 const historyOpen = ref(false);
 
@@ -106,6 +107,14 @@ const disabled = computed(() => loading || model.value.trim().length < 2);
 
 const onSubmit = () => {
   if (!disabled.value) emit("search");
+};
+
+// A search input fires a native `search` event when its clear button ("x") empties it,
+// or Escape does. With the box empty that means "take this search away", not "submit",
+// so tell the page to drop the results too. Deleting the text by hand fires no such
+// event, which keeps the results on screen while a new query is being typed.
+const onNativeSearch = () => {
+  if (!model.value.trim()) emit("dismiss");
 };
 
 const onRecall = (query) => {
