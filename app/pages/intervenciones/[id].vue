@@ -13,7 +13,16 @@
               />
             </span>
             <div class="c-speech__identity">
-              <h1 class="c-speech__name">{{ speech.speaker }}</h1>
+              <h1 class="c-speech__name">
+                <NuxtLink
+                  v-if="speakerDeputy?.id"
+                  :to="{ name: 'deputy', params: { id: speakerDeputy.id } }"
+                  class="c-speech__name-link"
+                >
+                  {{ speech.speaker }}
+                </NuxtLink>
+                <template v-else>{{ speech.speaker }}</template>
+              </h1>
               <p class="c-speech__role">
                 <span class="c-speech__role-sq" aria-hidden="true" />
                 <template v-if="speech.group">{{ speech.group }} · </template>{{ speech.role }}
@@ -803,6 +812,16 @@ defineOgImage('Speech', {
 
     @media (min-width: $sm) {
       font-size: rem(32px);
+    }
+  }
+
+  &__name-link {
+    color: inherit;
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+      text-underline-offset: 3px;
     }
   }
 
