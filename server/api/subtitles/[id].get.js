@@ -1,10 +1,10 @@
 import {
   createError,
   defineEventHandler,
-  getQuery,
   getRouterParam,
-  setResponseHeader,
-} from 'h3';
+  getValidatedQuery,
+  useRuntimeConfig,
+} from 'nuxt/server';
 
 /**
  * The subtitle track of one block of an intervention, served from our own origin.
@@ -37,23 +37,24 @@ const ORIGINAL = /^(true|false)$/i;
 // Matches the backend's own cache header: cues change only when a speech is re-aligned.
 const CACHE_CONTROL = 'public, max-age=3600';
 
-export default defineEventHandler(async (event) => {
-  const config = useRuntimeConfig(event);
-  const id = getRouterParam(event, 'id');
-  const { lang, original } = getQuery(event);
+const invalid = (statusText) => createError({ status: 400, statusText });
 
-  if (!id || !SPEECH_ID.test(id)) {
-    throw createError({ statusCode: 400, statusMessage: 'Intervención no válida' });
-  }
-  if (lang !== undefined && (typeof lang !== 'string' || !LANG.test(lang))) {
-    throw createError({ statusCode: 400, statusMessage: 'Idioma no válido' });
-  }
-  if (
-    original !== undefined &&
-    (typeof original !== 'string' || !ORIGINAL.test(original))
-  ) {
-    throw createError({ statusCode: 400, statusMessage: 'Bloque no válido' });
-  }
+const isOptionalMatch = (value, pattern) =>
+  value === undefined || (typeof value === 'string' && pattern.test(value));
+
+// A repeated parameter arrives as an array and is rejected along with anything else.
+const validateTrackQuery = ({ lang, original }) => {
+  if (!isOptionalMatch(lang, LANG)) throw invalid('Idioma no válido');
+  if (!isOptionalMatch(original, ORIGINAL)) throw invalid('Bloque no válido');
+  return { lang, original };
+};
+
+export default defineEventHandler(async (event) => {
+  const config = useRuntimeConfig();
+  const id = getRouterParam(event, 'id');
+  if (!id || !SPEECH_ID.test(id)) throw invalid('Intervención no válida');
+
+  const { lang, original } = await getValidatedQuery(event, validateTrackQuery);
 
   let track;
   try {
@@ -74,12 +75,12 @@ export default defineEventHandler(async (event) => {
     if (err?.status !== 404) {
       console.warn('[subtitles] Backend refused the track:', err?.status ?? err?.message);
     }
-    throw createError({ statusCode: 404, statusMessage: 'Sin subtítulos' });
+    throw createError({ status: 404, statusText: 'Sin subtítulos' });
   }
 
   // Players are strict about this one: a track served as anything but text/vtt is
   // dropped without a word.
-  setResponseHeader(event, 'content-type', 'text/vtt; charset=utf-8');
-  setResponseHeader(event, 'cache-control', CACHE_CONTROL);
+  event.res.headers.set('content-type', 'text/vtt; charset=utf-8');
+  event.res.headers.set('cache-control', CACHE_CONTROL);
   return track;
 });

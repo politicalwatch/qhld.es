@@ -6,6 +6,7 @@ import {
   buildRatingPayload,
   isLowRating,
   isSubmittable,
+  parseRatingBody,
 } from '../../shared/utils/searchRating.js';
 
 const RESULTS = [
@@ -129,5 +130,69 @@ describe('RATING_REASONS', () => {
 
   it('stays within the cap the backend enforces on the list', () => {
     expect(RATING_REASONS.length).toBeLessThanOrEqual(10);
+  });
+});
+
+describe('parseRatingBody', () => {
+  it('accepts whatever the browser builds, unchanged', () => {
+    const payload = build();
+    expect(parseRatingBody(payload)).toEqual(payload);
+    const bare = buildRatingPayload({ rating: 5, query: 'vivienda' });
+    expect(parseRatingBody(bare)).toEqual(bare);
+  });
+
+  it('rejects a missing or non-object body', () => {
+    expect(parseRatingBody(undefined)).toBe(false);
+    expect(parseRatingBody(null)).toBe(false);
+    expect(parseRatingBody('rating=3')).toBe(false);
+  });
+
+  it('rejects a rating outside 1-5 or not an integer', () => {
+    for (const rating of [0, 6, 2.5, '3', null, undefined]) {
+      expect(parseRatingBody({ rating, query: 'vivienda' })).toBe(false);
+    }
+  });
+
+  it('rejects a blank or overlong query, and trims the rest', () => {
+    expect(parseRatingBody({ rating: 3, query: '   ' })).toBe(false);
+    expect(parseRatingBody({ rating: 3, query: 42 })).toBe(false);
+    expect(parseRatingBody({ rating: 3, query: 'x'.repeat(501) })).toBe(false);
+    expect(parseRatingBody({ rating: 3, query: '  vivienda ' }).query).toBe('vivienda');
+  });
+
+  it('rejects optional fields of the wrong type', () => {
+    const base = { rating: 2, query: 'vivienda' };
+    expect(parseRatingBody({ ...base, query_meta: 'x' })).toBe(false);
+    expect(parseRatingBody({ ...base, reasons: 'otro' })).toBe(false);
+    expect(parseRatingBody({ ...base, reasons: [1] })).toBe(false);
+    expect(parseRatingBody({ ...base, result_ids: [null] })).toBe(false);
+    expect(parseRatingBody({ ...base, comment: 7 })).toBe(false);
+    expect(parseRatingBody({ ...base, corpus: {} })).toBe(false);
+  });
+
+  it('rejects more reasons than exist, or more than 100 result ids', () => {
+    const base = { rating: 2, query: 'vivienda' };
+    const reasons = Array(RATING_REASONS.length + 1).fill('otro');
+    expect(parseRatingBody({ ...base, reasons })).toBe(false);
+    const result_ids = Array(101).fill('sp');
+    expect(parseRatingBody({ ...base, result_ids })).toBe(false);
+  });
+
+  it('drops unknown reason slugs instead of rejecting', () => {
+    const body = { rating: 2, query: 'vivienda', reasons: ['otro', 'inventado'] };
+    expect(parseRatingBody(body).reasons).toEqual(['otro']);
+  });
+
+  it('trims the comment, truncates it, and omits it when blank', () => {
+    const base = { rating: 2, query: 'vivienda' };
+    expect(parseRatingBody({ ...base, comment: '  vale ' }).comment).toBe('vale');
+    expect(parseRatingBody({ ...base, comment: '  ' })).not.toHaveProperty('comment');
+    const long = parseRatingBody({ ...base, comment: 'x'.repeat(COMMENT_MAX_LENGTH + 5) });
+    expect(long.comment).toHaveLength(COMMENT_MAX_LENGTH);
+  });
+
+  it('does not forward fields outside the contract', () => {
+    const payload = parseRatingBody({ rating: 4, query: 'vivienda', admin: true });
+    expect(payload).not.toHaveProperty('admin');
   });
 });

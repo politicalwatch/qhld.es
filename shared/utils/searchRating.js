@@ -75,3 +75,52 @@ export const buildRatingPayload = ({
   if (corpus) payload.corpus = corpus;
   return payload;
 };
+
+const QUERY_MAX_LENGTH = 500;
+const MAX_RESULT_IDS = 100;
+
+const isOptional = (value, check) => value == null || check(value);
+
+const isStringList = (max) => (value) =>
+  Array.isArray(value)
+  && value.length <= max
+  && value.every((item) => typeof item === "string");
+
+/**
+ * Validate a rating posted to `/api/search-rating` and return the payload to forward,
+ * or `false` when it is malformed. The route runs it through `readValidatedBody`.
+ *
+ * The browser's `buildRatingPayload` already follows these rules, but the route is
+ * reachable on its own, so they are checked again here. The backend validates once
+ * more and is the one that must not be fooled; this check is for a clear error.
+ * Unknown reason slugs are dropped rather than rejected.
+ */
+export const parseRatingBody = (body) => {
+  if (body == null || typeof body !== "object") return false;
+  if (!isValidRating(body.rating)) return false;
+
+  const query = typeof body.query === "string" ? body.query.trim() : "";
+  if (!query || query.length > QUERY_MAX_LENGTH) return false;
+
+  if (
+    !isOptional(body.query_meta, (meta) => typeof meta === "object")
+    || !isOptional(body.reasons, isStringList(RATING_REASONS.length))
+    || !isOptional(body.result_ids, isStringList(MAX_RESULT_IDS))
+    || !isOptional(body.comment, (comment) => typeof comment === "string")
+    || !isOptional(body.corpus, (corpus) => typeof corpus === "string")
+  ) {
+    return false;
+  }
+
+  const payload = {
+    rating: body.rating,
+    query,
+    query_meta: body.query_meta ?? {},
+    reasons: (body.reasons ?? []).filter((slug) => REASON_SLUGS.has(slug)),
+    result_ids: body.result_ids ?? [],
+  };
+  const comment = (body.comment ?? "").trim().slice(0, COMMENT_MAX_LENGTH);
+  if (comment) payload.comment = comment;
+  if (body.corpus) payload.corpus = body.corpus;
+  return payload;
+};
