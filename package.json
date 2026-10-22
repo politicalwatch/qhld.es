@@ -28,7 +28,7 @@
     "date-fns": "^4.0.0",
     "js-sha1": "^0.7.0",
     "masonry-layout": "^4.2.2",
-    "nuxt": "^4.5.0",
+    "nuxt": "^4.6.2",
     "nuxt-gtag": "^4.1.0",
     "pluralize": "^8.0.0",
     "qs": "^6.11.2",
@@ -61,7 +61,7 @@
     "vue-tsc": "^3.2.6"
   },
   "overrides": {
-    "@unhead/vue": "3.2.1"
+    "@unhead/vue": "^3.4.3"
   },
   "browserslist": [
     "> 1%",
@@ -69,14 +69,12 @@
     "not dead"
   ],
   "allowScripts": {
-    "core-js@3.49.0": true,
-    "esbuild@0.27.7": true,
-    "esbuild@0.28.0": true,
-    "esbuild@0.28.1": true,
     "sharp@0.34.5": true,
     "vue-demi@0.14.10": true,
     "unrs-resolver@1.12.2": true,
-    "@parcel/watcher@2.5.6": true,
-    "fsevents@2.3.3": true
+    "fsevents@2.3.3": true,
+    "@parcel/watcher@2.6.0": true,
+    "core-js@3.51.0": true,
+    "esbuild@0.28.2": true
   }
 }
